@@ -94,7 +94,6 @@ func (s *STSSecret) GenerateLoginUrl(account string) (*url.URL, error) {
 	baseUrl := getBaseUrl(account)
 	tokenQ := url.Values{}
 	tokenQ.Set("Action", "getSigninToken")
-	tokenQ.Set("SessionDuration", "43200")
 	tokenQ.Set("Session", sessionStr)
 	tokenUrl := url.URL{
 		Scheme:   "https",
