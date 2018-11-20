@@ -1,0 +1,109 @@
+image: golang:1.11
+
+variables:
+  PROJECT_ROOT: /go/src/git.missionfocus.com/devops/mf-vault
+  RPM_PROJECT: $CI_PROJECT_NAME
+  BINARIES_DIR: $CI_PROJECT_DIR/binaries
+  PACKAGES_DIR: $CI_PROJECT_DIR/packages
+
+before_script:
+  - mkdir -p $PROJECT_ROOT
+  - cp -r $CI_PROJECT_DIR/. $PROJECT_ROOT
+  - cd $PROJECT_ROOT
+  - go get
+
+stages:
+  - build
+  - package
+  - publish
+
+build:x86_64-linux:
+  stage: build
+  script:
+    - GOOS=linux GOARCH=amd64 go build -o $BINARIES_DIR/x86_64-linux/mf-vault
+  artifacts:
+    expire_in: 30 minutes
+    paths:
+      - $BINARIES_DIR/x86_64-linux/mf-vault
+
+build:x86_64-darwin:
+  stage: build
+  script:
+    - GOOS=darwin GOARCH=amd64 go build -o $BINARIES_DIR/x86_64-darwin/mf-vault
+  artifacts:
+    expire_in: 30 minutes
+    paths:
+      - $BINARIES_DIR/x86_64-darwin/mf-vault
+
+package:rpm:
+  stage: package
+  only:
+    - master
+  image: centos:7
+  dependencies:
+    - build:x86_64-linux
+  before_script:
+    - cd rpm
+
+    - yum -y update
+    - yum -y install epel-release
+    - yum install -y python python-pip ansible
+    - yum clean all
+
+    - ansible-playbook -c local -i 'localhost,' site.yml
+  script:
+    - cd $RPM_PROJECT
+    - mkdir -p root/usr/bin
+    - cp $BINARIES_DIR/x86_64-linux/mf-vault root/usr/bin
+    - chmod -R a-rw,a+r,u+w,a+X .
+
+    - togo build package
+    - RPM_NAME=$(basename `ls -1 rpms/$RPM_PROJECT-*`)
+
+    - mkdir -p $PACKAGES_DIR/rpm
+    - mv rpms/$RPM_NAME $PACKAGES_DIR/rpm
+    - cd $PACKAGES_DIR/rpm
+    - openssl sha1 $RPM_NAME > $RPM_NAME.checksum
+  artifacts:
+    name: $RPM_PROJECT-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA
+    expire_in: 1 day
+    paths:
+      - $PACKAGES_DIR/rpm/$RPM_PROJECT-*.rpm
+      - $PACKAGES_DIR/rpm/$RPM_PROJECT-*.rpm.checksum
+
+publish:s3:
+  stage: publish
+  only:
+    - master
+  image: alpine
+  dependencies:
+    - package:rpm
+  variables:
+    S3_PATH: s3://mf-stevedore/rpms
+  before_script:
+    - cd $PACKAGES_DIR/rpm
+    - apk update && apk add git openssh-client openssl py-pip
+    - pip install -U pip && pip install awscli
+  script:
+    - aws s3 rm $S3_PATH --recursive --exclude "*" --include "$RPM_PROJECT-*"
+    - aws s3 sync . $S3_PATH --exclude="*" --include "$RPM_PROJECT-*"
+
+publish:sftp:
+  stage: publish
+  only:
+    - master
+  image: centos:7
+  dependencies:
+    - package:rpm
+  variables:
+    S3_PATH: s3://mf-stevedore/rpms
+  before_script:
+    - cd $PACKAGES_DIR/rpm
+    - yum -y install epel-release
+    - yum install -y openssh-clients lftp
+  script:
+    - RPM_NAME=$(basename `ls -1 $RPM_PROJECT-*`)
+
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore; mkdir rpms || ls ; ls ; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore/rpms/; mrm $RPM_PROJECT-* || ls; ls; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore/rpms/; mput $RPM_PROJECT-* ; ls; bye"
