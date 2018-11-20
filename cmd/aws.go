@@ -47,13 +47,13 @@ var awsCmd = &cobra.Command{
 			fatal(err)
 		}
 
-		fmt.Printf("AWS profile `%s` updated with Vault credentials.\n", profileName)
+		fmt.Printf("AWS profile `%s` updated with credentials for IAM role `%s` of account `%s`.\n", profileName, role, account)
 
 		loginUrl, err := secret.GenerateLoginUrl(account)
 		if err != nil {
 			fatal(err)
 		}
 
-		fmt.Printf("Temporary console login URL: %s\n", loginUrl.String())
+		fmt.Printf("Console login URL (valid for 15 minutes):\n\n%s\n", loginUrl.String())
 	},
 }

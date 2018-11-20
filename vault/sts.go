@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func getBaseUrl(account string) string {
+func getBaseAddr(account string) string {
 	switch account {
 	case "govcloud":
 		return "amazonaws-us-gov.com"
@@ -88,13 +88,12 @@ func (s *STSSecret) GenerateLoginUrl(account string) (*url.URL, error) {
 		return nil, err
 	}
 
-	sessionStr := url.QueryEscape(string(marshaled))
+	baseUrl := getBaseAddr(account)
 
-	client := &http.Client{Timeout: time.Second * 10}
-	baseUrl := getBaseUrl(account)
 	tokenQ := url.Values{}
 	tokenQ.Set("Action", "getSigninToken")
-	tokenQ.Set("Session", sessionStr)
+	tokenQ.Set("Session", string(marshaled))
+	client := &http.Client{Timeout: time.Second * 10}
 	tokenUrl := url.URL{
 		Scheme:   "https",
 		Host:     "signin." + baseUrl,
@@ -120,13 +119,13 @@ func (s *STSSecret) GenerateLoginUrl(account string) (*url.URL, error) {
 
 	loginQ := url.Values{}
 	loginQ.Set("Action", "login")
-	loginQ.Set("Issuer", url.QueryEscape("https://www.missionfocus.com/"))
-	loginQ.Set("Destination", url.QueryEscape("https://console."+baseUrl))
+	loginQ.Set("Issuer", "https://www.missionfocus.com/")
+	loginQ.Set("Destination", "https://console."+baseUrl)
 	loginQ.Set("SigninToken", decoded.SigninToken)
 
 	return &url.URL{
 		Scheme:   "https",
-		Host:     "signin" + baseUrl,
+		Host:     "signin." + baseUrl,
 		Path:     "federation",
 		RawQuery: loginQ.Encode(),
 	}, nil
