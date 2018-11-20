@@ -21,7 +21,7 @@ func init() {
 }
 
 var awsCmd = &cobra.Command{
-	Use:   "aws [account] [role]",
+	Use:   "aws <account> <role>",
 	Short: "Manages AWS Credentials",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
