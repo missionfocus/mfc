@@ -1,0 +1,81 @@
+---
+# hosts must be all for vagrant
+
+- hosts: all
+  become: true
+
+  vars:
+    packages:
+      - python-pip
+      - python-devel
+      - python
+      - createrepo
+      - openssl
+      - openssh
+      - openssh-server
+      - openssh-clients
+      - make
+      - sudo
+      - tree
+      - gcc
+      - gcc-c++
+      - reprepro
+      - gpg
+      - wget
+      - rpmrebuild
+      - sshpass
+      - awscli
+
+  tasks:
+
+  - name: Install epel-release
+    package:
+      name: "epel-release"
+      state: present
+
+  - name: Install {{packages}}
+    package:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - "{{packages}}"
+
+  - name: Upgrade pip
+    pip:
+      name: pip
+      extra_args: --upgrade
+
+  - name: Upgrade s3transfer
+    pip:
+      name: s3transfer
+      extra_args: --upgrade
+
+  # install the togo RPM creator
+  - name: Install togo
+    yum:
+      name: "https://github.com/genereese/togo/releases/download/v2.3r7/togo-2.3-7.noarch.rpm"
+      state: present
+
+  - name: Ensure togo dependencies are present (SQLObject, argparse)
+    pip:
+      name: "{{ item }}"
+    with_items:
+      - SQLObject
+      - argparse
+
+#  - name: Generate path of all files in $CI_PROJECT_DIR
+#    find:
+#      paths: "{{ansible_env.CI_PROJECT_DIR}}"
+#      file_type: directory
+#    register: build_dirs
+#    when: ansible_env.CI_PROJECT_DIR is defined
+#
+#  - name: Update Release version of all projects to $CI_JOB_ID
+#    replace:
+#      dest: "{{item.path}}/spec/header"
+#      regexp: 'Release: \d+'
+#      replace: "Release: {{ansible_env.CI_JOB_ID}}"
+#    with_items:
+#      - "{{build_dirs.files}}"
+#    when: "ansible_env.CI_JOB_ID is defined"
+...
