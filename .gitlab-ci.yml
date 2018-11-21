@@ -22,7 +22,7 @@ build:x86_64-linux:
   script:
     - GOOS=linux GOARCH=amd64 go build -o $BINARIES_DIR/x86_64-linux/mf-vault
   artifacts:
-    expire_in: 30 minutes
+    expire_in: 1 week
     paths:
       - $BINARIES_DIR/x86_64-linux/mf-vault
 
@@ -31,7 +31,7 @@ build:x86_64-darwin:
   script:
     - GOOS=darwin GOARCH=amd64 go build -o $BINARIES_DIR/x86_64-darwin/mf-vault
   artifacts:
-    expire_in: 30 minutes
+    expire_in: 1 week
     paths:
       - $BINARIES_DIR/x86_64-darwin/mf-vault
 
@@ -66,7 +66,7 @@ package:rpm:
     - openssl sha1 $RPM_NAME > $RPM_NAME.checksum
   artifacts:
     name: $RPM_PROJECT-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA
-    expire_in: 1 day
+    expire_in: 1 week
     paths:
       - $PACKAGES_DIR/rpm/$RPM_PROJECT-*.rpm
       - $PACKAGES_DIR/rpm/$RPM_PROJECT-*.rpm.checksum
