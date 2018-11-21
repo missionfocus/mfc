@@ -7,6 +7,7 @@ import (
 
 type Vault interface {
 	ReadSTS(account string, role string) (*STSSecret, error)
+	AuthLDAP(username string, password string) (string, error)
 }
 
 type vault struct {
@@ -28,4 +29,18 @@ func (v *vault) ReadSTS(account string, role string) (*STSSecret, error) {
 		SecretAccessKey: secret.Data["secret_key"].(string),
 		SecurityToken:   secret.Data["security_token"].(string),
 	}, nil
+}
+
+func (v *vault) AuthLDAP(username string, password string) (string, error) {
+	endpoint := strings.Join([]string{"auth", "ldap", "login", username}, "/")
+	data := map[string]interface{}{
+		"password": password,
+	}
+
+	secret, err := v.Logical().Write(endpoint, data)
+	if err != nil {
+		return "", err
+	}
+
+	return secret.Auth.ClientToken, nil
 }
