@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"git.missionfocus.com/devops/mf-vault/vault"
-	"github.com/hashicorp/vault/api"
 	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
@@ -28,15 +27,11 @@ var awsCmd = &cobra.Command{
 		account := args[0]
 		role := args[1]
 
-		vClient, err := api.NewClient(&api.Config{
-			Address: os.Getenv("VAULT_ADDR"),
-		})
+		client, err := getClientWithToken()
 		if err != nil {
 			fatal(err)
 		}
-
-		vClient.SetToken(os.Getenv("VAULT_TOKEN"))
-		v := vault.New(vClient)
+		v := vault.New(client)
 
 		secret, err := v.ReadSTS(account, role)
 		if err != nil {
