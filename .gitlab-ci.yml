@@ -20,7 +20,7 @@ stages:
 build:x86_64-linux:
   stage: build
   script:
-    - GOOS=linux GOARCH=amd64 go build -o $BINARIES_DIR/x86_64-linux/mf-vault
+    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o $BINARIES_DIR/x86_64-linux/mf-vault
   artifacts:
     expire_in: 1 week
     paths:
