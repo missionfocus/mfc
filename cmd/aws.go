@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"git.missionfocus.com/devops/mf-vault/vault"
+	"git.missionfocus.com/open-source/mf-vault/vault"
 	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 var credentialsPath string
@@ -37,14 +38,15 @@ var awsCmd = &cobra.Command{
 		if err != nil {
 			fatal(err)
 		}
-
-		if err := secret.ToProfile(credentialsPath, profileName); err != nil {
+		stsSecret := vault.NewSTSSecret(secret)
+		if err := stsSecret.ToProfile(credentialsPath, profileName); err != nil {
 			fatal(err)
 		}
 
 		fmt.Printf("AWS profile `%s` updated with credentials for IAM role `%s` of account `%s`.\n", profileName, role, account)
+		fmt.Printf("These credentials are valid for: %s\n", (time.Second * time.Duration(secret.LeaseDuration)).String())
 
-		loginUrl, err := secret.GenerateLoginUrl(account)
+		loginUrl, err := stsSecret.GenerateLoginUrl(account)
 		if err != nil {
 			fatal(err)
 		}

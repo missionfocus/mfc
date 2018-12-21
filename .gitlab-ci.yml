@@ -1,7 +1,7 @@
 image: golang:1.11
 
 variables:
-  PROJECT_ROOT: /go/src/git.missionfocus.com/devops/mf-vault
+  PROJECT_ROOT: /go/src/git.missionfocus.com/open-source/mf-vault
   RPM_PROJECT: $CI_PROJECT_NAME
   BINARIES_DIR: $CI_PROJECT_DIR/binaries
   PACKAGES_DIR: $CI_PROJECT_DIR/packages

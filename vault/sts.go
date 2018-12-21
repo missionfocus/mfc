@@ -2,6 +2,7 @@ package vault
 
 import (
 	"encoding/json"
+	"github.com/hashicorp/vault/api"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -23,6 +24,14 @@ type STSSecret struct {
 	AccessKeyID     string `json:"sessionId"`
 	SecretAccessKey string `json:"sessionKey"`
 	SecurityToken   string `json:"sessionToken"`
+}
+
+func NewSTSSecret(secret *api.Secret) *STSSecret {
+	return &STSSecret{
+		AccessKeyID:     secret.Data["access_key"].(string),
+		SecretAccessKey: secret.Data["secret_key"].(string),
+		SecurityToken:   secret.Data["security_token"].(string),
+	}
 }
 
 // Matches [<profile name>]
