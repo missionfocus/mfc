@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"git.missionfocus.com/devops/mf-vault/vault"
+	"git.missionfocus.com/open-source/mf-vault/vault"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 	"io/ioutil"
