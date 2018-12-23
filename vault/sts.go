@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -39,7 +40,12 @@ var re = regexp.MustCompile(`^\[(.+)]`)
 
 // Adds or updates the STS secret as an AWS profile to the specified credentials file.
 func (s *STSSecret) ToProfile(path string, name string) error {
-	data, err := ioutil.ReadFile(path)
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	data, err := ioutil.ReadAll(f)
 	if err != nil {
 		return err
 	}
