@@ -11,6 +11,7 @@ import (
 
 var credentialsPath string
 var profileName string
+var silent bool
 
 func init() {
 	rootCmd.AddCommand(awsCmd)
@@ -18,6 +19,7 @@ func init() {
 	defaultCredentialsPath := filepath.Join(os.Getenv("HOME"), ".aws", "credentials")
 	awsCmd.PersistentFlags().StringVarP(&credentialsPath, "credentials", "c", defaultCredentialsPath, "path to AWS credentials file")
 	awsCmd.PersistentFlags().StringVarP(&profileName, "profile", "p", "vault", "name of the profile")
+	awsCmd.PersistentFlags().BoolVarP(&silent, "silent", "s", false, "update AWS credentials with no output to stdout")
 }
 
 var awsCmd = &cobra.Command{
@@ -41,6 +43,10 @@ var awsCmd = &cobra.Command{
 		stsSecret := vault.NewSTSSecret(secret)
 		if err := stsSecret.ToProfile(credentialsPath, profileName); err != nil {
 			fatal(err)
+		}
+
+		if silent {
+			return
 		}
 
 		fmt.Printf("AWS profile `%s` updated with credentials for IAM role `%s` of account `%s`.\n", profileName, role, account)
