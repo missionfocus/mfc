@@ -39,18 +39,11 @@ package:rpm:
   stage: package
   only:
     - master
-  image: centos:7
+  image: hub.missionfocus.com/devops/ci-images/centos/general:testing
   dependencies:
     - build:x86_64-linux
   before_script:
-    - cd rpm
-
-    - yum -y update
-    - yum -y install epel-release
-    - yum install -y python python-pip ansible
-    - yum clean all
-
-    - ansible-playbook -c local -i 'localhost,' site.yml
+    - cd rpm && ansible-playbook -c local -i 'localhost,' site.yml
   script:
     - cd $RPM_PROJECT
     - mkdir -p root/usr/bin
@@ -75,15 +68,14 @@ publish:s3:
   stage: publish
   only:
     - master
-  image: alpine
+  image: hub.missionfocus.com/devops/ci-images/alpine/general:testing
   dependencies:
     - package:rpm
   variables:
     S3_PATH: s3://mf-stevedore/rpms
   before_script:
+    - . setup_aws_auth.sh
     - cd $PACKAGES_DIR/rpm
-    - apk update && apk add git openssh-client openssl py-pip
-    - pip install -U pip && pip install awscli
   script:
     - aws s3 rm $S3_PATH --recursive --exclude "*" --include "$RPM_PROJECT-*"
     - aws s3 sync . $S3_PATH --exclude="*" --include "$RPM_PROJECT-*"
@@ -92,18 +84,19 @@ publish:sftp:
   stage: publish
   only:
     - master
-  image: centos:7
+  image: hub.missionfocus.com/devops/ci-images/alpine/general:testing
   dependencies:
     - package:rpm
+    - build:x86_64-linux
   variables:
-    S3_PATH: s3://mf-stevedore/rpms
+    SFTP_BINARIES_PATH: "/web/pipeline-resources/binaries"
   before_script:
-    - cd $PACKAGES_DIR/rpm
-    - yum -y install epel-release
-    - yum install -y openssh-clients lftp
+    - . setup_sftp_auth.sh
   script:
-    - RPM_NAME=$(basename `ls -1 $RPM_PROJECT-*`)
-
+    # output binary
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mkdir -p $SFTP_BINARIES_PATH; cd $SFTP_BINARIES_PATH;  mput -O ./ $BINARIES_DIR/x86_64-linux/mf-vault; ls; bye"
+    # output rpm
+    - cd $PACKAGES_DIR/rpm && RPM_NAME=$(basename `ls -1 $RPM_PROJECT-*`)
     - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore; mkdir rpms || ls ; ls ; bye"
     - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore/rpms/; mrm $RPM_PROJECT-* || ls; ls; bye"
     - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore/rpms/; mput $RPM_PROJECT-* ; ls; bye"
