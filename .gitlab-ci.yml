@@ -68,7 +68,7 @@ publish:s3:
   stage: publish
   only:
     - master
-  image: hub.missionfocus.com/devops/ci-images/alpine/general:testing
+  image: hub.missionfocus.com/devops/ci-images/alpine/general:master
   dependencies:
     - package:rpm
   variables:
@@ -84,7 +84,7 @@ publish:sftp:
   stage: publish
   only:
     - master
-  image: hub.missionfocus.com/devops/ci-images/alpine/general:testing
+  image: hub.missionfocus.com/devops/ci-images/alpine/general:master
   dependencies:
     - package:rpm
     - build:x86_64-linux
@@ -94,7 +94,7 @@ publish:sftp:
     - . setup_sftp_auth.sh
   script:
     # output binary
-    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mkdir -p $SFTP_BINARIES_PATH; cd $SFTP_BINARIES_PATH;  mput -O ./ $BINARIES_DIR/x86_64-linux/mf-vault; ls; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mkdir -p $SFTP_BINARIES_PATH || true; cd $SFTP_BINARIES_PATH;  mput -O ./ $BINARIES_DIR/x86_64-linux/mf-vault; ls; bye"
     # output rpm
     - cd $PACKAGES_DIR/rpm && RPM_NAME=$(basename `ls -1 $RPM_PROJECT-*`)
     - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore; mkdir rpms || ls ; ls ; bye"
