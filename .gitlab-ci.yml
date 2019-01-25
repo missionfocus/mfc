@@ -10,7 +10,6 @@ before_script:
   - mkdir -p $PROJECT_ROOT
   - cp -r $CI_PROJECT_DIR/. $PROJECT_ROOT
   - cd $PROJECT_ROOT
-  - go get
 
 stages:
   - build
@@ -20,6 +19,7 @@ stages:
 build:x86_64-linux:
   stage: build
   script:
+    - go get
     - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o $BINARIES_DIR/x86_64-linux/mf-vault
   artifacts:
     expire_in: 1 week
@@ -29,6 +29,7 @@ build:x86_64-linux:
 build:x86_64-darwin:
   stage: build
   script:
+    - go get
     - GOOS=darwin GOARCH=amd64 go build -o $BINARIES_DIR/x86_64-darwin/mf-vault
   artifacts:
     expire_in: 1 week
@@ -104,3 +105,24 @@ publish:sftp:
     - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore; mkdir rpms || ls ; ls ; bye"
     - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore/rpms/; mrm $RPM_PROJECT-* || ls; ls; bye"
     - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore/rpms/; mput $RPM_PROJECT-* ; ls; bye"
+
+publish:gitlab-release:
+  stage: publish
+  only:
+    - tags
+  image: hub.missionfocus.com/devops/ci-images/alpine/general:master
+  dependencies:
+    - build:x86_64-linux
+    - build:x86_64-darwin
+  before_script:
+    - . setup_mario_pat.sh
+  script:
+    - echo Release $CI_COMMIT_TAG
+    - |
+      curl --header 'Content-Type: application/json' --header 'PRIVATE-TOKEN: $MARIO_PAT' \
+          --data '{"name": "mf-vault $CI_COMMIT_TAG", "tag_name": "$CI_COMMIT_TAG", "ref": "$CI_COMMIT_REF_NAME", "description": "Mission Focus Vault CLI.", "assets": {"links": [{"name": "Artifacts", "url": "https://git.missionfocus.com/open-source/mf-vault/-/jobs/$CI_JOB_ID/artifacts/download"}]}}' \
+          --request POST https://git.missionfocus.com/api/v4/projects/$CI_PROJECT_ID/releases
+  artifacts:
+    name: mf-vault-$CI_COMMIT_TAG-artifacts
+    paths:
+      - $BINARIES_DIR
