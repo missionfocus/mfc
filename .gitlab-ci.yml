@@ -95,7 +95,7 @@ publish:sftp:
   script:
     # output binary
     # - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mkdir -p $SFTP_BINARIES_PATH || true; cd $SFTP_BINARIES_PATH;  mput -O ./ $BINARIES_DIR/x86_64-linux/mf-vault; ls; bye"
-    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mkdir -p $SFTP_BINARIES_PATH/x86_64-linux $SFTP_BINARIES_PATH/x86_64-darwin || true; cd $SFTP_BINARIES_PATH;  mput -O ./x86_64-linux/ $CI_PROJECT_DIR/binaries/x86_64-linux/mf-vault; mput -O ./x86_64-darwin/ $CI_PROJECT_DIR/binaries/x86_64-darwin/mf-vault; ls; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mkdir -p $SFTP_BINARIES_PATH/x86_64-linux $SFTP_BINARIES_PATH/x86_64-darwin || true; cd $SFTP_BINARIES_PATH;  mput -O ./x86_64-linux/ $CI_PROJECT_DIR/binaries/x86_64-linux/mf-vault; mput -O ./x86_64-darwin/ $CI_PROJECT_DIR/binaries/x86_64-darwin/mf-vault; ls -l; echo "!!! $PWD !!!"; ls -l ./x86_64-linux/ ; ls -l ./x86_64-darwin/ ; bye"
     # output rpm
     - cd $PACKAGES_DIR/rpm && RPM_NAME=$(basename `ls -1 $RPM_PROJECT-*`)
     - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore; mkdir rpms || ls ; ls ; bye"
