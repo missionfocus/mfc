@@ -88,6 +88,7 @@ publish:sftp:
   dependencies:
     - package:rpm
     - build:x86_64-linux
+    - build:x86_64-darwin
   variables:
     SFTP_BINARIES_PATH: "/web/pipeline-resources/binaries"
   before_script:
