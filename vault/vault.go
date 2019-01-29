@@ -8,6 +8,7 @@ import (
 type Vault interface {
 	ReadSTS(account string, role string) (*api.Secret, error)
 	AuthLDAP(username string, password string) (string, error)
+	ListAllKV(key string) []string
 }
 
 type vault struct {
@@ -39,4 +40,19 @@ func (v *vault) AuthLDAP(username string, password string) (string, error) {
 	}
 
 	return secret.Auth.ClientToken, nil
+}
+
+func (v *vault) ListAllKV(key string) []string {
+	tree := NewKvTree(v.Client, key)
+	keys := make([]string, 0)
+
+	tree.Traverse(func(node *TreeNode) {
+		if node.Err != nil {
+			keys = append(keys, "Error: Could not list key: "+node.Err.Error())
+			return
+		}
+		keys = append(keys, node.Key)
+	})
+
+	return keys
 }
