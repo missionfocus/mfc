@@ -37,8 +37,6 @@ build:x86_64-darwin:
 
 package:rpm:
   stage: package
-  only:
-    - master
   image: hub.missionfocus.com/devops/ci-images/centos/general:master
   dependencies:
     - build:x86_64-linux
