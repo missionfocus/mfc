@@ -5,10 +5,10 @@ Name: mf-vault
 Summary: CLI for interacting with the Mission Focus Vault
 
 # The version of your package
-Version: 0.4.0
+Version: 0.5.0
 
 # The release number of your package
-Release: 5
+Release: 6
 
 # Any license you wish to list
 License: UNLICENSED
