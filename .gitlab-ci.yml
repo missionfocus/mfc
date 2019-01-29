@@ -82,8 +82,8 @@ publish:s3:
 
 publish:sftp:
   stage: publish
-  # only:
-  #   - master
+  only:
+    - master
   image: hub.missionfocus.com/devops/ci-images/alpine/general:master
   dependencies:
     - package:rpm
@@ -95,8 +95,6 @@ publish:sftp:
     - . setup_sftp_auth.sh
   script:
     # output binary
-    # - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mkdir -p $SFTP_BINARIES_PATH || true; cd $SFTP_BINARIES_PATH;  mput -O ./ $BINARIES_DIR/x86_64-linux/mf-vault; ls; bye"
-    # - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mkdir -p $SFTP_BINARIES_PATH/x86_64-linux $SFTP_BINARIES_PATH/x86_64-darwin || true; cd $SFTP_BINARIES_PATH;  mput -O ./x86_64-linux/ $CI_PROJECT_DIR/binaries/x86_64-linux/mf-vault; mput -O ./x86_64-darwin/ $CI_PROJECT_DIR/binaries/x86_64-darwin/mf-vault; ls -l; echo "!!! $PWD !!!"; ls -l ./x86_64-linux/ ; ls -l ./x86_64-darwin/ ; bye"
     - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mkdir -p $SFTP_BINARIES_PATH/x86_64-linux $SFTP_BINARIES_PATH/x86_64-darwin; bye" || true
     - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mput -O $SFTP_BINARIES_PATH/x86_64-linux/ $CI_PROJECT_DIR/binaries/x86_64-linux/mf-vault; bye"
     - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mput -O $SFTP_BINARIES_PATH/x86_64-darwin/ $CI_PROJECT_DIR/binaries/x86_64-darwin/mf-vault; bye"
