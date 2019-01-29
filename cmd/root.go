@@ -16,19 +16,17 @@ func init() {
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "mf-vault",
-	Version: "0.4.0",
-	Short: "CLI for interacting with the Mission Focus Vault",
+	Use:     "mf-vault",
+	Version: "0.5.0",
+	Short:   "CLI for interacting with the Mission Focus Vault",
 }
 
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fatal(err)
-	}
+	_ = rootCmd.Execute()
 }
 
 func fatal(err error) {
-	fmt.Println(err)
+	fmt.Println("Error: " + err.Error())
 	os.Exit(1)
 }
 
