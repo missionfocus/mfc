@@ -86,13 +86,19 @@ publish:sftp:
   dependencies:
     - package:rpm
     - build:x86_64-linux
+    - build:x86_64-darwin
   variables:
     SFTP_BINARIES_PATH: "/web/pipeline-resources/binaries"
   before_script:
     - . setup_sftp_auth.sh
   script:
     # output binary
-    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mkdir -p $SFTP_BINARIES_PATH || true; cd $SFTP_BINARIES_PATH;  mput -O ./ $BINARIES_DIR/x86_64-linux/mf-vault; ls; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mkdir -p $SFTP_BINARIES_PATH/x86_64-linux $SFTP_BINARIES_PATH/x86_64-darwin; bye" || true
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mput -O $SFTP_BINARIES_PATH/x86_64-linux/ $CI_PROJECT_DIR/binaries/x86_64-linux/mf-vault; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mput -O $SFTP_BINARIES_PATH/x86_64-darwin/ $CI_PROJECT_DIR/binaries/x86_64-darwin/mf-vault; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "ls -l $SFTP_BINARIES_PATH; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "ls -l $SFTP_BINARIES_PATH/x86_64-linux; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "ls -l $SFTP_BINARIES_PATH/x86_64-darwin; bye"
     # output rpm
     - cd $PACKAGES_DIR/rpm && RPM_NAME=$(basename `ls -1 $RPM_PROJECT-*`)
     - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore; mkdir rpms || ls ; ls ; bye"
