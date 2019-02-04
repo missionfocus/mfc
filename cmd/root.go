@@ -25,7 +25,7 @@ func init() {
 
 var rootCmd = &cobra.Command{
 	Use:     "mf-vault",
-	Version: "0.5.0",
+	Version: "0.6.0",
 	Short:   "CLI for interacting with the Mission Focus Vault",
 }
 
