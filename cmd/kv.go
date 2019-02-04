@@ -9,6 +9,8 @@ import (
 func init() {
 	rootCmd.AddCommand(kvCmd)
 	kvCmd.AddCommand(kvListAllCmd)
+	kvCmd.AddCommand(kvAwsCmd)
+	kvAwsCmd.PersistentFlags().StringVarP(&profileName, "profile", "p", "vault", "name of the profile")
 }
 
 var kvCmd = &cobra.Command{
@@ -24,12 +26,31 @@ var kvListAllCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getClientWithToken()
 		if err != nil {
-			fatal(err)
+			check(err)
 		}
 		v := vault.New(client)
-		keys := v.ListAllKV(args[0])
+		keys := v.KvListAll(args[0])
 		for _, key := range keys {
 			fmt.Println(key)
 		}
+	},
+}
+
+var kvAwsCmd = &cobra.Command{
+	Use: "aws <path>",
+	Short: "Reads the secret at path as AWS credentials.",
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		key := args[0]
+
+		client, err := getClientWithToken()
+		check(err)
+
+		v := vault.New(client)
+		secret, err := v.KvReadAws(key)
+		check(err)
+
+		check(secret.ToProfile(credentialsPath, profileName))
+		silentPrint(fmt.Sprintf("AWS profile `%s` updated with the credentials read from `%s`.\n", profileName, key))
 	},
 }

@@ -25,7 +25,7 @@ var loginCmd = &cobra.Command{
 			input, err := terminal.ReadPassword(0)
 			fmt.Print("\n")
 			if err != nil {
-				fatal(err)
+				check(err)
 			}
 			password = string(input)
 		} else {
@@ -34,13 +34,13 @@ var loginCmd = &cobra.Command{
 
 		client, err := getClient()
 		if err != nil {
-			fatal(err)
+			check(err)
 		}
 
 		v := vault.New(client)
 		token, err := v.AuthLDAP(username, password)
 		if err != nil {
-			fatal(err)
+			check(err)
 		}
 
 		ioutil.WriteFile(tokenFilePath, []byte(token), 0600)

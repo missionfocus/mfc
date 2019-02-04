@@ -4,22 +4,12 @@ import (
 	"fmt"
 	"git.missionfocus.com/open-source/mf-vault/vault"
 	"github.com/spf13/cobra"
-	"os"
-	"path/filepath"
 	"time"
 )
 
-var credentialsPath string
-var profileName string
-var silent bool
-
 func init() {
 	rootCmd.AddCommand(awsCmd)
-
-	defaultCredentialsPath := filepath.Join(os.Getenv("HOME"), ".aws", "credentials")
-	awsCmd.PersistentFlags().StringVarP(&credentialsPath, "credentials", "c", defaultCredentialsPath, "path to AWS credentials file")
 	awsCmd.PersistentFlags().StringVarP(&profileName, "profile", "p", "vault", "name of the profile")
-	awsCmd.PersistentFlags().BoolVarP(&silent, "silent", "s", false, "update AWS credentials with no output to stdout")
 }
 
 var awsCmd = &cobra.Command{
@@ -32,17 +22,17 @@ var awsCmd = &cobra.Command{
 
 		client, err := getClientWithToken()
 		if err != nil {
-			fatal(err)
+			check(err)
 		}
 		v := vault.New(client)
 
 		secret, err := v.ReadSTS(account, role)
 		if err != nil {
-			fatal(err)
+			check(err)
 		}
 		stsSecret := vault.NewSTSSecret(secret)
 		if err := stsSecret.ToProfile(credentialsPath, profileName); err != nil {
-			fatal(err)
+			check(err)
 		}
 
 		if silent {
@@ -54,7 +44,7 @@ var awsCmd = &cobra.Command{
 
 		loginUrl, err := stsSecret.GenerateLoginUrl(account)
 		if err != nil {
-			fatal(err)
+			check(err)
 		}
 
 		fmt.Printf("Console login URL (valid for 15 minutes):\n\n%s\n", loginUrl.String())

@@ -8,7 +8,9 @@ import (
 type Vault interface {
 	ReadSTS(account string, role string) (*api.Secret, error)
 	AuthLDAP(username string, password string) (string, error)
-	ListAllKV(key string) []string
+
+	KvListAll(key string) []string
+	KvReadAws(path string) (*STSSecret, error)
 }
 
 type vault struct {
@@ -42,7 +44,7 @@ func (v *vault) AuthLDAP(username string, password string) (string, error) {
 	return secret.Auth.ClientToken, nil
 }
 
-func (v *vault) ListAllKV(key string) []string {
+func (v *vault) KvListAll(key string) []string {
 	tree := NewKvTree(v.Client, key)
 	keys := make([]string, 0)
 
@@ -55,4 +57,12 @@ func (v *vault) ListAllKV(key string) []string {
 	})
 
 	return keys
+}
+
+func (v *vault) KvReadAws(path string) (*STSSecret, error)  {
+	secret, err := v.Logical().Read(path)
+	if err != nil {
+		return nil, err
+	}
+	return NewSTSSecret(secret), nil
 }
