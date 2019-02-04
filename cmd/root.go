@@ -9,15 +9,23 @@ import (
 	"path/filepath"
 )
 
-var tokenFilePath string
+var (
+	credentialsPath string
+	profileName string
+	tokenFilePath string
+	silent bool
+)
 
 func init() {
+	defaultCredentialsPath := filepath.Join(os.Getenv("HOME"), ".aws", "credentials")
 	rootCmd.PersistentFlags().StringVarP(&tokenFilePath, "token-file", "t", filepath.Join(os.Getenv("HOME"), ".vault-token"), "path to vault token file")
+	rootCmd.PersistentFlags().StringVarP(&credentialsPath, "credentials", "c", defaultCredentialsPath, "path to AWS credentials file")
+	rootCmd.PersistentFlags().BoolVarP(&silent, "silent", "s", false, "suppress output to stdout")
 }
 
 var rootCmd = &cobra.Command{
 	Use:     "mf-vault",
-	Version: "0.5.0",
+	Version: "0.6.0",
 	Short:   "CLI for interacting with the Mission Focus Vault",
 }
 
@@ -25,9 +33,11 @@ func Execute() {
 	_ = rootCmd.Execute()
 }
 
-func fatal(err error) {
-	fmt.Println("Error: " + err.Error())
-	os.Exit(1)
+func check(err error) {
+	if err != nil {
+		fmt.Println("Fatal: " + err.Error())
+		os.Exit(1)
+	}
 }
 
 func getClient() (*api.Client, error) {
@@ -57,4 +67,10 @@ func getClientWithToken() (*api.Client, error) {
 	}
 
 	return client, nil
+}
+
+func silentPrint(str string) {
+	if !silent {
+		fmt.Print(str)
+	}
 }
