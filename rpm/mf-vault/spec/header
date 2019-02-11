@@ -15,7 +15,7 @@ License: UNLICENSED
 
 # What group this RPM would typically reside in
 Group: Applications/System
- fla
+
 # Who packaged this RPM
 Packager: Mission Focus <ccday@missionfocus.com>
 
