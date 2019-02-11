@@ -6,8 +6,9 @@ import (
 )
 
 type Vault interface {
-	ReadSTS(account string, role string) (*api.Secret, error)
 	AuthLDAP(username string, password string) (string, error)
+
+	AwsReadSTS(account string, role string, ttl string) (*api.Secret, error)
 
 	KvListAll(key string) []string
 	KvReadAws(path string) (*STSSecret, error)
@@ -21,8 +22,10 @@ func New(client *api.Client) Vault {
 	return &vault{client}
 }
 
-func (v *vault) ReadSTS(account string, role string) (*api.Secret, error) {
-	secret, err := v.Logical().Read(strings.Join([]string{account, "sts", role}, "/"))
+func (v *vault) AwsReadSTS(account string, role string, ttl string) (*api.Secret, error) {
+	secret, err := v.Logical().Write(strings.Join([]string{account, "sts", role}, "/"), map[string]interface{}{
+		"ttl": ttl,
+	})
 	if err != nil {
 		return nil, err
 	}

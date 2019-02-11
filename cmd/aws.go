@@ -10,7 +10,10 @@ import (
 func init() {
 	rootCmd.AddCommand(awsCmd)
 	awsCmd.PersistentFlags().StringVarP(&profileName, "profile", "p", "vault", "name of the profile")
+	awsCmd.PersistentFlags().StringVarP(&awsTtl, "ttl", "l", "3600s", "requested TTL of the STS token")
 }
+
+var awsTtl string
 
 var awsCmd = &cobra.Command{
 	Use:   "aws <account> <role>",
@@ -26,7 +29,7 @@ var awsCmd = &cobra.Command{
 		}
 		v := vault.New(client)
 
-		secret, err := v.ReadSTS(account, role)
+		secret, err := v.AwsReadSTS(account, role, awsTtl)
 		if err != nil {
 			check(err)
 		}
