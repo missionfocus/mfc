@@ -11,9 +11,9 @@ import (
 
 var (
 	credentialsPath string
-	profileName string
-	tokenFilePath string
-	silent bool
+	profileName     string
+	tokenFilePath   string
+	silent          bool
 )
 
 func init() {
@@ -30,7 +30,9 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() {
-	_ = rootCmd.Execute()
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }
 
 func check(err error) {
