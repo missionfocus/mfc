@@ -11,9 +11,9 @@ import (
 
 var (
 	credentialsPath string
-	profileName string
-	tokenFilePath string
-	silent bool
+	profileName     string
+	tokenFilePath   string
+	silent          bool
 )
 
 func init() {
