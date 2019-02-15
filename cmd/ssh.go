@@ -2,9 +2,8 @@ package cmd
 
 import (
 	"bytes"
-	"fmt"
-	// "git.missionfocus.com/open-source/mf-vault/vault"
 	"encoding/json"
+	"fmt"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"net/http"
@@ -13,13 +12,13 @@ import (
 	"strings"
 )
 
-// DataSchema ...
+// DataSchema is the format of the JSON subsection of ResponseSchema
 type DataSchema struct {
 	SerialNumber string `json:"serial_number"`
 	SignedKey    string `json:"signed_key"`
 }
 
-// ResponseSchema ...
+// ResponseSchema is the format of the JSON response we get after a successful request
 type ResponseSchema struct {
 	RequestID     string     `json:"request_id"`
 	LeaseID       string     `json:"lease_id"`
