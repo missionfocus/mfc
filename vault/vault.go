@@ -2,6 +2,8 @@ package vault
 
 import (
 	"github.com/hashicorp/vault/api"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -13,6 +15,8 @@ type Vault interface {
 	KvListAll(key string) []string
 	KvReadAws(key string) (*STSSecret, error)
 	KvGpgImport(key string, private bool) ([]byte, error)
+
+	PkiCreateFiles(secret *api.Secret, path string) error
 }
 
 type vault struct {
@@ -89,4 +93,28 @@ func (v *vault) KvGpgImport(key string, private bool) (out []byte, err error) {
 	}
 
 	return
+}
+
+func (v *vault) PkiCreateFiles(secret *api.Secret, path string) error {
+	pkiSecret := NewPKISecret(secret)
+
+	fullchain, err := os.OpenFile(filepath.Join(path, "fullchain.pem"), os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		return err
+	}
+	defer fullchain.Close()
+	if err := pkiSecret.WriteChain(fullchain); err != nil {
+		return err
+	}
+
+	privkey, err := os.OpenFile(filepath.Join(path, "privkey.pem"), os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		return err
+	}
+	defer privkey.Close()
+	if err := pkiSecret.WritePrivateKey(privkey); err != nil {
+		return err
+	}
+
+	return nil
 }
