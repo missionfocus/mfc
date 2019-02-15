@@ -12,6 +12,8 @@ type Vault interface {
 
 	KvListAll(key string) []string
 	KvReadAws(path string) (*STSSecret, error)
+
+	SignUserKey(publicKeyBytes []byte) (*api.Secret, error)
 }
 
 type vault struct {
@@ -62,10 +64,16 @@ func (v *vault) KvListAll(key string) []string {
 	return keys
 }
 
-func (v *vault) KvReadAws(path string) (*STSSecret, error)  {
+func (v *vault) KvReadAws(path string) (*STSSecret, error) {
 	secret, err := v.Logical().Read(path)
 	if err != nil {
 		return nil, err
 	}
 	return NewSTSSecret(secret), nil
+}
+
+func (v *vault) SignUserKey(publicKeyBytes []byte) (*api.Secret, error) {
+	sshClient := v.Client.SSHWithMountPoint("ssh-signer")
+	data := map[string]interface{}{"public_key": publicKeyBytes}
+	return sshClient.SignKey("user-key", data)
 }
