@@ -11,7 +11,8 @@ type Vault interface {
 	AwsReadSTS(account string, role string, ttl string) (*api.Secret, error)
 
 	KvListAll(key string) []string
-	KvReadAws(path string) (*STSSecret, error)
+	KvReadAws(key string) (*STSSecret, error)
+	KvGpgImport(key string, private bool) ([]byte, error)
 }
 
 type vault struct {
@@ -62,10 +63,30 @@ func (v *vault) KvListAll(key string) []string {
 	return keys
 }
 
-func (v *vault) KvReadAws(path string) (*STSSecret, error)  {
-	secret, err := v.Logical().Read(path)
+func (v *vault) KvReadAws(key string) (*STSSecret, error) {
+	secret, err := v.Logical().Read(key)
 	if err != nil {
 		return nil, err
 	}
 	return NewSTSSecret(secret), nil
+}
+
+func (v *vault) KvGpgImport(key string, private bool) (out []byte, err error) {
+	secret, err := v.Logical().Read(key)
+	if err != nil {
+		return nil, err
+	}
+
+	gpgSecret, err := NewPGPSecret(secret)
+	if err != nil {
+		return nil, err
+	}
+
+	if private {
+		out, err = gpgSecret.ImportPrivate()
+	} else {
+		out, err = gpgSecret.ImportPublic()
+	}
+
+	return
 }
