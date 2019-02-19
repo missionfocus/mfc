@@ -12,12 +12,12 @@ import (
 
 func init() {
 	rootCmd.AddCommand(sshCmd)
-	sshCmd.PersistentFlags().StringVarP(&sshKeyPath, "public-key", "a", filepath.Join(os.Getenv("HOME"), ".ssh", "id_rsa.pub"), "Path used to read SSH public key")
+	sshCmd.PersistentFlags().StringVarP(&keyPath, "public-key", "a", filepath.Join(os.Getenv("HOME"), ".ssh", "id_rsa.pub"), "Path used to read SSH public key")
 	sshCmd.PersistentFlags().StringVarP(&signedKeyPath, "signed-public-key", "b", filepath.Join(os.Getenv("HOME"), ".ssh", "signed-cert.pub"), "Path to write signed certificate")
 }
 
 var (
-	sshKeyPath    string
+	keyPath       string
 	signedKeyPath string
 )
 
@@ -33,6 +33,7 @@ var sshCmd = &cobra.Command{
 
 		sshKeyBytes, sshKeyReadError := ioutil.ReadFile(sshKeyPath)
 		check(sshKeyReadError)
+
 		sshKey := string(sshKeyBytes)
 		sshKeyTrimmed := strings.TrimRight(sshKey, "\r\n")
 		trimmedSSHKeyBytes := []byte(sshKeyTrimmed)
