@@ -42,3 +42,5 @@ Temporary Items
 # Vagrant
 .vagrant
 
+# Artifacts
+/out

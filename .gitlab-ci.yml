@@ -13,99 +13,98 @@ before_script:
 
 stages:
   - build
-  #- package
+  - package
   - publish
-  #- trigger
+  - trigger
 
 build:x86_64-linux:
   stage: build
   script:
     - go get
-    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o $BINARIES_DIR/x86_64-linux/mf-vault
+    - BINARY=$BINARIES_DIR/x86_64-linux/mf-vault GOOS=linux GOARCH=amd64 make build
   artifacts:
     expire_in: 1 week
     paths:
-      - $BINARIES_DIR/x86_64-linux/mf-vault
+      - $BINARIES_DIR
 
 build:x86_64-darwin:
   stage: build
   script:
     - go get
-    - GOOS=darwin GOARCH=amd64 go build -o $BINARIES_DIR/x86_64-darwin/mf-vault
+    - BINARY=$BINARIES_DIR/x86_64-darwin/mf-vault GOOS=darwin GOARCH=amd64 make build
   artifacts:
     expire_in: 1 week
     paths:
-      - $BINARIES_DIR/x86_64-darwin/mf-vault
+      - $BINARIES_DIR
 
-#package:rpm:
-#  stage: package
-#  image: hub.missionfocus.com/devops/ci-images/centos/general:master
-#  dependencies:
-#    - build:x86_64-linux
-#  before_script:
-#    - cd build/package/rpm && ansible-playbook -c local -i 'localhost,' site.yml
-#  script:
-#    - cd $RPM_PROJECT
-#    - mkdir -p root/usr/bin
-#    - cp $BINARIES_DIR/x86_64-linux/mf-vault root/usr/bin
-#    - chmod -R a-rw,a+r,u+w,a+X .
-#
-#    - togo build package
-#    - RPM_NAME=$(basename `ls -1 rpms/$RPM_PROJECT-*`)
-#
-#    - mkdir -p $PACKAGES_DIR/rpm
-#    - mv rpms/$RPM_NAME $PACKAGES_DIR/rpm
-#    - cd $PACKAGES_DIR/rpm
-#    - openssl sha1 $RPM_NAME > $RPM_NAME.checksum
-#  artifacts:
-#    name: $RPM_PROJECT-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA
-#    expire_in: 1 week
-#    paths:
-#      - $PACKAGES_DIR/rpm/$RPM_PROJECT-*.rpm
-#      - $PACKAGES_DIR/rpm/$RPM_PROJECT-*.rpm.checksum
+package:rpm:
+  stage: package
+  image: hub.missionfocus.com/devops/ci-images/centos/general:master
+  dependencies:
+    - build:x86_64-linux
+  before_script:
+    - cd build/package/rpm && ansible-playbook -c local -i 'localhost,' site.yml
+  script:
+    - cd $RPM_PROJECT
+    - mkdir -p root/usr/bin
+    - cp $BINARIES_DIR/x86_64-linux/mf-vault root/usr/bin
+    - chmod -R a-rw,a+r,u+w,a+X .
 
-#publish:s3:
-#  stage: publish
-#  only:
-#    - master
-#  image: hub.missionfocus.com/devops/ci-images/alpine/general:master
-#  dependencies:
-#    - package:rpm
-#  variables:
-#    S3_PATH: s3://mf-stevedore/rpms
-#  before_script:
-#    - . setup_aws_auth.sh
-#    - cd $PACKAGES_DIR/rpm
-#  script:
-#    - aws s3 rm $S3_PATH --recursive --exclude "*" --include "$RPM_PROJECT-*"
-#    - aws s3 sync . $S3_PATH --exclude="*" --include "$RPM_PROJECT-*"
-#
-#publish:sftp:
-#  stage: publish
-#  only:
-#    - master
-#  image: hub.missionfocus.com/devops/ci-images/alpine/general:master
-#  dependencies:
-#    - package:rpm
-#    - build:x86_64-linux
-#    - build:x86_64-darwin
-#  variables:
-#    SFTP_BINARIES_PATH: "/web/pipeline-resources/binaries"
-#  before_script:
-#    - . setup_sftp_auth.sh
-#  script:
-#    # output binary
-#    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mkdir -p $SFTP_BINARIES_PATH/x86_64-linux $SFTP_BINARIES_PATH/x86_64-darwin; bye" || true
-#    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mput -O $SFTP_BINARIES_PATH/x86_64-linux/ $CI_PROJECT_DIR/binaries/x86_64-linux/mf-vault; bye"
-#    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mput -O $SFTP_BINARIES_PATH/x86_64-darwin/ $CI_PROJECT_DIR/binaries/x86_64-darwin/mf-vault; bye"
-#    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "ls -l $SFTP_BINARIES_PATH; bye"
-#    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "ls -l $SFTP_BINARIES_PATH/x86_64-linux; bye"
-#    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "ls -l $SFTP_BINARIES_PATH/x86_64-darwin; bye"
-#    # output rpm
-#    - cd $PACKAGES_DIR/rpm && RPM_NAME=$(basename `ls -1 $RPM_PROJECT-*`)
-#    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore; mkdir rpms || ls ; ls ; bye"
-#    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore/rpms/; mrm $RPM_PROJECT-* || ls; ls; bye"
-#    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore/rpms/; mput $RPM_PROJECT-* ; ls; bye"
+    - togo build package
+    - RPM_NAME=$(basename `ls -1 rpms/$RPM_PROJECT-*`)
+
+    - mkdir -p $PACKAGES_DIR/rpm
+    - mv rpms/$RPM_NAME $PACKAGES_DIR/rpm
+    - cd $PACKAGES_DIR/rpm
+    - openssl sha1 $RPM_NAME > $RPM_NAME.checksum
+  artifacts:
+    name: $RPM_PROJECT-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA
+    expire_in: 1 week
+    paths:
+      - $PACKAGES_DIR
+
+publish:s3:
+  stage: publish
+  only:
+    - tags
+  image: hub.missionfocus.com/devops/ci-images/alpine/general:master
+  dependencies:
+    - package:rpm
+  variables:
+    S3_PATH: s3://mf-stevedore/rpms
+  before_script:
+    - . setup_aws_auth.sh
+    - cd $PACKAGES_DIR/rpm
+  script:
+    - aws s3 rm $S3_PATH --recursive --exclude "*" --include "$RPM_PROJECT-*"
+    - aws s3 sync . $S3_PATH --exclude="*" --include "$RPM_PROJECT-*"
+
+publish:sftp:
+  stage: publish
+  only:
+    - tags
+  image: hub.missionfocus.com/devops/ci-images/alpine/general:master
+  dependencies:
+    - package:rpm
+    - build:x86_64-linux
+    - build:x86_64-darwin
+  variables:
+    SFTP_BINARIES_PATH: "/web/pipeline-resources/binaries"
+  before_script:
+    - . setup_sftp_auth.sh
+  script:
+    # output binary
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mkdir -p $SFTP_BINARIES_PATH/x86_64-linux $SFTP_BINARIES_PATH/x86_64-darwin; bye" || true
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mput -O $SFTP_BINARIES_PATH/x86_64-linux/ $CI_PROJECT_DIR/binaries/x86_64-linux/mf-vault; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "mput -O $SFTP_BINARIES_PATH/x86_64-darwin/ $CI_PROJECT_DIR/binaries/x86_64-darwin/mf-vault; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "ls -l $SFTP_BINARIES_PATH; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "ls -l $SFTP_BINARIES_PATH/x86_64-linux; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "ls -l $SFTP_BINARIES_PATH/x86_64-darwin; bye"
+    # output rpm
+    - cd $PACKAGES_DIR/rpm && RPM_NAME=$(basename `ls -1 $RPM_PROJECT-*`)
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore; mkdir rpms || ls ; ls ; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore/rpms/; mrm $RPM_PROJECT-* || ls; ls; bye"
+    - lftp sftp://release:$JACKIE_PASSWORD@jackie.missionfocus.com -e "cd /mf-stevedore/rpms/; mput $RPM_PROJECT-* ; ls; bye"
 
 publish:gitlab-release:
   stage: publish
@@ -121,18 +120,18 @@ publish:gitlab-release:
     - make gitlab-release | jq .
   artifacts:
     name: mf-vault-$CI_COMMIT_TAG-artifacts
+    expire_in: 0
     paths:
       - $BINARIES_DIR
 
-#trigger:ci-images:
-#  stage: trigger
-#  only:
-#    - tags
-#    - master
-#  image: centos:7
-#  before_script:
-#    - echo "Triggering downstream ci-images repo"
-#  script:
-#    - curl -X POST -F token=$CI_JOB_TOKEN -F ref=master https://git.missionfocus.com/api/v4/projects/396/trigger/pipeline
-#  after_script:
-#     - echo "Trigger finished from $CI_COMMIT_REF_SLUG branch"
+trigger:ci-images:
+  stage: trigger
+  only:
+    - tags
+  image: centos:7
+  before_script:
+    - echo "Triggering downstream ci-images repo"
+  script:
+    - curl -X POST -F token=$CI_JOB_TOKEN -F ref=master https://git.missionfocus.com/api/v4/projects/396/trigger/pipeline
+  after_script:
+    - echo "Trigger finished from $CI_COMMIT_REF_SLUG branch"
