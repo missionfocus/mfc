@@ -120,7 +120,7 @@ publish:gitlab-release:
     - make gitlab-release | jq .
   artifacts:
     name: mf-vault-$CI_COMMIT_TAG-artifacts
-    expire_in: 0
+    expire_in: 1 year
     paths:
       - $BINARIES_DIR
 
