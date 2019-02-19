@@ -42,5 +42,3 @@ Temporary Items
 # Vagrant
 .vagrant
 
-# Binary for this project
-mf-vault

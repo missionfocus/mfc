@@ -1,4 +1,4 @@
-package cmd
+package mf_vault
 
 import (
 	"git.missionfocus.com/open-source/mf-vault/vault"

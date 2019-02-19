@@ -43,7 +43,7 @@ package:rpm:
   dependencies:
     - build:x86_64-linux
   before_script:
-    - cd rpm && ansible-playbook -c local -i 'localhost,' site.yml
+    - cd build/package/rpm && ansible-playbook -c local -i 'localhost,' site.yml
   script:
     - cd $RPM_PROJECT
     - mkdir -p root/usr/bin
@@ -118,11 +118,7 @@ publish:gitlab-release:
   before_script:
     - . setup_mario_pat.sh
   script:
-    - echo Release $CI_COMMIT_TAG
-    - |
-      curl --header 'Content-Type: application/json' --header 'PRIVATE-TOKEN: $MARIO_PAT' \
-          --data '{"name": "mf-vault $CI_COMMIT_TAG", "tag_name": "$CI_COMMIT_TAG", "ref": "$CI_COMMIT_REF_NAME", "description": "Mission Focus Vault CLI.", "assets": {"links": [{"name": "Artifacts", "url": "https://git.missionfocus.com/open-source/mf-vault/-/jobs/$CI_JOB_ID/artifacts/download"}]}}' \
-          --request POST https://git.missionfocus.com/api/v4/projects/$CI_PROJECT_ID/releases
+    - make gitlab-release | jq .
   artifacts:
     name: mf-vault-$CI_COMMIT_TAG-artifacts
     paths:
