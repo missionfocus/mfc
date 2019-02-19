@@ -31,13 +31,13 @@ var sshCmd = &cobra.Command{
 
 		v := vault.New(client)
 
-		sshKeyBytes, sshKeyReadError := ioutil.ReadFile(sshKeyPath)
-		check(sshKeyReadError)
+		keyBytes, keyReadError := ioutil.ReadFile(keyPath)
+		check(keyReadError)
 
-		sshKey := string(sshKeyBytes)
-		sshKeyTrimmed := strings.TrimRight(sshKey, "\r\n")
-		trimmedSSHKeyBytes := []byte(sshKeyTrimmed)
-		secret, signError := v.SignUserKey(trimmedSSHKeyBytes)
+		key := string(keyBytes)
+		keyTrimmed := strings.TrimRight(key, "\r\n")
+		trimmedKeyBytes := []byte(keyTrimmed)
+		secret, signError := v.SignUserKey(trimmedKeyBytes)
 		check(signError)
 
 		data := secret.Data
