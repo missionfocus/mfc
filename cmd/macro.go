@@ -7,13 +7,13 @@ import (
 	"path"
 )
 
-func init()  {
+func init() {
 	rootCmd.AddCommand(macroCmd)
 	macroCmd.AddCommand(minioMacro)
 }
 
 var macroCmd = &cobra.Command{
-	Use: "macro",
+	Use:   "macro",
 	Short: "Performs a high-level operation.",
 }
 
@@ -21,7 +21,7 @@ const MinioBasePath = "secret/minio"
 const MinioProfileName = "minio"
 
 var minioMacro = &cobra.Command{
-	Use: "minio",
+	Use:   "minio",
 	Short: "Configures AWS credentials to use Jackie as an S3 implementation.",
 	Run: func(cmd *cobra.Command, args []string) {
 		key := path.Join(MinioBasePath, "aws-credentials")
