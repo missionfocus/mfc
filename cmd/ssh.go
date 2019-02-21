@@ -42,7 +42,7 @@ var sshSignCmd = &cobra.Command{
 		key := string(keyBytes)
 		keyTrimmed := strings.TrimRight(key, "\r\n")
 		trimmedKeyBytes := []byte(keyTrimmed)
-		secret, signError := v.SignUserKey(trimmedKeyBytes)
+		secret, signError := v.SSHSignUserKey(trimmedKeyBytes)
 		check(signError)
 
 		data := secret.Data
