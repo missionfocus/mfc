@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"git.missionfocus.com/open-source/mf-vault/vault"
 	"github.com/spf13/cobra"
 	"path"
@@ -33,11 +32,11 @@ var minioMacro = &cobra.Command{
 		credentialsSecret, err := v.KvReadAws(key)
 		check(err)
 		check(credentialsSecret.ToProfile(credentialsPath, MinioProfileName))
-		silentPrint(fmt.Sprintf("AWS profile `%s` updated with the credentials read from `%s`.\n", MinioProfileName, key))
+		silentPrintf("AWS profile `%s` updated with the credentials read from `%s`.\n", MinioProfileName, key)
 
 		endpointSecret, err := client.Logical().Read(path.Join(MinioBasePath, "end-point"))
 		check(err)
 		endpoint := endpointSecret.Data["end-point"].(string)
-		silentPrint(fmt.Sprintf("Configure your S3 client to use the following endpoint:\n\n\t%s\n", endpoint))
+		silentPrintf("Configure your S3 client to use the following endpoint:\n\n\t%s\n", endpoint)
 	},
 }

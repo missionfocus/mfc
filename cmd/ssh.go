@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"git.missionfocus.com/open-source/mf-vault/vault"
 	"github.com/spf13/cobra"
 	"io/ioutil"
@@ -12,17 +11,23 @@ import (
 
 func init() {
 	rootCmd.AddCommand(sshCmd)
-	sshCmd.PersistentFlags().StringVarP(&keyPath, "public-key", "a", filepath.Join(os.Getenv("HOME"), ".ssh", "id_rsa.pub"), "Path used to read SSH public key")
-	sshCmd.PersistentFlags().StringVarP(&signedKeyPath, "signed-public-key", "b", filepath.Join(os.Getenv("HOME"), ".ssh", "signed-cert.pub"), "Path to write signed certificate")
+	sshCmd.AddCommand(sshSignCmd)
+	sshSignCmd.PersistentFlags().StringVarP(&sshSignKeyPath, "public-key", "a", filepath.Join(os.Getenv("HOME"), ".ssh", "id_rsa.pub"), "Path used to read SSH public key")
+	sshSignCmd.PersistentFlags().StringVarP(&sshSignSignedKeyPath, "signed-public-key", "b", filepath.Join(os.Getenv("HOME"), ".ssh", "signed-cert.pub"), "Path to write signed certificate")
 }
-
-var (
-	keyPath       string
-	signedKeyPath string
-)
 
 var sshCmd = &cobra.Command{
 	Use:   "ssh",
+	Short: "Performs operations related to SSH.",
+}
+
+var (
+	sshSignKeyPath       string
+	sshSignSignedKeyPath string
+)
+
+var sshSignCmd = &cobra.Command{
+	Use:   "sign",
 	Short: "Sign client SSH key",
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -31,7 +36,7 @@ var sshCmd = &cobra.Command{
 
 		v := vault.New(client)
 
-		keyBytes, keyReadError := ioutil.ReadFile(keyPath)
+		keyBytes, keyReadError := ioutil.ReadFile(sshSignKeyPath)
 		check(keyReadError)
 
 		key := string(keyBytes)
@@ -43,10 +48,10 @@ var sshCmd = &cobra.Command{
 		data := secret.Data
 		signedKey := data["signed_key"].(string)
 		signedKeyBytes := []byte(signedKey)
-		writeSignedKeyError := ioutil.WriteFile(signedKeyPath, signedKeyBytes, 0644)
+		writeSignedKeyError := ioutil.WriteFile(sshSignSignedKeyPath, signedKeyBytes, 0644)
 		check(writeSignedKeyError)
 
-		fmt.Printf("Signed public key written to: %s\n", signedKeyPath)
+		silentPrintf("Signed public key written to: %s\n", sshSignSignedKeyPath)
 
 	},
 }

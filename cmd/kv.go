@@ -56,7 +56,7 @@ var kvAwsCmd = &cobra.Command{
 		check(err)
 
 		check(secret.ToProfile(credentialsPath, profileName))
-		silentPrint(fmt.Sprintf("AWS profile `%s` updated with the credentials read from `%s`.\n", profileName, key))
+		silentPrintf("AWS profile `%s` updated with the credentials read from `%s`.\n", profileName, key)
 	},
 }
 

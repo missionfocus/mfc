@@ -76,3 +76,9 @@ func silentPrint(str string) {
 		fmt.Print(str)
 	}
 }
+
+func silentPrintf(format string, a ...interface{}) {
+	if !silent {
+		fmt.Printf(format, a...)
+	}
+}
