@@ -63,12 +63,12 @@
       - SQLObject
       - argparse
 
-  - name: Generate path of all files in $CI_PROJECT_DIR
+  - name: Generate path of all files in $RPM_DIR
     find:
-      paths: "{{ansible_env.CI_PROJECT_DIR}}"
+      paths: "{{ansible_env.RPM_DIR}}"
       file_type: directory
     register: build_dirs
-    when: ansible_env.CI_PROJECT_DIR is defined
+    when: ansible_env.RPM_DIR is defined
 
   - name: Update Release counter of all projects to $CI_JOB_ID
     replace:

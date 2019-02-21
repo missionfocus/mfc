@@ -3,8 +3,9 @@ image: golang:1.11
 variables:
   PROJECT_ROOT: /go/src/git.missionfocus.com/open-source/mf-vault
   RPM_PROJECT: $CI_PROJECT_NAME
-  BINARIES_DIR: $CI_PROJECT_DIR/binaries
-  PACKAGES_DIR: $CI_PROJECT_DIR/packages
+  RPM_DIR: $CI_PROJECT_DIR/build/package/rpm
+  BINARIES_DIR: $CI_PROJECT_DIR/out/binaries
+  PACKAGES_DIR: $CI_PROJECT_DIR/out/packages
 
 before_script:
   - mkdir -p $PROJECT_ROOT
@@ -43,7 +44,7 @@ package:rpm:
   dependencies:
     - build:x86_64-linux
   before_script:
-    - cd build/package/rpm && ansible-playbook -c local -i 'localhost,' site.yml
+    - cd $RPM_DIR && ansible-playbook -c local -i 'localhost,' site.yml
   script:
     - cd $RPM_PROJECT
     - mkdir -p root/usr/bin
