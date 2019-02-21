@@ -31,9 +31,8 @@ var kvListAllCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getClientWithToken()
-		if err != nil {
-			check(err)
-		}
+		check(err)
+
 		v := vault.New(client)
 		keys := v.KvListAll(args[0])
 		for _, key := range keys {
