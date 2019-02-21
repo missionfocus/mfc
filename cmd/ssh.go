@@ -1,95 +1,57 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
+	"git.missionfocus.com/open-source/mf-vault/vault"
 	"github.com/spf13/cobra"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-// DataSchema is the format of the JSON subsection of ResponseSchema
-type DataSchema struct {
-	SerialNumber string `json:"serial_number"`
-	SignedKey    string `json:"signed_key"`
-}
-
-// ResponseSchema is the format of the JSON response we get after a successful request
-type ResponseSchema struct {
-	RequestID     string     `json:"request_id"`
-	LeaseID       string     `json:"lease_id"`
-	Renewable     bool       `json:"renewable"`
-	LeaseDuration int        `json:"lease_duration"`
-	Data          DataSchema `json:"data"`
-	WrapInfo      string     `json:"wrap_info"`
-	Warnings      string     `json:"warnings"`
-	Auth          string     `json:"auth"`
-}
-
 func init() {
 	rootCmd.AddCommand(sshCmd)
-	sshCmd.PersistentFlags().StringVarP(&sshPublicKeyPath, "public-key", "a", filepath.Join(os.Getenv("HOME"), ".ssh", "id_rsa.pub"), "Path used to read SSH public key")
-	sshCmd.PersistentFlags().StringVarP(&signedPublicKeyPath, "signed-public-key", "b", filepath.Join(os.Getenv("HOME"), ".ssh", "signed-cert.pub"), "Path to write signed certificate")
-	sshCmd.PersistentFlags().StringVarP(&userKeyPath, "user-key-path", "u", "ssh-signer/sign/user-key", "Vault endpoint for user key signing")
+	sshCmd.AddCommand(sshSignCmd)
+	sshSignCmd.PersistentFlags().StringVarP(&sshSignKeyPath, "public-key", "a", filepath.Join(os.Getenv("HOME"), ".ssh", "id_rsa.pub"), "Path used to read SSH public key")
+	sshSignCmd.PersistentFlags().StringVarP(&sshSignSignedKeyPath, "signed-public-key", "b", filepath.Join(os.Getenv("HOME"), ".ssh", "signed-cert.pub"), "Path to write signed certificate")
 }
-
-var (
-	signedPublicKeyPath string
-	sshPublicKeyPath    string
-	userKeyPath         string
-)
 
 var sshCmd = &cobra.Command{
 	Use:   "ssh",
+	Short: "Performs operations related to SSH.",
+}
+
+var (
+	sshSignKeyPath       string
+	sshSignSignedKeyPath string
+)
+
+var sshSignCmd = &cobra.Command{
+	Use:   "sign",
 	Short: "Sign client SSH key",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		sshPublicKeyBytes, sshPublicKeyReadError := ioutil.ReadFile(sshPublicKeyPath)
-		check(sshPublicKeyReadError)
-		sshPublicKey := string(sshPublicKeyBytes)
-		sshPublicKeyTrimmed := strings.TrimRight(sshPublicKey, "\r\n")
+		client, clientError := getClientWithToken()
+		check(clientError)
 
-		var urlBuffer bytes.Buffer
-		urlBuffer.WriteString("https://vault.missionfocus.com/v1/")
-		urlBuffer.WriteString(userKeyPath)
-		url := urlBuffer.String()
+		v := vault.New(client)
 
-		client := &http.Client{}
-		bodyContents := fmt.Sprintf("{\"public_key\": \"%s\"}", sshPublicKeyTrimmed)
+		keyBytes, keyReadError := ioutil.ReadFile(sshSignKeyPath)
+		check(keyReadError)
 
-		body := bytes.NewBufferString(bodyContents)
+		key := string(keyBytes)
+		keyTrimmed := strings.TrimRight(key, "\r\n")
+		trimmedKeyBytes := []byte(keyTrimmed)
+		secret, signError := v.SSHSignUserKey(trimmedKeyBytes)
+		check(signError)
 
-		request, requestError := http.NewRequest(http.MethodPut, url, body)
-		check(requestError)
-
-		request.Header.Set("X-Vault-Token", "3TencBRGMsrc48VFIxmonLfS")
-		request.Header.Set("Content-Type", "application/json")
-
-		response, responseError := client.Do(request)
-		check(responseError)
-
-		responseBody, responseReadError := ioutil.ReadAll(response.Body)
-		check(responseReadError)
-
-		var parsedResponse ResponseSchema
-		unmarshalError := json.Unmarshal(responseBody, &parsedResponse)
-		check(unmarshalError)
-
-		responseData := parsedResponse.Data
-		signedKey := responseData.SignedKey
-
+		data := secret.Data
+		signedKey := data["signed_key"].(string)
 		signedKeyBytes := []byte(signedKey)
-		writeSignedPublicKeyError := ioutil.WriteFile(signedPublicKeyPath, signedKeyBytes, 0644)
-		check(writeSignedPublicKeyError)
+		writeSignedKeyError := ioutil.WriteFile(sshSignSignedKeyPath, signedKeyBytes, 0644)
+		check(writeSignedKeyError)
 
-		responseCloseError := response.Body.Close()
-		check(responseCloseError)
-
-		fmt.Printf("Signed public key written to: %s\n", signedPublicKeyPath)
+		silentPrintf("Signed public key written to: %s\n", sshSignSignedKeyPath)
 
 	},
 }
