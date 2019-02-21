@@ -1,5 +1,4 @@
 NAME := mf-vault
-VERSION := $(shell git describe --always --tags --abbrev=0)
 BINARY ?= out/$(NAME)
 
 .PHONY: gitlab-release
@@ -8,5 +7,5 @@ gitlab-release:
 
 .PHONY: build
 build:
-	CGO_ENABLED=0 go build -o $(BINARY)
+	CGO_ENABLED=0 go build -v -ldflags "-X git.missionfocus.com/open-source/mf-vault/cmd/mf-vault.version=$(CI_COMMIT_TAG)" -o $(BINARY)
 	openssl sha1 $(BINARY) > $(BINARY).checksum
