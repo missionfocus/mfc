@@ -1,7 +1,7 @@
-package cmd
+package mf_vault
 
 import (
-	"git.missionfocus.com/open-source/mf-vault/vault"
+	"git.missionfocus.com/open-source/mf-vault/pkg/vault"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"

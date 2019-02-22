@@ -1,4 +1,4 @@
-package cmd
+package mf_vault
 
 import (
 	"fmt"
@@ -23,9 +23,17 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&silent, "silent", "s", false, "suppress output to stdout")
 }
 
+// Do not modify this variable, it will be set at build time.
+var version string
+
 var rootCmd = &cobra.Command{
 	Use:     "mf-vault",
-	Version: "0.6.2",
+	Version: func() string {
+		if version == "" {
+			return "next"
+		}
+		return version
+	}(),
 	Short:   "CLI for interacting with the Mission Focus Vault",
 }
 

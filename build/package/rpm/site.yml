@@ -63,19 +63,28 @@
       - SQLObject
       - argparse
 
-#  - name: Generate path of all files in $CI_PROJECT_DIR
-#    find:
-#      paths: "{{ansible_env.CI_PROJECT_DIR}}"
-#      file_type: directory
-#    register: build_dirs
-#    when: ansible_env.CI_PROJECT_DIR is defined
-#
-#  - name: Update Release version of all projects to $CI_JOB_ID
-#    replace:
-#      dest: "{{item.path}}/spec/header"
-#      regexp: 'Release: \d+'
-#      replace: "Release: {{ansible_env.CI_JOB_ID}}"
-#    with_items:
-#      - "{{build_dirs.files}}"
-#    when: "ansible_env.CI_JOB_ID is defined"
+  - name: Generate path of all files in $RPM_DIR
+    find:
+      paths: "{{ansible_env.RPM_DIR}}"
+      file_type: directory
+    register: build_dirs
+    when: ansible_env.RPM_DIR is defined
+
+  - name: Update Release counter of all projects to $CI_JOB_ID
+    replace:
+      dest: "{{item.path}}/spec/header"
+      regexp: 'Release: \d+'
+      replace: "Release: {{ansible_env.CI_JOB_ID}}"
+    with_items:
+      - "{{build_dirs.files}}"
+    when: "ansible_env.CI_JOB_ID is defined"
+
+  - name: Update Version of all projects to $CI_COMMIT_TAG
+    replace:
+      dest: "{{item.path}}/spec/header"
+      regexp: 'Version: \d+'
+      replace: "Release: {{ansible_env.CI_COMMIT_TAG}}"
+    with_items:
+      - "{{build_dirs.files}}"
+    when: "ansible_env.CI_COMMIT_TAG is defined"
 ...

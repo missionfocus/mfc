@@ -3,8 +3,9 @@ image: golang:1.11
 variables:
   PROJECT_ROOT: /go/src/git.missionfocus.com/open-source/mf-vault
   RPM_PROJECT: $CI_PROJECT_NAME
-  BINARIES_DIR: $CI_PROJECT_DIR/binaries
-  PACKAGES_DIR: $CI_PROJECT_DIR/packages
+  RPM_DIR: $CI_PROJECT_DIR/build/package/rpm
+  BINARIES_DIR: $CI_PROJECT_DIR/out/binaries
+  PACKAGES_DIR: $CI_PROJECT_DIR/out/packages
 
 before_script:
   - mkdir -p $PROJECT_ROOT
@@ -21,21 +22,21 @@ build:x86_64-linux:
   stage: build
   script:
     - go get
-    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o $BINARIES_DIR/x86_64-linux/mf-vault
+    - BINARY=$BINARIES_DIR/x86_64-linux/mf-vault GOOS=linux GOARCH=amd64 make build
   artifacts:
     expire_in: 1 week
     paths:
-      - $BINARIES_DIR/x86_64-linux/mf-vault
+      - $BINARIES_DIR
 
 build:x86_64-darwin:
   stage: build
   script:
     - go get
-    - GOOS=darwin GOARCH=amd64 go build -o $BINARIES_DIR/x86_64-darwin/mf-vault
+    - BINARY=$BINARIES_DIR/x86_64-darwin/mf-vault GOOS=darwin GOARCH=amd64 make build
   artifacts:
     expire_in: 1 week
     paths:
-      - $BINARIES_DIR/x86_64-darwin/mf-vault
+      - $BINARIES_DIR
 
 package:rpm:
   stage: package
@@ -43,7 +44,7 @@ package:rpm:
   dependencies:
     - build:x86_64-linux
   before_script:
-    - cd rpm && ansible-playbook -c local -i 'localhost,' site.yml
+    - cd $RPM_DIR && ansible-playbook -c local -i 'localhost,' site.yml
   script:
     - cd $RPM_PROJECT
     - mkdir -p root/usr/bin
@@ -61,13 +62,12 @@ package:rpm:
     name: $RPM_PROJECT-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA
     expire_in: 1 week
     paths:
-      - $PACKAGES_DIR/rpm/$RPM_PROJECT-*.rpm
-      - $PACKAGES_DIR/rpm/$RPM_PROJECT-*.rpm.checksum
+      - $PACKAGES_DIR
 
 publish:s3:
   stage: publish
   only:
-    - master
+    - tags
   image: hub.missionfocus.com/devops/ci-images/alpine/general:master
   dependencies:
     - package:rpm
@@ -83,7 +83,7 @@ publish:s3:
 publish:sftp:
   stage: publish
   only:
-    - master
+    - tags
   image: hub.missionfocus.com/devops/ci-images/alpine/general:master
   dependencies:
     - package:rpm
@@ -118,13 +118,10 @@ publish:gitlab-release:
   before_script:
     - . setup_mario_pat.sh
   script:
-    - echo Release $CI_COMMIT_TAG
-    - |
-      curl --header 'Content-Type: application/json' --header 'PRIVATE-TOKEN: $MARIO_PAT' \
-          --data '{"name": "mf-vault $CI_COMMIT_TAG", "tag_name": "$CI_COMMIT_TAG", "ref": "$CI_COMMIT_REF_NAME", "description": "Mission Focus Vault CLI.", "assets": {"links": [{"name": "Artifacts", "url": "https://git.missionfocus.com/open-source/mf-vault/-/jobs/$CI_JOB_ID/artifacts/download"}]}}' \
-          --request POST https://git.missionfocus.com/api/v4/projects/$CI_PROJECT_ID/releases
+    - make gitlab-release | jq .
   artifacts:
     name: mf-vault-$CI_COMMIT_TAG-artifacts
+    expire_in: 1 year
     paths:
       - $BINARIES_DIR
 
@@ -132,11 +129,10 @@ trigger:ci-images:
   stage: trigger
   only:
     - tags
-    - master
   image: centos:7
   before_script:
     - echo "Triggering downstream ci-images repo"
   script:
     - curl -X POST -F token=$CI_JOB_TOKEN -F ref=master https://git.missionfocus.com/api/v4/projects/396/trigger/pipeline
   after_script:
-     - echo "Trigger finished from $CI_COMMIT_REF_SLUG branch"
+    - echo "Trigger finished from $CI_COMMIT_REF_SLUG branch"
