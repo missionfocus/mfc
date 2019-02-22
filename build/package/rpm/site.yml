@@ -83,7 +83,7 @@
     replace:
       dest: "{{item.path}}/spec/header"
       regexp: 'Version: \d+'
-      replace: "Release: {{ansible_env.CI_COMMIT_TAG}}"
+      replace: "Version: {{ansible_env.CI_COMMIT_TAG}}"
     with_items:
       - "{{build_dirs.files}}"
     when: "ansible_env.CI_COMMIT_TAG is defined"
