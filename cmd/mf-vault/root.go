@@ -3,6 +3,7 @@ package mf_vault
 import (
 	"fmt"
 	"github.com/hashicorp/vault/api"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
@@ -11,7 +12,6 @@ import (
 
 var (
 	credentialsPath string
-	profileName     string
 	tokenFilePath   string
 	silent          bool
 )
@@ -27,14 +27,14 @@ func init() {
 var version string
 
 var rootCmd = &cobra.Command{
-	Use:     "mf-vault",
+	Use: "mf-vault",
 	Version: func() string {
 		if version == "" {
 			return "next"
 		}
 		return version
 	}(),
-	Short:   "CLI for interacting with the Mission Focus Vault",
+	Short: "CLI for interacting with the Mission Focus Vault",
 }
 
 func Execute() {
@@ -51,13 +51,17 @@ func check(err error) {
 }
 
 func getClient() (*api.Client, error) {
+	addr := os.Getenv("VAULT_ADDR")
+	if addr == "" {
+		return nil, errors.New("The VAULT_ADDR environment variable is not set. Run the following command, then " +
+			"retry: export VAULT_ADDR=https://vault.missionfocus.com")
+	}
 	client, err := api.NewClient(&api.Config{
-		Address: os.Getenv("VAULT_ADDR"),
+		Address: addr,
 	})
 	if err != nil {
 		return nil, err
 	}
-
 	return client, nil
 }
 
