@@ -13,9 +13,10 @@ func init() {
 	awsCmd.PersistentFlags().StringVarP(&awsTtl, "ttl", "l", "3600s", "requested TTL of the STS token")
 }
 
-var awsTtl string
-
-var awsProfileName string
+var (
+	awsTtl         string
+	awsProfileName string
+)
 
 var awsCmd = &cobra.Command{
 	Use:   "aws <account> <role>",
@@ -29,19 +30,13 @@ var awsCmd = &cobra.Command{
 		}
 
 		client, err := getClientWithToken()
-		if err != nil {
-			check(err)
-		}
+		check(err)
 		v := vault.New(client)
 
 		secret, err := v.AwsReadSTS(account, role, awsTtl)
-		if err != nil {
-			check(err)
-		}
+		check(err)
 		stsSecret := vault.NewSTSSecret(secret)
-		if err := stsSecret.ToProfile(credentialsPath, awsProfileName); err != nil {
-			check(err)
-		}
+		check(stsSecret.ToProfile(credentialsPath, awsProfileName))
 
 		if silent {
 			return
@@ -51,10 +46,7 @@ var awsCmd = &cobra.Command{
 		fmt.Printf("These credentials are valid for: %s\n", (time.Second * time.Duration(secret.LeaseDuration)).String())
 
 		loginUrl, err := stsSecret.GenerateLoginUrl(account)
-		if err != nil {
-			check(err)
-		}
-
+		check(err)
 		fmt.Printf("Console login URL (valid for 15 minutes):\n\n%s\n", loginUrl.String())
 	},
 }
