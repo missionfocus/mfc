@@ -13,7 +13,7 @@ func init() {
 	kvCmd.AddCommand(kvAwsCmd)
 	kvCmd.AddCommand(kvGpgCmd)
 
-	kvAwsCmd.PersistentFlags().StringVarP(&profileName, "profile", "p", "vault", "name of the profile")
+	kvAwsCmd.PersistentFlags().StringVarP(&kvAwsProfileName, "profile", "p", "vault", "name of the profile")
 
 	kvGpgImportCmd.PersistentFlags().BoolVar(&kvGpgImportPrivate, "private", false, "import the pair's private key")
 	kvGpgCmd.AddCommand(kvGpgImportCmd)
@@ -41,6 +41,8 @@ var kvListAllCmd = &cobra.Command{
 	},
 }
 
+var kvAwsProfileName string
+
 var kvAwsCmd = &cobra.Command{
 	Use:   "aws <path>",
 	Short: "Reads the secret at path as AWS credentials.",
@@ -55,8 +57,8 @@ var kvAwsCmd = &cobra.Command{
 		secret, err := v.KvReadAws(key)
 		check(err)
 
-		check(secret.ToProfile(credentialsPath, profileName))
-		silentPrintf("AWS profile `%s` updated with the credentials read from `%s`.\n", profileName, key)
+		check(secret.ToProfile(credentialsPath, awsProfileName))
+		silentPrintf("AWS profile `%s` updated with the credentials read from `%s`.\n", awsProfileName, key)
 	},
 }
 

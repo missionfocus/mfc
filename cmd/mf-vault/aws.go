@@ -9,11 +9,13 @@ import (
 
 func init() {
 	rootCmd.AddCommand(awsCmd)
-	awsCmd.PersistentFlags().StringVarP(&profileName, "profile", "p", "vault", "name of the profile")
+	awsCmd.PersistentFlags().StringVarP(&awsProfileName, "profile", "p", "", "name of the profile")
 	awsCmd.PersistentFlags().StringVarP(&awsTtl, "ttl", "l", "3600s", "requested TTL of the STS token")
 }
 
 var awsTtl string
+
+var awsProfileName string
 
 var awsCmd = &cobra.Command{
 	Use:   "aws <account> <role>",
@@ -22,6 +24,9 @@ var awsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		account := args[0]
 		role := args[1]
+		if awsProfileName == "" {
+			awsProfileName = account
+		}
 
 		client, err := getClientWithToken()
 		if err != nil {
@@ -34,7 +39,7 @@ var awsCmd = &cobra.Command{
 			check(err)
 		}
 		stsSecret := vault.NewSTSSecret(secret)
-		if err := stsSecret.ToProfile(credentialsPath, profileName); err != nil {
+		if err := stsSecret.ToProfile(credentialsPath, awsProfileName); err != nil {
 			check(err)
 		}
 
@@ -42,7 +47,7 @@ var awsCmd = &cobra.Command{
 			return
 		}
 
-		fmt.Printf("AWS profile `%s` updated with credentials for IAM role `%s` of account `%s`.\n", profileName, role, account)
+		fmt.Printf("AWS profile `%s` updated with credentials for IAM role `%s` of account `%s`.\n", awsProfileName, role, account)
 		fmt.Printf("These credentials are valid for: %s\n", (time.Second * time.Duration(secret.LeaseDuration)).String())
 
 		loginUrl, err := stsSecret.GenerateLoginUrl(account)
