@@ -80,6 +80,23 @@ publish:s3:
     - aws s3 rm $S3_PATH --recursive --exclude "*" --include "$RPM_PROJECT-*"
     - aws s3 sync . $S3_PATH --exclude="*" --include "$RPM_PROJECT-*"
 
+publish:minios:
+  stage: publish
+  only:
+    - master
+  image: hub.missionfocus.com/devops/ci-images/centos/general:master
+  dependencies:
+    - package:rpm
+  variables:
+    S3_PATH: s3://mf-stevedore/rpms/internal
+  before_script:
+    - . setup_minio_auth.sh
+    - . setup_gpg_auth.sh
+    - cd $PACKAGES_DIR/rpm
+    - GPG_PASS=$GPG_PASS find ./ -name "*.rpm" -exec sh -c 'expect -c "spawn /usr/bin/rpm --addsign {}; expect -re {Enter pass phrase:}; send \"$GPG_PASS\r\"; expect eof"' \;
+  script:
+    - minio_aws s3 sync . $S3_PATH --exclude="*" --include "$RPM_PROJECT-*"
+
 publish:sftp:
   stage: publish
   only:
