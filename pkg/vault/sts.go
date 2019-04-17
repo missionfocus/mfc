@@ -90,6 +90,10 @@ func (s *STSSecret) toCredentials() string {
 	sb.WriteString(s.SecurityToken)
 	sb.WriteRune('\n')
 
+	sb.WriteString("aws_session_token = ")
+	sb.WriteString(s.SecurityToken)
+	sb.WriteRune('\n')
+
 	return sb.String()
 }
 
