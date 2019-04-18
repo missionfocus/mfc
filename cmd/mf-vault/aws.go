@@ -5,7 +5,6 @@ import (
 	"git.missionfocus.com/open-source/mf-vault/pkg/vault"
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
-	"os"
 	"time"
 )
 
@@ -13,11 +12,13 @@ func init() {
 	rootCmd.AddCommand(awsCmd)
 	awsCmd.PersistentFlags().StringVarP(&awsProfileName, "profile", "p", "", "name of the profile")
 	awsCmd.PersistentFlags().StringVarP(&awsTtl, "ttl", "l", "3600s", "requested TTL of the STS token")
+	awsCmd.PersistentFlags().BoolVarP(&awsAutoOpenURL, "open", "o", false, "automatically open the AWS console")
 }
 
 var (
 	awsTtl         string
 	awsProfileName string
+	awsAutoOpenURL bool
 )
 
 var awsCmd = &cobra.Command{
@@ -47,16 +48,11 @@ var awsCmd = &cobra.Command{
 		fmt.Printf("AWS profile `%s` updated with credentials for IAM role `%s` of account `%s`.\n", awsProfileName, role, account)
 		fmt.Printf("These credentials are valid for: %s\n", (time.Second * time.Duration(secret.LeaseDuration)).String())
 
-		loginUrl, err := stsSecret.GenerateLoginUrl(account)
+		loginURL, err := stsSecret.GenerateLoginUrl(account)
 		check(err)
-		fmt.Printf("Console login URL (valid for 15 minutes):\n\n%s\n", loginUrl.String())
-		check(autoOpen(loginUrl.String()))
+		fmt.Printf("Console login URL (valid for 15 minutes):\n\n%s\n", loginURL.String())
+		if awsAutoOpenURL {
+			check(browser.OpenURL(loginURL.String()))
+		}
 	},
-}
-
-func autoOpen(url string) error {
-	if os.Getenv("MF_VAULT_AUTO_OPEN_URL") == "true" {
-		return browser.OpenURL(url)
-	}
-	return nil
 }
