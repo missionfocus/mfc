@@ -3,7 +3,9 @@ package mf_vault
 import (
 	"fmt"
 	"git.missionfocus.com/open-source/mf-vault/pkg/vault"
+	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
+	"os"
 	"time"
 )
 
@@ -48,5 +50,13 @@ var awsCmd = &cobra.Command{
 		loginUrl, err := stsSecret.GenerateLoginUrl(account)
 		check(err)
 		fmt.Printf("Console login URL (valid for 15 minutes):\n\n%s\n", loginUrl.String())
+		check(autoOpen(loginUrl.String()))
 	},
+}
+
+func autoOpen(url string) error {
+	if os.Getenv("MF_VAULT_AUTO_OPEN_URL") == "true" {
+		return browser.OpenURL(url)
+	}
+	return nil
 }
