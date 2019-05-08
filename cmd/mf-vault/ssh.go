@@ -12,19 +12,12 @@ import (
 func init() {
 	rootCmd.AddCommand(sshCmd)
 	sshCmd.AddCommand(sshSignCmd)
-	sshSignCmd.PersistentFlags().StringVarP(&sshSignKeyPath, "public-key", "a", filepath.Join(os.Getenv("HOME"), ".ssh", "id_rsa.pub"), "Path used to read SSH public key")
-	sshSignCmd.PersistentFlags().StringVarP(&sshSignSignedKeyPath, "signed-public-key", "b", filepath.Join(os.Getenv("HOME"), ".ssh", "signed-cert.pub"), "Path to write signed certificate")
 }
 
 var sshCmd = &cobra.Command{
 	Use:   "ssh",
 	Short: "Performs operations related to SSH.",
 }
-
-var (
-	sshSignKeyPath       string
-	sshSignSignedKeyPath string
-)
 
 var sshSignCmd = &cobra.Command{
 	Use:   "sign",
@@ -36,7 +29,8 @@ var sshSignCmd = &cobra.Command{
 
 		v := vault.New(client)
 
-		keyBytes, keyReadError := ioutil.ReadFile(sshSignKeyPath)
+		keyPath := filepath.Join(os.Getenv("HOME"), ".ssh", "id_rsa.pub")
+		keyBytes, keyReadError := ioutil.ReadFile(keyPath)
 		check(keyReadError)
 
 		key := string(keyBytes)
@@ -48,10 +42,11 @@ var sshSignCmd = &cobra.Command{
 		data := secret.Data
 		signedKey := data["signed_key"].(string)
 		signedKeyBytes := []byte(signedKey)
-		writeSignedKeyError := ioutil.WriteFile(sshSignSignedKeyPath, signedKeyBytes, 0644)
+		signedKeyPath := filepath.Join(os.Getenv("HOME"), ".ssh", "id_rsa-cert.pub")
+		writeSignedKeyError := ioutil.WriteFile(signedKeyPath, signedKeyBytes, 0644)
 		check(writeSignedKeyError)
 
-		silentPrintf("Signed public key written to: %s\n", sshSignSignedKeyPath)
+		silentPrintf("Signed public key written to: %s\n", signedKeyPath)
 
 	},
 }
