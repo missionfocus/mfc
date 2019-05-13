@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -40,7 +41,7 @@ var re = regexp.MustCompile(`^\[(.+)]`)
 
 // Adds or updates the STS secret as an AWS profile to the specified credentials file.
 func (s *STSSecret) ToProfile(path string, name string) error {
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0600)
+	f, err := openOrCreateCredsFile(path)
 	if err != nil {
 		return err
 	}
@@ -73,6 +74,19 @@ func (s *STSSecret) ToProfile(path string, name string) error {
 
 	blocks = append(blocks, "["+name+"]\n"+s.toCredentials())
 	return ioutil.WriteFile(path, []byte(strings.Join(blocks, "\n\n")), 0600)
+}
+
+func openOrCreateCredsFile(path string) (f *os.File, err error) {
+	if _, err = os.Stat(path); os.IsNotExist(err) {
+		dir, _ := filepath.Split(path)
+		if err = os.MkdirAll(dir, 0700); err != nil {
+			return
+		}
+		f, err = os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0600)
+	} else if err == nil {
+		f, err = os.Open(path)
+	}
+	return
 }
 
 func (s *STSSecret) toCredentials() string {
