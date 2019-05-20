@@ -15,6 +15,7 @@ type Vault interface {
 	KvListAll(key string) []string
 	KvReadAws(key string) (*STSSecret, error)
 	KvGpgImport(key string, private bool) ([]byte, error)
+	KvNPMAuth(key string) (*NPMSecret, error)
 
 	PkiCreateFiles(secret *api.Secret, path string) error
 
@@ -125,4 +126,12 @@ func (v *vault) PkiCreateFiles(secret *api.Secret, path string) error {
 	}
 
 	return nil
+}
+
+func (v *vault) KvNPMAuth(key string) (*NPMSecret, error) {
+	secret, err := v.Logical().Read(key)
+	if err != nil {
+		return nil, err
+	}
+	return NewNPMSecret(secret), nil
 }
