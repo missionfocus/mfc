@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"git.missionfocus.com/open-source/mf-vault/pkg/vault"
 	"github.com/spf13/cobra"
+	"os"
+	"path/filepath"
 )
 
 func init() {
@@ -12,11 +14,16 @@ func init() {
 	kvCmd.AddCommand(kvListAllCmd)
 	kvCmd.AddCommand(kvAwsCmd)
 	kvCmd.AddCommand(kvGpgCmd)
+	kvCmd.AddCommand(kvNPMCmd)
 
 	kvAwsCmd.PersistentFlags().StringVarP(&kvAwsProfileName, "profile", "p", "vault", "name of the profile")
 
 	kvGpgImportCmd.PersistentFlags().BoolVar(&kvGpgImportPrivate, "private", false, "import the pair's private key")
 	kvGpgCmd.AddCommand(kvGpgImportCmd)
+
+	kvNPMAuthCmd.PersistentFlags().BoolVar(&kvNPMStdout, "stdout", false, "write the NPM auth token to stdout instead of .npmrc")
+	kvNPMAuthCmd.PersistentFlags().StringVarP(&kvNPMRcPath, "path", "p", filepath.Join(os.Getenv("HOME"), ".npmrc"), "path to .npmrc")
+	kvNPMCmd.AddCommand(kvNPMAuthCmd)
 }
 
 var kvCmd = &cobra.Command{
@@ -83,5 +90,36 @@ var kvGpgImportCmd = &cobra.Command{
 		out, err := v.KvGpgImport(key, kvGpgImportPrivate)
 		silentPrint(string(out))
 		check(err)
+	},
+}
+
+var kvNPMCmd = &cobra.Command{
+	Use:   "npm",
+	Short: "Interacts with NPM configuration stored in Vault",
+}
+
+var (
+	kvNPMRcPath string
+	kvNPMStdout bool
+)
+
+const nexusSecretPath = "secret/nexus"
+
+var kvNPMAuthCmd = &cobra.Command{
+	Use:   "auth",
+	Short: "Update .npmrc with authentication data from Vault",
+	Run: func(cmd *cobra.Command, args []string) {
+		client, err := getClientWithToken()
+		check(err)
+		v := vault.New(client)
+
+		secret, err := v.KvNPMAuth(nexusSecretPath)
+		check(err)
+
+		if kvNPMStdout {
+			fmt.Print(secret.Base64())
+			return
+		}
+		check(secret.UpdateNpmrc(kvNPMRcPath))
 	},
 }
