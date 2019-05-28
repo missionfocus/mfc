@@ -11,13 +11,13 @@ import (
 
 type NPMSecret struct {
 	Registry string
-	Token string
+	Token    string
 }
 
 func NewNPMSecret(secret *api.Secret) *NPMSecret {
 	return &NPMSecret{
 		Registry: secret.Data["registry"].(string),
-		Token: secret.Data["token"].(string),
+		Token:    secret.Data["token"].(string),
 	}
 }
 
@@ -49,7 +49,7 @@ func (s *NPMSecret) UpdateNpmrc(path string) error {
 	}
 
 	// Other case, it doesn't exist, so append it
-	content = append(content, []byte("\n//" + s.Registry + ":_authToken=" + s.Token)...)
+	content = append(content, []byte("\n//"+s.Registry+":_authToken="+s.Token)...)
 	return ioutil.WriteFile(path, content, 0600)
 }
 
