@@ -45,7 +45,7 @@ func (s *NPMSecret) UpdateNpmrc(path string) error {
 		updated := bytes.Replace(match[0], match[2], []byte(s.Token), 1)
 		content = bytes.Replace(content, match[0], updated, 1)
 
-		return nil
+		return ioutil.WriteFile(path, content, 0600)
 	}
 
 	// Other case, it doesn't exist, so append it
