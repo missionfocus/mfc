@@ -5,6 +5,7 @@ import (
 	"git.missionfocus.com/open-source/mf-vault/pkg/vault"
 	"github.com/spf13/cobra"
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -103,21 +104,22 @@ var (
 	kvNPMStdout bool
 )
 
-const nexusSecretPath = "secret/nexus"
+const npmBasePath = "secret/npm"
 
 var kvNPMAuthCmd = &cobra.Command{
-	Use:   "auth",
+	Use:   "auth <registry>",
 	Short: "Update .npmrc with authentication data from Vault",
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getClientWithToken()
 		check(err)
 		v := vault.New(client)
 
-		secret, err := v.KvNPMAuth(nexusSecretPath)
+		secret, err := v.KvNPMAuth(path.Join(npmBasePath, args[0]))
 		check(err)
 
 		if kvNPMStdout {
-			fmt.Print(secret.Base64())
+			fmt.Print(secret.Token)
 			return
 		}
 		check(secret.UpdateNpmrc(kvNPMRcPath))
