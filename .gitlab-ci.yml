@@ -41,7 +41,7 @@ build:x86_64-darwin:
 build:x86_64-windows:
   stage: build
   script:
-    - BINARY=$BINARIES_DIR/x86_64-windows/mf-vault.exe GOOS=windows GOARCH=amd64
+    - BINARY=$BINARIES_DIR/x86_64-windows/mf-vault.exe GOOS=windows GOARCH=amd64 make build
   artifacts:
     expire_in: 1 week
     paths:
