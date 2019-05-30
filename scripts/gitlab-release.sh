@@ -26,6 +26,14 @@ curl -X POST https://git.missionfocus.com/api/v4/projects/${CI_PROJECT_ID}/relea
         "name": "macOS (Checksum)",
         "url": "https://git.missionfocus.com/open-source/mf-vault/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-darwin/mf-vault.checksum"
       }
+      {
+        "name": "Windows",
+        "url": "https://git.missionfocus.com/open-source/mf-vault/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-windows/mf-vault.exe"
+      },
+      {
+        "name": "Windows (Checksum)",
+        "url": "https://git.missionfocus.com/open-source/mf-vault/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-darwin/mf-vault.exe.checksum"
+      }
     ]
   }
 }

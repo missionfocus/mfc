@@ -38,6 +38,15 @@ build:x86_64-darwin:
     paths:
       - $BINARIES_DIR
 
+build:x86_64-windows:
+  stage: build
+  script:
+    - BINARY=$BINARIES_DIR/x86_64-windows/mf-vault.exe GOOS=windows GOARCH=amd64 make build
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - $BINARIES_DIR
+
 package:rpm:
   stage: package
   image: hub.missionfocus.com/devops/ci-images/centos/general:master
@@ -132,6 +141,7 @@ publish:gitlab-release:
   dependencies:
     - build:x86_64-linux
     - build:x86_64-darwin
+    - build:x86_64-windows
   before_script:
     - . setup_mario_pat.sh
   script:

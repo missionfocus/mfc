@@ -242,6 +242,7 @@
   input-imports = [
     "git.missionfocus.com/go/pkg/gpg",
     "github.com/hashicorp/vault/api",
+    "github.com/mitchellh/go-homedir",
     "github.com/pkg/browser",
     "github.com/pkg/errors",
     "github.com/spf13/cobra",
