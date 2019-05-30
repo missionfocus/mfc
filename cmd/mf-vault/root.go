@@ -3,22 +3,31 @@ package mf_vault
 import (
 	"fmt"
 	"github.com/hashicorp/vault/api"
+	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 var (
 	credentialsPath string
 	tokenFilePath   string
 	silent          bool
+	homeDir         string
 )
 
 func init() {
-	defaultCredentialsPath := filepath.Join(os.Getenv("HOME"), ".aws", "credentials")
-	rootCmd.PersistentFlags().StringVarP(&tokenFilePath, "token-file", "t", filepath.Join(os.Getenv("HOME"), ".vault-token"), "path to vault token file")
+	home, err := homedir.Dir()
+	check(err)
+	homeDir = home
+
+	defaultCredentialsPath := filepath.Join(homeDir, ".aws", "credentials")
+	defaultTokenPath := filepath.Join(homeDir, ".vault-token")
+
+	rootCmd.PersistentFlags().StringVarP(&tokenFilePath, "token-file", "t", defaultTokenPath, "path to vault token file")
 	rootCmd.PersistentFlags().StringVarP(&credentialsPath, "credentials", "c", defaultCredentialsPath, "path to AWS credentials file")
 	rootCmd.PersistentFlags().BoolVarP(&silent, "silent", "s", false, "suppress output to stdout")
 }
@@ -53,8 +62,12 @@ func check(err error) {
 func getClient() (*api.Client, error) {
 	addr := os.Getenv("VAULT_ADDR")
 	if addr == "" {
+		exportCmd := "export"
+		if runtime.GOOS == "windows" {
+			exportCmd = "set"
+		}
 		return nil, errors.New("The VAULT_ADDR environment variable is not set. Run the following command, then " +
-			"retry: export VAULT_ADDR=https://vault.missionfocus.com")
+			"retry: " + exportCmd + " VAULT_ADDR=https://vault.missionfocus.com")
 	}
 	client, err := api.NewClient(&api.Config{
 		Address: addr,

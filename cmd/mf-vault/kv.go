@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"git.missionfocus.com/open-source/mf-vault/pkg/vault"
 	"github.com/spf13/cobra"
-	"os"
 	"path"
 	"path/filepath"
 )
@@ -23,7 +22,7 @@ func init() {
 	kvGpgCmd.AddCommand(kvGpgImportCmd)
 
 	kvNPMAuthCmd.PersistentFlags().BoolVar(&kvNPMStdout, "stdout", false, "write the NPM auth token to stdout instead of .npmrc")
-	kvNPMAuthCmd.PersistentFlags().StringVarP(&kvNPMRcPath, "path", "p", filepath.Join(os.Getenv("HOME"), ".npmrc"), "path to .npmrc")
+	kvNPMAuthCmd.PersistentFlags().StringVarP(&kvNPMRcPath, "path", "p", filepath.Join(homeDir, ".npmrc"), "path to .npmrc")
 	kvNPMCmd.AddCommand(kvNPMAuthCmd)
 }
 
@@ -109,7 +108,7 @@ const npmBasePath = "secret/npm"
 var kvNPMAuthCmd = &cobra.Command{
 	Use:   "auth <registry>",
 	Short: "Update .npmrc with authentication data from Vault",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getClientWithToken()
 		check(err)

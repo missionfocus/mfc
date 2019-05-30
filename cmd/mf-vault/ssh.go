@@ -4,7 +4,6 @@ import (
 	"git.missionfocus.com/open-source/mf-vault/pkg/vault"
 	"github.com/spf13/cobra"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -29,7 +28,7 @@ var sshSignCmd = &cobra.Command{
 
 		v := vault.New(client)
 
-		keyPath := filepath.Join(os.Getenv("HOME"), ".ssh", "id_rsa.pub")
+		keyPath := filepath.Join(homeDir, ".ssh", "id_rsa.pub")
 		keyBytes, keyReadError := ioutil.ReadFile(keyPath)
 		check(keyReadError)
 
@@ -42,7 +41,7 @@ var sshSignCmd = &cobra.Command{
 		data := secret.Data
 		signedKey := data["signed_key"].(string)
 		signedKeyBytes := []byte(signedKey)
-		signedKeyPath := filepath.Join(os.Getenv("HOME"), ".ssh", "id_rsa-cert.pub")
+		signedKeyPath := filepath.Join(homeDir, ".ssh", "id_rsa-cert.pub")
 		writeSignedKeyError := ioutil.WriteFile(signedKeyPath, signedKeyBytes, 0644)
 		check(writeSignedKeyError)
 

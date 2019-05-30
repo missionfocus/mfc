@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 	"io/ioutil"
+	"syscall"
 )
 
 func init() {
@@ -50,7 +51,7 @@ var loginCmd = &cobra.Command{
 
 func securePrompt(prompt string) (string, error) {
 	fmt.Print(prompt)
-	pw, err := terminal.ReadPassword(0)
+	pw, err := terminal.ReadPassword(int(syscall.Stdin))
 	return string(pw), err
 }
 
