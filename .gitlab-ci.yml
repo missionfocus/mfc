@@ -160,6 +160,7 @@ trigger:ci-images:
   before_script:
     - echo "Triggering downstream ci-images repo"
   script:
-    - curl -X POST -F token=$CI_JOB_TOKEN -F ref=master https://git.missionfocus.com/api/v4/projects/396/trigger/pipeline
+    - curl -X POST -F token=$CI_IMAGES_TRIGGER -F ref=master https://git.missionfocus.com/api/v4/projects/396/trigger/pipeline
+    - curl -X POST -F token=$CLOUDBASE_TRIGGER -F ref=master https://git.missionfocus.com/api/v4/projects/173/trigger/pipeline
   after_script:
     - echo "Trigger finished from $CI_COMMIT_REF_SLUG branch"
