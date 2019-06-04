@@ -3,12 +3,14 @@ package vault
 import (
 	"github.com/hashicorp/vault/api"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
 
 type Vault interface {
 	AuthLDAP(username string, password string) (string, error)
+	AuthApprole(roleID string, secretID string) (string, error)
 
 	AwsReadSTS(account string, role string, ttl string) (*api.Secret, error)
 
@@ -45,6 +47,21 @@ func (v *vault) AuthLDAP(username string, password string) (string, error) {
 	endpoint := strings.Join([]string{"auth", "ldap", "login", username}, "/")
 	data := map[string]interface{}{
 		"password": password,
+	}
+
+	secret, err := v.Logical().Write(endpoint, data)
+	if err != nil {
+		return "", err
+	}
+
+	return secret.Auth.ClientToken, nil
+}
+
+func (v *vault) AuthApprole(roleID string, secretID string) (string, error) {
+	endpoint := path.Join("auth", "approle", "login")
+	data := map[string]interface{}{
+		"role_id":   roleID,
+		"secret_id": secretID,
 	}
 
 	secret, err := v.Logical().Write(endpoint, data)
