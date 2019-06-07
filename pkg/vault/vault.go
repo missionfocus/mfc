@@ -21,7 +21,7 @@ type Vault interface {
 
 	PkiCreateFiles(secret *api.Secret, path string) error
 
-	SSHSignUserKey(publicKeyBytes []byte) (*api.Secret, error)
+	SSHSignPubKey(publicKeyBytes []byte, usage string) (*api.Secret, error)
 }
 
 type vault struct {
@@ -95,10 +95,19 @@ func (v *vault) KvReadAws(key string) (*STSSecret, error) {
 	return NewSTSSecret(secret), nil
 }
 
-func (v *vault) SSHSignUserKey(publicKeyBytes []byte) (*api.Secret, error) {
-	sshClient := v.Client.SSHWithMountPoint("ssh-signer")
-	data := map[string]interface{}{"public_key": string(publicKeyBytes)}
-	return sshClient.SignKey("user-key", data)
+func (v *vault) SSHSignPubKey(publicKeyBytes []byte, usage string) (*api.Secret, error) {
+	if usage == "user" {
+		sshClient := v.Client.SSHWithMountPoint("ssh-signer")
+		data := map[string]interface{}{"public_key": string(publicKeyBytes)}
+		return sshClient.SignKey("user-key", data)
+	} else {
+		sshClient := v.Client.SSHWithMountPoint("ssh-signer")
+		data := map[string]interface{}{
+			"public_key": string(publicKeyBytes),
+			"cert_type": "host",
+		}
+		return sshClient.SignKey("host-key", data)
+	}
 }
 
 func (v *vault) KvGpgImport(key string, private bool) (out []byte, err error) {
