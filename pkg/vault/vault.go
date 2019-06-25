@@ -22,6 +22,7 @@ type Vault interface {
 	PkiCreateFiles(secret *api.Secret, path string) error
 
 	SSHSignPubKey(publicKeyBytes []byte, usage string) (*api.Secret, error)
+	SSHCA(path string) (string, error)
 }
 
 type vault struct {
@@ -160,4 +161,12 @@ func (v *vault) KvNPMAuth(key string) (*NPMSecret, error) {
 		return nil, err
 	}
 	return NewNPMSecret(secret), nil
+}
+
+func (v *vault) SSHCA(p string) (string, error) {
+	secret, err := v.Logical().Read(path.Join(p, "config", "ca"))
+	if err != nil {
+		return "", err
+	}
+	return secret.Data["public_key"].(string), nil
 }

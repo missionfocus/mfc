@@ -1,6 +1,7 @@
 package mf_vault
 
 import (
+	"fmt"
 	"git.missionfocus.com/open-source/mf-vault/pkg/vault"
 	"github.com/spf13/cobra"
 	"io/ioutil"
@@ -12,7 +13,10 @@ func init() {
 	rootCmd.AddCommand(sshCmd)
 	sshCmd.AddCommand(sshSignUserCmd)
 	sshCmd.AddCommand(sshSignHostCmd)
+	sshCmd.AddCommand(sshCACmd)
 }
+
+const sshDefaultEngine = "ssh-signer"
 
 var sshCmd = &cobra.Command{
 	Use:   "ssh",
@@ -65,4 +69,18 @@ func signPubKey(keyPath string, signedKeyPath string, usage string) {
 	check(writeSignedKeyError)
 
 	silentPrintf("Signed public key written to: %s\n", signedKeyPath)
+}
+
+var sshCACmd = &cobra.Command{
+	Use: "ca",
+	Short: "Print the public key of the Vault SSH Signer CA.",
+	Run: func(cmd *cobra.Command, args []string) {
+		client, err := getClientWithToken()
+		check(err)
+		v := vault.New(client)
+
+		pubKey, err := v.SSHCA(sshDefaultEngine)
+		check(err)
+		fmt.Println(pubKey)
+	},
 }
