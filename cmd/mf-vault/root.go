@@ -16,16 +16,11 @@ var (
 	credentialsPath string
 	tokenFilePath   string
 	silent          bool
-	homeDir         string
 )
 
 func init() {
-	home, err := homedir.Dir()
-	check(err)
-	homeDir = home
-
-	defaultCredentialsPath := filepath.Join(homeDir, ".aws", "credentials")
-	defaultTokenPath := filepath.Join(homeDir, ".vault-token")
+	defaultCredentialsPath := filepath.Join(homeDir(), ".aws", "credentials")
+	defaultTokenPath := filepath.Join(homeDir(), ".vault-token")
 
 	rootCmd.PersistentFlags().StringVarP(&tokenFilePath, "token-file", "t", defaultTokenPath, "path to vault token file")
 	rootCmd.PersistentFlags().StringVarP(&credentialsPath, "credentials", "c", defaultCredentialsPath, "path to AWS credentials file")
@@ -106,4 +101,10 @@ func silentPrintf(format string, a ...interface{}) {
 	if !silent {
 		fmt.Printf(format, a...)
 	}
+}
+
+func homeDir() string {
+	home, err := homedir.Dir()
+	check(err)
+	return home
 }

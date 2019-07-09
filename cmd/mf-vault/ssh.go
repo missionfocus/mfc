@@ -27,8 +27,8 @@ var sshSignUserCmd = &cobra.Command{
 	Use:   "sign",
 	Short: "Sign client SSH key",
 	Run: func(cmd *cobra.Command, args []string) {
-		keyPath := filepath.Join(homeDir, ".ssh", "id_rsa.pub")
-		signedKeyPath := filepath.Join(homeDir, ".ssh", "id_rsa-cert.pub")
+		keyPath := filepath.Join(homeDir(), ".ssh", "id_rsa.pub")
+		signedKeyPath := filepath.Join(homeDir(), ".ssh", "id_rsa-cert.pub")
 
 		signPubKey(keyPath, signedKeyPath, "user")
 
@@ -72,7 +72,7 @@ func signPubKey(keyPath string, signedKeyPath string, usage string) {
 }
 
 var sshCACmd = &cobra.Command{
-	Use: "ca",
+	Use:   "ca",
 	Short: "Print the public key of the Vault SSH Signer CA.",
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getClientWithToken()

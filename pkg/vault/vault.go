@@ -105,7 +105,7 @@ func (v *vault) SSHSignPubKey(publicKeyBytes []byte, usage string) (*api.Secret,
 		sshClient := v.Client.SSHWithMountPoint("ssh-signer")
 		data := map[string]interface{}{
 			"public_key": string(publicKeyBytes),
-			"cert_type": "host",
+			"cert_type":  "host",
 		}
 		return sshClient.SignKey("host-key", data)
 	}
