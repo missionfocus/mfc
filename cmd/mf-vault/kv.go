@@ -22,7 +22,7 @@ func init() {
 	kvGpgCmd.AddCommand(kvGpgImportCmd)
 
 	kvNPMAuthCmd.PersistentFlags().BoolVar(&kvNPMStdout, "stdout", false, "write the NPM auth token to stdout instead of .npmrc")
-	kvNPMAuthCmd.PersistentFlags().StringVarP(&kvNPMRcPath, "path", "p", filepath.Join(homeDir, ".npmrc"), "path to .npmrc")
+	kvNPMAuthCmd.PersistentFlags().StringVarP(&kvNPMRcPath, "path", "p", filepath.Join(homeDir(), ".npmrc"), "path to .npmrc")
 	kvNPMCmd.AddCommand(kvNPMAuthCmd)
 }
 
