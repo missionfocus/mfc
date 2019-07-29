@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"github.com/hashicorp/vault/api"
 	"github.com/mitchellh/go-homedir"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 )
+
+const defaultVaultAddr = "https://vault.missionfocus.com"
 
 var (
 	credentialsPath string
@@ -57,12 +57,7 @@ func check(err error) {
 func getClient() (*api.Client, error) {
 	addr := os.Getenv("VAULT_ADDR")
 	if addr == "" {
-		exportCmd := "export"
-		if runtime.GOOS == "windows" {
-			exportCmd = "set"
-		}
-		return nil, errors.New("The VAULT_ADDR environment variable is not set. Run the following command, then " +
-			"retry: " + exportCmd + " VAULT_ADDR=https://vault.missionfocus.com")
+		addr = defaultVaultAddr
 	}
 	client, err := api.NewClient(&api.Config{
 		Address: addr,
