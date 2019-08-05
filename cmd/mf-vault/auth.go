@@ -71,10 +71,18 @@ var authLDAPCmd = &cobra.Command{
 }
 
 var authTokenCmd = &cobra.Command{
-	Use:   "token <token>",
+	Use:   "token [token]",
 	Short: "Authenticate to Vault using a raw token",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		check(writeToken(args[0]))
+		var token string
+		if len(args) == 0 {
+			t, err := securePrompt("Enter your Vault token (will be hidden): ")
+			check(err)
+			token = t
+		} else {
+			token = args[0]
+		}
+		check(writeToken(token))
 	},
 }
