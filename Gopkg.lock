@@ -159,6 +159,14 @@
   revision = "256dc444b735e061061cf46c809487313d5b0065"
 
 [[projects]]
+  digest = "1:4de05f36aa4d3687ae4296a2e001f5f3d6df7b8fe6b3bc174de6331a21794ae1"
+  name = "github.com/sethvargo/go-diceware"
+  packages = ["diceware"]
+  pruneopts = "UT"
+  revision = "908b539e6e6518acbe0008629fa386202b5ccaad"
+  version = "0.1.1"
+
+[[projects]]
   digest = "1:645cabccbb4fa8aab25a956cbcbdf6a6845ca736b2c64e197ca7cbb9d210b939"
   name = "github.com/spf13/cobra"
   packages = ["."]
@@ -245,6 +253,7 @@
     "github.com/mitchellh/go-homedir",
     "github.com/pkg/browser",
     "github.com/pkg/errors",
+    "github.com/sethvargo/go-diceware/diceware",
     "github.com/spf13/cobra",
     "golang.org/x/crypto/ssh/terminal",
   ]
