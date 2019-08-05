@@ -5,9 +5,11 @@ import (
 	"github.com/hashicorp/vault/api"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"syscall"
 )
 
 const defaultVaultAddr = "https://vault.missionfocus.com"
@@ -102,4 +104,14 @@ func homeDir() string {
 	home, err := homedir.Dir()
 	check(err)
 	return home
+}
+
+func securePrompt(prompt string) (string, error) {
+	fmt.Print(prompt)
+	pw, err := terminal.ReadPassword(int(syscall.Stdin))
+	return string(pw), err
+}
+
+func writeToken(token string) error {
+	return ioutil.WriteFile(tokenFilePath, []byte(token), 0600)
 }
