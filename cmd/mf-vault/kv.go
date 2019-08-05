@@ -28,13 +28,13 @@ func init() {
 
 var kvCmd = &cobra.Command{
 	Use:   "kv",
-	Short: "Manages Key/Value secrets.",
+	Short: "Interact with Vault's Key/Value engine",
 }
 
 var kvListAllCmd = &cobra.Command{
 	Use:     "listall <key>",
-	Short:   "Lists all keys under the specified K/V engine key. Key must end with `/`.",
-	Example: "  listall secret/\tLists all keys under the default K/V secrets engine.",
+	Short:   "Lists all keys under the specified K/V engine key. Key must end with `/`",
+	Example: "  listall secret/\tLists all keys under the default K/V secrets engine",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getClientWithToken()
@@ -52,7 +52,7 @@ var kvAwsProfileName string
 
 var kvAwsCmd = &cobra.Command{
 	Use:   "aws <path>",
-	Short: "Reads the secret at path as AWS credentials.",
+	Short: "Read the secret at `path` as AWS credentials",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
@@ -71,14 +71,14 @@ var kvAwsCmd = &cobra.Command{
 
 var kvGpgCmd = &cobra.Command{
 	Use:   "gpg",
-	Short: "Interacts with GPG keys stored in Vault",
+	Short: "Interact with GPG keys stored in Vault",
 }
 
 var kvGpgImportPrivate bool
 
 var kvGpgImportCmd = &cobra.Command{
 	Use:   "import <key>",
-	Short: "Imports the GPG key at the specified KV engine key.",
+	Short: "Import the GPG key at the specified KV engine key",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
@@ -95,7 +95,7 @@ var kvGpgImportCmd = &cobra.Command{
 
 var kvNPMCmd = &cobra.Command{
 	Use:   "npm",
-	Short: "Interacts with NPM configuration stored in Vault",
+	Short: "Interact with NPM configuration stored in Vault",
 }
 
 var (

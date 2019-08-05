@@ -18,12 +18,12 @@ func init() {
 
 var authCmd = &cobra.Command{
 	Use:   "auth",
-	Short: "Authenticate with Vault.",
+	Short: "Authenticate with Vault",
 }
 
 var authApproleCmd = &cobra.Command{
 	Use:   "approle",
-	Short: "Authenticate with Vault's AppRole engine.",
+	Short: "Authenticate with Vault using AppRole RoleID/SecretID",
 	Run: func(cmd *cobra.Command, args []string) {
 		var (
 			roleID   = os.Getenv("VAULT_ROLE_ID")
