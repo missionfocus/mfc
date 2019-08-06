@@ -18,14 +18,14 @@ func init() {
 
 var pkiCmd = &cobra.Command{
 	Use:   "pki",
-	Short: "Interact with Vault's PKI engine.",
+	Short: "Interact with Vault's PKI engine",
 }
 
 var pkiCreateFilesDir string
 
 var pkiCreateFilesCmd = &cobra.Command{
 	Use:   "create-files [filename]",
-	Short: "Parses a Vault PKI secret in JSON format and creates certificate files.",
+	Short: "Parse a Vault PKI secret in JSON format and create certificate files",
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		r := os.Stdin

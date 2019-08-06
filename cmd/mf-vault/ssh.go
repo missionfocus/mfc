@@ -20,7 +20,7 @@ const sshDefaultEngine = "ssh-signer"
 
 var sshCmd = &cobra.Command{
 	Use:   "ssh",
-	Short: "Performs operations related to SSH.",
+	Short: "Interact with Vault's SSH engine",
 }
 
 var sshSignUserCmd = &cobra.Command{
@@ -73,7 +73,7 @@ func signPubKey(keyPath string, signedKeyPath string, usage string) {
 
 var sshCACmd = &cobra.Command{
 	Use:   "ca",
-	Short: "Print the public key of the Vault SSH Signer CA.",
+	Short: "Print the public key of the Vault SSH Signer CA",
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getClientWithToken()
 		check(err)

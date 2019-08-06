@@ -12,7 +12,8 @@ type Vault interface {
 	AuthLDAP(username string, password string) (string, error)
 	AuthApprole(roleID string, secretID string) (string, error)
 
-	AwsReadSTS(account string, role string, ttl string) (*api.Secret, error)
+	AWSReadSTS(account string, role string, ttl string) (*api.Secret, error)
+	AWSListRoles(account string) ([]string, error)
 
 	KvListAll(key string) []string
 	KvReadAws(key string) (*STSSecret, error)
@@ -33,7 +34,7 @@ func New(client *api.Client) Vault {
 	return &vault{client}
 }
 
-func (v *vault) AwsReadSTS(account string, role string, ttl string) (*api.Secret, error) {
+func (v *vault) AWSReadSTS(account string, role string, ttl string) (*api.Secret, error) {
 	secret, err := v.Logical().Write(strings.Join([]string{account, "sts", role}, "/"), map[string]interface{}{
 		"ttl": ttl,
 	})
@@ -42,6 +43,20 @@ func (v *vault) AwsReadSTS(account string, role string, ttl string) (*api.Secret
 	}
 
 	return secret, nil
+}
+
+func (v *vault) AWSListRoles(account string) ([]string, error) {
+	endpoint := path.Join(account, "roles")
+	secret, err := v.Logical().List(endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	roles := make([]string, len(secret.Data["keys"].([]interface{})))
+	for i, iface := range secret.Data["keys"].([]interface{}) {
+		roles[i] = iface.(string)
+	}
+	return roles, nil
 }
 
 func (v *vault) AuthLDAP(username string, password string) (string, error) {

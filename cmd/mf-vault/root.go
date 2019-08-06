@@ -5,9 +5,11 @@ import (
 	"github.com/hashicorp/vault/api"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"syscall"
 )
 
 const defaultVaultAddr = "https://vault.missionfocus.com"
@@ -22,9 +24,9 @@ func init() {
 	defaultCredentialsPath := filepath.Join(homeDir(), ".aws", "credentials")
 	defaultTokenPath := filepath.Join(homeDir(), ".vault-token")
 
-	rootCmd.PersistentFlags().StringVarP(&tokenFilePath, "token-file", "t", defaultTokenPath, "path to vault token file")
-	rootCmd.PersistentFlags().StringVarP(&credentialsPath, "credentials", "c", defaultCredentialsPath, "path to AWS credentials file")
-	rootCmd.PersistentFlags().BoolVarP(&silent, "silent", "s", false, "suppress output to stdout")
+	rootCmd.PersistentFlags().StringVar(&tokenFilePath, "token-file", defaultTokenPath, "path to vault token file")
+	rootCmd.PersistentFlags().StringVar(&credentialsPath, "aws-creds-file", defaultCredentialsPath, "path to AWS credentials file")
+	rootCmd.PersistentFlags().BoolVar(&silent, "silent", false, "suppress output to stdout")
 }
 
 // Do not modify this variable, it will be set at build time.
@@ -98,8 +100,23 @@ func silentPrintf(format string, a ...interface{}) {
 	}
 }
 
+var cachedHomeDir string
+
 func homeDir() string {
-	home, err := homedir.Dir()
-	check(err)
-	return home
+	if cachedHomeDir == "" {
+		home, err := homedir.Dir()
+		check(err)
+		cachedHomeDir = home
+	}
+	return cachedHomeDir
+}
+
+func securePrompt(prompt string) (string, error) {
+	fmt.Print(prompt)
+	pw, err := terminal.ReadPassword(int(syscall.Stdin))
+	return string(pw), err
+}
+
+func writeToken(token string) error {
+	return ioutil.WriteFile(tokenFilePath, []byte(token), 0600)
 }
