@@ -2,8 +2,6 @@ package vault
 
 import (
 	"github.com/hashicorp/vault/api"
-	"path"
-	"strings"
 )
 
 type TreeNode struct {
@@ -25,7 +23,7 @@ type kvTree struct {
 }
 
 // Creates a new Tree for a KV engine.
-func NewKvTree(client *api.Client, rootKey string) Tree {
+func NewKVTree(client *api.Client, rootKey string) Tree {
 	return &kvTree{client, rootKey, nil}
 }
 
@@ -54,11 +52,15 @@ func (t *kvTree) traverse(visit func(node *TreeNode), node *TreeNode) {
 func (t *kvTree) buildSubtree(key string) *TreeNode {
 	// Base case, leaf node.
 	if rune(key[len(key)-1]) != '/' {
-		return &TreeNode{Key: key}
+		secret, err := t.client.Logical().Read(key)
+		return &TreeNode{
+			Key:    key,
+			Secret: secret,
+			Err:    err,
+		}
 	}
 
-	split := clean(strings.Split(key, "/"))
-	secret, err := t.client.Logical().List(path.Join(split[0], "metadata", strings.Join(split[1:], "/")))
+	secret, err := t.client.Logical().List(key)
 	if err != nil {
 		return &TreeNode{Key: key, Err: err}
 	}
@@ -68,20 +70,9 @@ func (t *kvTree) buildSubtree(key string) *TreeNode {
 	if ok {
 		children = make([]*TreeNode, len(keys))
 		for i, k := range keys {
-			children[i] = t.buildSubtree(strings.Join(append(split, k.(string)), "/"))
+			children[i] = t.buildSubtree(key + k.(string))
 		}
 	}
 
 	return &TreeNode{Key: key, Secret: secret, Children: children}
-}
-
-// Removes empty values from a string slice.
-func clean(slc []string) []string {
-	cleaned := make([]string, 0)
-	for _, str := range slc {
-		if str != "" {
-			cleaned = append(cleaned, str)
-		}
-	}
-	return cleaned
 }

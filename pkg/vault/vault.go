@@ -89,7 +89,7 @@ func (v *vault) AuthApprole(roleID string, secretID string) (string, error) {
 }
 
 func (v *vault) KvListAll(key string) []string {
-	tree := NewKvTree(v.Client, key)
+	tree := NewKVTree(v.Client, key)
 	keys := make([]string, 0)
 
 	tree.Traverse(func(node *TreeNode) {
