@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"git.missionfocus.com/open-source/mf-vault/pkg/vault"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 )
@@ -15,6 +18,8 @@ func init() {
 	kvCmd.AddCommand(kvAwsCmd)
 	kvCmd.AddCommand(kvGpgCmd)
 	kvCmd.AddCommand(kvNPMCmd)
+	kvCmd.AddCommand(kvGetAllCmd)
+	kvCmd.AddCommand(kvPutAllCmd)
 
 	kvAwsCmd.PersistentFlags().StringVarP(&kvAwsProfileName, "profile", "p", "vault", "name of the profile")
 
@@ -44,6 +49,49 @@ var kvListAllCmd = &cobra.Command{
 		keys := v.KvListAll(args[0])
 		for _, key := range keys {
 			fmt.Println(key)
+		}
+	},
+}
+
+var kvGetAllCmd = &cobra.Command{
+	Use:   "getall <key>",
+	Short: "Recursively gets the data for all keys under the specified path as YAML",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		client, err := getClientWithToken()
+		check(err)
+		v := vault.New(client)
+
+		items, errNodes := v.KVGetAll(args[0])
+		y, err := yaml.Marshal(items)
+		check(err)
+		fmt.Print(string(y))
+
+		if len(errNodes) > 0 {
+			fmt.Fprintln(os.Stderr, "\nerror: could not get the following keys:")
+			for _, node := range errNodes {
+				_, _ = fmt.Fprintln(os.Stderr, node.Key)
+			}
+		}
+	},
+}
+
+var kvPutAllCmd = &cobra.Command{
+	Use:   "putall <file>",
+	Short: "Puts all keys in the specified YAML file into the KV engine",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		client, err := getClientWithToken()
+		check(err)
+		v := vault.New(client)
+
+		content, err := ioutil.ReadFile(args[0])
+		check(err)
+		var items []vault.KVItem
+		check(yaml.Unmarshal(content, &items))
+		if err := v.KVPutAll(items); err != nil {
+			fmt.Fprintln(os.Stderr, "error(s): writing keys:")
+			fmt.Fprint(os.Stderr, err)
 		}
 	},
 }
