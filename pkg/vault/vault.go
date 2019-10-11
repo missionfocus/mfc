@@ -19,6 +19,8 @@ type Vault interface {
 	KvReadAws(key string) (*STSSecret, error)
 	KvGpgImport(key string, private bool) ([]byte, error)
 	KvNPMAuth(key string) (*NPMSecret, error)
+	KVGetAll(key string) ([]KVItem, []*TreeNode)
+	KVPutAll(items []KVItem) error
 
 	PkiCreateFiles(secret *api.Secret, path string) error
 
@@ -88,29 +90,6 @@ func (v *vault) AuthApprole(roleID string, secretID string) (string, error) {
 	return secret.Auth.ClientToken, nil
 }
 
-func (v *vault) KvListAll(key string) []string {
-	tree := NewKVTree(v.Client, key)
-	keys := make([]string, 0)
-
-	tree.Traverse(func(node *TreeNode) {
-		if node.Err != nil {
-			keys = append(keys, "Error: Could not list key: "+node.Err.Error())
-			return
-		}
-		keys = append(keys, node.Key)
-	})
-
-	return keys
-}
-
-func (v *vault) KvReadAws(key string) (*STSSecret, error) {
-	secret, err := v.Logical().Read(key)
-	if err != nil {
-		return nil, err
-	}
-	return NewSTSSecret(secret), nil
-}
-
 func (v *vault) SSHSignPubKey(publicKeyBytes []byte, usage string) (*api.Secret, error) {
 	if usage == "user" {
 		sshClient := v.Client.SSHWithMountPoint("ssh-signer")
@@ -124,26 +103,6 @@ func (v *vault) SSHSignPubKey(publicKeyBytes []byte, usage string) (*api.Secret,
 		}
 		return sshClient.SignKey("host-key", data)
 	}
-}
-
-func (v *vault) KvGpgImport(key string, private bool) (out []byte, err error) {
-	secret, err := v.Logical().Read(key)
-	if err != nil {
-		return nil, err
-	}
-
-	gpgSecret, err := NewPGPSecret(secret)
-	if err != nil {
-		return nil, err
-	}
-
-	if private {
-		out, err = gpgSecret.ImportPrivate()
-	} else {
-		out, err = gpgSecret.ImportPublic()
-	}
-
-	return
 }
 
 func (v *vault) PkiCreateFiles(secret *api.Secret, path string) error {
@@ -168,14 +127,6 @@ func (v *vault) PkiCreateFiles(secret *api.Secret, path string) error {
 	}
 
 	return nil
-}
-
-func (v *vault) KvNPMAuth(key string) (*NPMSecret, error) {
-	secret, err := v.Logical().Read(key)
-	if err != nil {
-		return nil, err
-	}
-	return NewNPMSecret(secret), nil
 }
 
 func (v *vault) SSHCA(p string) (string, error) {
