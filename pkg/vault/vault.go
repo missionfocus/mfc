@@ -36,8 +36,10 @@ func New(client *api.Client) Vault {
 	return &vault{client}
 }
 
+const awsEnginePrefix = "aws"
+
 func (v *vault) AWSReadSTS(account string, role string, ttl string) (*api.Secret, error) {
-	secret, err := v.Logical().Write(strings.Join([]string{account, "sts", role}, "/"), map[string]interface{}{
+	secret, err := v.Logical().Write(path.Join(awsEnginePrefix, account, "sts", role), map[string]interface{}{
 		"ttl": ttl,
 	})
 	if err != nil {
@@ -48,7 +50,7 @@ func (v *vault) AWSReadSTS(account string, role string, ttl string) (*api.Secret
 }
 
 func (v *vault) AWSListRoles(account string) ([]string, error) {
-	endpoint := path.Join(account, "roles")
+	endpoint := path.Join(awsEnginePrefix, account, "roles")
 	secret, err := v.Logical().List(endpoint)
 	if err != nil {
 		return nil, err
@@ -96,7 +98,7 @@ func (v *vault) SSHSignPubKey(publicKeyBytes []byte, usage string) (*api.Secret,
 		data := map[string]interface{}{"public_key": string(publicKeyBytes)}
 		return sshClient.SignKey("user-key", data)
 	} else {
-		sshClient := v.Client.SSHWithMountPoint("ssh-signer")
+		sshClient := v.Client.SSHWithMountPoint("ssh-host-signer")
 		data := map[string]interface{}{
 			"public_key": string(publicKeyBytes),
 			"cert_type":  "host",

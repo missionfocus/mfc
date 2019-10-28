@@ -17,7 +17,8 @@ type PGPSecret struct {
 
 // Create a PGP Secret from a generic Vault secret.
 func NewPGPSecret(secret *api.Secret) (*PGPSecret, error) {
-	rawPassphrase, ok := secret.Data["passphrase"]
+	data := secret.Data["data"].(map[string]interface{})
+	rawPassphrase, ok := data["passphrase"]
 	if !ok {
 		return nil, errors.New("failed to get passphrase: key does not exist")
 	}
@@ -26,12 +27,12 @@ func NewPGPSecret(secret *api.Secret) (*PGPSecret, error) {
 		return nil, errors.New("failed to get passphrase: value must be of type string")
 	}
 
-	private, err := getB64EncodedValue(secret.Data, "private")
+	private, err := getB64EncodedValue(data, "private")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get private key")
 	}
 
-	public, err := getB64EncodedValue(secret.Data, "public")
+	public, err := getB64EncodedValue(data, "public")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get public key")
 	}
