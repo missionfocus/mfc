@@ -29,7 +29,10 @@ type STSSecret struct {
 }
 
 func NewSTSSecret(secret *api.Secret) *STSSecret {
-	data := secret.Data["data"].(map[string]interface{})
+	data := secret.Data
+	if d, ok := secret.Data["data"].(map[string]interface{}); ok {
+		data = d
+	}
 	return &STSSecret{
 		AccessKeyID:     data["access_key"].(string),
 		SecretAccessKey: data["secret_key"].(string),
