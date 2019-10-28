@@ -15,9 +15,10 @@ type NPMSecret struct {
 }
 
 func NewNPMSecret(secret *api.Secret) *NPMSecret {
+	data := secret.Data["data"].(map[string]interface{})
 	return &NPMSecret{
-		Registry: secret.Data["registry"].(string),
-		Token:    secret.Data["token"].(string),
+		Registry: data["registry"].(string),
+		Token:    data["token"].(string),
 	}
 }
 

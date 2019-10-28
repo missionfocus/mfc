@@ -1,6 +1,8 @@
 package vault
 
-import "github.com/hashicorp/go-multierror"
+import (
+	"github.com/hashicorp/go-multierror"
+)
 
 type KVItem struct {
 	Key  string                 `yaml:"key"`
@@ -81,7 +83,8 @@ func (v *vault) KVGetAll(key string) ([]KVItem, []*TreeNode) {
 func (v *vault) KVPutAll(items []KVItem) error {
 	me := &multierror.Error{}
 	for _, item := range items {
-		if _, err := v.Logical().Write(item.Key, item.Data); err != nil {
+		data := map[string]interface{}{"data": item.Data}
+		if _, err := v.Logical().Write(item.Key, data); err != nil {
 			me = multierror.Append(me, err)
 		}
 	}

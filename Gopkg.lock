@@ -92,20 +92,20 @@
   revision = "65a6292f0157eff210d03ed1bf6c59b190b8b906"
 
 [[projects]]
-  digest = "1:dc8b504ab398bfdb0f085321c572465aec1def1a7e8f8ae6fe2b3309d7d9e30f"
+  digest = "1:73ee84b6f2e41b5c16ecb76c8a3785cb31f4d45a9842b750be70167a3451584b"
   name = "github.com/hashicorp/vault"
   packages = [
     "api",
-    "helper/compressutil",
-    "helper/consts",
-    "helper/hclutil",
-    "helper/jsonutil",
-    "helper/parseutil",
-    "helper/strutil",
+    "sdk/helper/compressutil",
+    "sdk/helper/consts",
+    "sdk/helper/hclutil",
+    "sdk/helper/jsonutil",
+    "sdk/helper/parseutil",
+    "sdk/helper/strutil",
   ]
   pruneopts = "UT"
-  revision = "85909e3373aa743c34a6a0ab59131f61fd9e8e43"
-  version = "v1.0.3"
+  revision = "c14bd9a2b1d2c20f15b9f93f5c2d487507bb8a2f"
+  version = "v1.2.3"
 
 [[projects]]
   digest = "1:870d441fe217b8e689d7949fef6e43efbc787e50f200cb1e70dbca9204a1d6be"
@@ -210,9 +210,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:fde12c4da6237363bf36b81b59aa36a43d28061167ec4acb0d41fc49464e28b9"
+  digest = "1:fb961be99914b3b93d599cabeaec91736f662e3f706b894668fcd23c0d9aafd7"
   name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
+  packages = [
+    "ed25519",
+    "ed25519/internal/edwards25519",
+    "pbkdf2",
+    "ssh/terminal",
+  ]
   pruneopts = "UT"
   revision = "74369b46fc6756741c016591724fd1cb8e26845f"
 
@@ -271,6 +276,19 @@
   revision = "fbb02b2291d28baffd63558aa44b4b56f178d650"
 
 [[projects]]
+  digest = "1:45df33697961c5703020e4f00720743622bc4d383138958f0b57d9db0b4921fd"
+  name = "gopkg.in/square/go-jose.v2"
+  packages = [
+    ".",
+    "cipher",
+    "json",
+    "jwt",
+  ]
+  pruneopts = "UT"
+  revision = "8fd82ff1d52a5162ff23c0a48e2c64a1fa4a3f8f"
+  version = "v2.4.0"
+
+[[projects]]
   digest = "1:59f10c1537d2199d9115d946927fe31165959a95190849c82ff11e05803528b0"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -283,6 +301,7 @@
   analyzer-version = 1
   input-imports = [
     "git.missionfocus.com/go/pkg/gpg",
+    "github.com/hashicorp/go-multierror",
     "github.com/hashicorp/vault/api",
     "github.com/mitchellh/go-homedir",
     "github.com/pkg/browser",

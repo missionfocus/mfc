@@ -151,7 +151,7 @@ var (
 	kvNPMStdout bool
 )
 
-const npmBasePath = "secret/npm"
+const npmBasePath = "secret/data/ci/shared/npm"
 
 var kvNPMAuthCmd = &cobra.Command{
 	Use:   "auth <registry>",
