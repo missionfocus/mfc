@@ -14,6 +14,7 @@ func init() {
 	authCmd.AddCommand(authApproleCmd)
 	authCmd.AddCommand(authLDAPCmd)
 	authCmd.AddCommand(authTokenCmd)
+	authCmd.AddCommand(authRADIUSCmd)
 }
 
 var authCmd = &cobra.Command{
@@ -84,5 +85,39 @@ var authTokenCmd = &cobra.Command{
 			token = args[0]
 		}
 		check(writeToken(token))
+	},
+}
+
+var authRADIUSCmd = &cobra.Command{
+	Use:   "radius [username] [password] [mfa token]",
+	Short: "Authenticate to Vault using RADIUS",
+	Args:  cobra.MaximumNArgs(3),
+	Run: func(cmd *cobra.Command, args []string) {
+		switch len(args) {
+		case 0:
+			scanner := bufio.NewScanner(os.Stdin)
+			fmt.Print("Enter your RADIUS username: ")
+			scanner.Scan()
+			args = append(args, scanner.Text())
+			fallthrough
+		case 1:
+			pw, err := securePrompt("Enter your password (will be hidden): ")
+			check(err)
+			args = append(args, pw)
+			fmt.Print("\n")
+			fallthrough
+		case 2:
+			tok, err := securePrompt("Enter your MFA token (will be hidden): ")
+			check(err)
+			args = append(args, tok)
+		}
+
+		client, err := getClient()
+		check(err)
+		v := vault.New(client)
+		token, err := v.AuthRADIUS(args[0], args[1], args[2])
+		check(err)
+		check(writeToken(token))
+		fmt.Printf("\nLogged in to Vault as %s.\n", args[0])
 	},
 }
