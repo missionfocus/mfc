@@ -13,6 +13,14 @@
   revision = "90970653e646a6399abf815bbd47e6077d715ca9"
 
 [[projects]]
+  digest = "1:b6d886569181ec96ca83d529f4d6ba0cbf92ace7bb6f633f90c5f34d9bba7aab"
+  name = "github.com/blang/semver"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ba2c2ddd89069b46a7011d4106f6868f17ee1705"
+  version = "v3.6.1"
+
+[[projects]]
   digest = "1:f40ce74ceee561aaad86f75a22519a454575844c85872212e1640dce2b70df95"
   name = "github.com/cpuguy83/go-md2man"
   packages = ["md2man"]
@@ -106,6 +114,18 @@
   pruneopts = "UT"
   revision = "c14bd9a2b1d2c20f15b9f93f5c2d487507bb8a2f"
   version = "v1.2.3"
+
+[[projects]]
+  branch = "master"
+  digest = "1:f3b0cfd42716269884bf06df5d5be9e54161d5af0a2f0ccca08717928dd45fc5"
+  name = "github.com/inconshreveable/go-update"
+  packages = [
+    ".",
+    "internal/binarydist",
+    "internal/osext",
+  ]
+  pruneopts = "UT"
+  revision = "8152e7eb6ccf8679a64582a66b78519688d156ad"
 
 [[projects]]
   digest = "1:870d441fe217b8e689d7949fef6e43efbc787e50f200cb1e70dbca9204a1d6be"
@@ -301,8 +321,10 @@
   analyzer-version = 1
   input-imports = [
     "git.missionfocus.com/go/pkg/gpg",
+    "github.com/blang/semver",
     "github.com/hashicorp/go-multierror",
     "github.com/hashicorp/vault/api",
+    "github.com/inconshreveable/go-update",
     "github.com/mitchellh/go-homedir",
     "github.com/pkg/browser",
     "github.com/pkg/errors",
