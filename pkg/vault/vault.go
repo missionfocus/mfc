@@ -11,6 +11,7 @@ import (
 type Vault interface {
 	AuthLDAP(username string, password string) (string, error)
 	AuthApprole(roleID string, secretID string) (string, error)
+	AuthRADIUS(username, password, mfaToken string) (string, error)
 
 	AWSReadSTS(account string, role string, ttl string) (*api.Secret, error)
 	AWSListRoles(account string) ([]string, error)
@@ -82,6 +83,27 @@ func (v *vault) AuthApprole(roleID string, secretID string) (string, error) {
 	data := map[string]interface{}{
 		"role_id":   roleID,
 		"secret_id": secretID,
+	}
+
+	secret, err := v.Logical().Write(endpoint, data)
+	if err != nil {
+		return "", err
+	}
+
+	return secret.Auth.ClientToken, nil
+}
+
+func (v *vault) AuthRADIUS(username, password, mfaToken string) (string, error) {
+	endpoint := path.Join("auth", "radius", "login")
+
+	pw := password
+	if mfaToken != "" {
+		pw += "," + mfaToken
+	}
+
+	data := map[string]interface{}{
+		"username": username,
+		"password": pw,
 	}
 
 	secret, err := v.Logical().Write(endpoint, data)
