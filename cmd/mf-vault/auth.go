@@ -2,11 +2,12 @@ package mf_vault
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
-	"git.missionfocus.com/open-source/mf-vault/pkg/vault"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 	"os"
+
+	"git.missionfocus.com/open-source/mf-vault/pkg/vault"
+	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -22,16 +23,32 @@ var authCmd = &cobra.Command{
 	Short: "Authenticate with Vault",
 }
 
+var AppRoleCredentialsError = errors.New("both VAULT_ROLE_ID and VAULT_SECRET_ID must be set or passed as arguments to use AppRole authentication")
+
 var authApproleCmd = &cobra.Command{
-	Use:   "approle",
+	Use:   "approle [role id] [secret id]",
 	Short: "Authenticate with Vault using AppRole RoleID/SecretID",
+	Args: cobra.MaximumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		var (
 			roleID   = os.Getenv("VAULT_ROLE_ID")
 			secretID = os.Getenv("VAULT_SECRET_ID")
 		)
-		if roleID == "" || secretID == "" {
-			check(errors.New("both VAULT_ROLE_ID and VAULT_SECRET_ID must be set to use AppRole authentication"))
+
+		if roleID == "" {
+			if len(args) < 1 {
+				check(AppRoleCredentialsError)
+			}
+
+			roleID = args[0]
+		}
+
+		if secretID == "" {
+			if len(args) < 2 {
+				check(AppRoleCredentialsError)
+			}
+
+			secretID = args[1]
 		}
 
 		client, err := getClient()
