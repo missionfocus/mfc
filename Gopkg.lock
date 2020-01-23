@@ -179,6 +179,14 @@
   version = "v0.8.1"
 
 [[projects]]
+  digest = "1:a98ae622da560a52a16a442e9b1d32fc9f8e463e0e3eb1ec82924bc2236e9666"
+  name = "github.com/rsteube/cobra-zsh-gen"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "cc3295c1d13330a8eb91bc3b2db2506b3c4fd26f"
+  version = "v1.1.0"
+
+[[projects]]
   digest = "1:2ee0f15eb0fb04f918db7c2dcf39745f40d69f798ef171610a730e8a56aaa4fd"
   name = "github.com/russross/blackfriday"
   packages = ["."]
@@ -328,6 +336,7 @@
     "github.com/mitchellh/go-homedir",
     "github.com/pkg/browser",
     "github.com/pkg/errors",
+    "github.com/rsteube/cobra-zsh-gen",
     "github.com/sethvargo/go-diceware/diceware",
     "github.com/spf13/cobra",
     "github.com/spf13/cobra/doc",
