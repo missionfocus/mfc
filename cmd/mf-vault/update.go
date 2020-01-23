@@ -27,7 +27,7 @@ var updateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		updater := &autoupdate.GitLabUpdater{ProjectURL: mustParseURL(projectURL),}
+		updater := &autoupdate.GitLabUpdater{ProjectURL: mustParseURL(projectURL)}
 
 		fmt.Println("Checking for update...")
 		nextVer, err := updater.Check(version)

@@ -28,7 +28,7 @@ var AppRoleCredentialsError = errors.New("both VAULT_ROLE_ID and VAULT_SECRET_ID
 var authApproleCmd = &cobra.Command{
 	Use:   "approle [role id] [secret id]",
 	Short: "Authenticate with Vault using AppRole RoleID/SecretID",
-	Args: cobra.MaximumNArgs(2),
+	Args:  cobra.MaximumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		var (
 			roleID   = os.Getenv("VAULT_ROLE_ID")
