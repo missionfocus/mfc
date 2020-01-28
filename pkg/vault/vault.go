@@ -23,7 +23,8 @@ type Vault interface {
 	KVGetAll(key string) ([]KVItem, []*TreeNode)
 	KVPutAll(items []KVItem) error
 
-	PkiCreateFiles(secret *api.Secret, path string) error
+	PKICreateFiles(secret *api.Secret, path string) error
+	PKIIssue(options *PKIIssueOptions) (*PKIIssueSecret, error)
 
 	SSHSignPubKey(publicKeyBytes []byte, usage string) (*api.Secret, error)
 	SSHCA(path string) (string, error)
@@ -129,8 +130,11 @@ func (v *vault) SSHSignPubKey(publicKeyBytes []byte, usage string) (*api.Secret,
 	}
 }
 
-func (v *vault) PkiCreateFiles(secret *api.Secret, path string) error {
-	pkiSecret := NewPKISecret(secret)
+func (v *vault) PKICreateFiles(secret *api.Secret, path string) error {
+	pkiSecret, err := NewPKIIssueSecret(secret.Data)
+	if err != nil {
+		return err
+	}
 
 	fullchain, err := os.OpenFile(filepath.Join(path, "fullchain.pem"), os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {

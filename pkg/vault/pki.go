@@ -1,65 +1,86 @@
 package vault
 
 import (
-	"github.com/hashicorp/vault/api"
-	"github.com/pkg/errors"
+	"encoding/json"
 	"io"
-	"time"
+	"path"
+
+	"github.com/pkg/errors"
 )
 
-type PKISecret struct {
-	Certificate    string
-	Expiration     time.Time
-	IssuingCa      string
-	PrivateKey     string
-	PrivateKeyType string
-	SerialNumber   string
+const (
+	DefaultPKIEnginePath = "pki"
+	DefaultPKIEngineRole = "missionfocus-dot-com"
+)
+
+type PKIIssueOptions struct {
+	RoleName          string
+	CommonName        string
+	AltNames          string
+	IPSANs            string
+	URISANs           string
+	OtherSANs         string
+	TTL               string
+	Format            string
+	PrivateKeyFormat  string
+	ExcludeCNFromSANs bool
 }
 
-func NewPKISecret(secret *api.Secret) *PKISecret {
-	var pkiSecret PKISecret
-
-	if cert, ok := secret.Data["certificate"]; ok {
-		pkiSecret.Certificate = cert.(string)
-	}
-
-	if exp, ok := secret.Data["expiration"]; ok {
-		pkiSecret.Expiration = time.Unix(int64(exp.(float64)), 0)
-	}
-
-	if iss, ok := secret.Data["issuing_ca"]; ok {
-		pkiSecret.IssuingCa = iss.(string)
-	}
-
-	if priv, ok := secret.Data["private_key"]; ok {
-		pkiSecret.PrivateKey = priv.(string)
-	}
-
-	if keyType, ok := secret.Data["private_key_type"]; ok {
-		pkiSecret.PrivateKeyType = keyType.(string)
-	}
-
-	if sn, ok := secret.Data["serial_number"]; ok {
-		pkiSecret.SerialNumber = sn.(string)
-	}
-
-	return &pkiSecret
+type PKIIssueSecret struct {
+	Certificate    string `json:"certificate"`
+	IssuingCA      string `json:"issuing_ca"`
+	CAChain        string `json:"ca_chain"`
+	PrivateKey     string `json:"private_key"`
+	PrivateKeyType string `json:"private_key_type"`
+	SerialNumber   string `json:"serial_number"`
 }
 
-func (s *PKISecret) WriteChain(w io.Writer) error {
+func NewPKIIssueSecret(data map[string]interface{}) (*PKIIssueSecret, error) {
+	var secret PKIIssueSecret
+	m, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(m, &secret)
+	return &secret, err
+}
+
+func (s *PKIIssueSecret) WriteChain(w io.Writer) error {
 	if _, err := io.WriteString(w, s.Certificate+"\n"); err != nil {
 		return errors.Wrap(err, "failed to write certificate")
 	}
-	if _, err := io.WriteString(w, s.IssuingCa); err != nil {
+	if _, err := io.WriteString(w, s.IssuingCA); err != nil {
 		return errors.Wrap(err, "failed to write issuing CA certificate")
 	}
 	return nil
 }
 
-func (s *PKISecret) WritePrivateKey(w io.Writer) error {
+func (s *PKIIssueSecret) WritePrivateKey(w io.Writer) error {
 	_, err := io.WriteString(w, s.PrivateKey)
 	if err != nil {
 		return errors.Wrap(err, "failed to write private key")
 	}
 	return nil
+}
+
+func (s *PKIIssueSecret) WriteJSON(w io.Writer) error {
+	return json.NewEncoder(w).Encode(s)
+}
+
+func (v *vault) PKIIssue(options *PKIIssueOptions) (*PKIIssueSecret, error) {
+	secret, err := v.Logical().Write(path.Join(DefaultPKIEnginePath, "issue", options.RoleName), map[string]interface{}{
+		"common_name":          options.CommonName,
+		"alt_names":            options.AltNames,
+		"ip_sans":              options.IPSANs,
+		"uri_sans":             options.URISANs,
+		"other_sans":           options.OtherSANs,
+		"ttl":                  options.TTL,
+		"format":               options.Format,
+		"private_key_format":   options.PrivateKeyFormat,
+		"exclude_cn_from_sans": options.ExcludeCNFromSANs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return NewPKIIssueSecret(secret.Data)
 }
