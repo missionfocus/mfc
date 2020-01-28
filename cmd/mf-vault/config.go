@@ -73,7 +73,7 @@ var completionCmd = &cobra.Command{
 				case "bash":
 					check(rootCmd.GenBashCompletionFile(completionsFile))
 				case "zsh":
-					zsh.Wrap(rootCmd).GenZshCompletionFile(completionsFile)
+					check(zsh.Wrap(rootCmd).GenZshCompletionFile(completionsFile))
 				}
 				rcFile := path.Join(homeDir(), "."+completionShell+"rc")
 				fmt.Printf("For first run:\n`echo . %s >> %s`.\n\n", completionsFile, rcFile)
@@ -82,7 +82,7 @@ var completionCmd = &cobra.Command{
 				case "bash":
 					check(rootCmd.GenBashCompletion(os.Stdout))
 				case "zsh":
-					zsh.Wrap(rootCmd).GenZshCompletion(os.Stdout)
+					check(zsh.Wrap(rootCmd).GenZshCompletion(os.Stdout))
 				}
 			}
 		case "oh-my-zsh":
@@ -91,11 +91,11 @@ var completionCmd = &cobra.Command{
 				check(os.MkdirAll(completionsDir, 0700))
 				check(rootCmd.GenZshCompletionFile(path.Join(completionsDir, "_mf-vault")))
 			} else {
-				rootCmd.GenZshCompletion(os.Stdout)
+				check(rootCmd.GenZshCompletion(os.Stdout))
 			}
 		default:
 			fmt.Println("Shell not supported. Review help for options.")
-			cmd.Help()
+			_ = cmd.Help()
 			return
 		}
 		if completionWriteToFile {

@@ -2,18 +2,25 @@ package mf_vault
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
+
 	"git.missionfocus.com/open-source/mf-vault/pkg/vault"
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 func init() {
 	rootCmd.AddCommand(pkiCmd)
 	pkiCmd.AddCommand(pkiCreateFilesCmd)
+	pkiCmd.AddCommand(pkiIssueCmd)
 
 	wd, _ := os.Getwd()
 	pkiCmd.PersistentFlags().StringVar(&pkiCreateFilesDir, "dir", wd, "directory to create files in")
+
+	pkiIssueCmd.PersistentFlags().StringVar(&pkiIssueTTL, "ttl", "", "ttl of the issued cert")
+	pkiIssueCmd.PersistentFlags().StringVar(&pkiIssueFormat, "format", "pem", "format of the returned data, one of: pem, der, pem_bundle")
+	pkiIssueCmd.PersistentFlags().StringVarP(&pkiIssueWrite, "write", "w", "", "location to write files")
 }
 
 var pkiCmd = &cobra.Command{
@@ -44,6 +51,45 @@ var pkiCreateFilesCmd = &cobra.Command{
 		client, err := getClientWithToken()
 		check(err)
 		v := vault.New(client)
-		check(v.PkiCreateFiles(&secret, pkiCreateFilesDir))
+		check(v.PKICreateFiles(&secret, pkiCreateFilesDir))
+	},
+}
+
+var (
+	pkiIssueTTL    string
+	pkiIssueFormat string
+	pkiIssueWrite string
+)
+
+var pkiIssueCmd = &cobra.Command{
+	Use:   "issue <common name>",
+	Short: "Issue a new certificate signed by the Vault CA for the specified CN",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		client, err := getClientWithToken()
+		check(err)
+		v := vault.New(client)
+		secret, err := v.PKIIssue(&vault.PKIIssueOptions{
+			RoleName:   vault.DefaultPKIEngineRole,
+			CommonName: args[0],
+			TTL:        pkiIssueTTL,
+			Format:     pkiIssueFormat,
+		})
+		check(err)
+
+		if pkiIssueWrite == "" {
+			check(secret.WriteJSON(os.Stdout))
+			return
+		}
+
+		chain, err := os.OpenFile(filepath.Join(pkiIssueWrite, "fullchain.pem"), os.O_CREATE|os.O_WRONLY, 0600)
+		check(err)
+		defer chain.Close()
+		check(secret.WriteChain(chain))
+
+		priv, err := os.OpenFile(filepath.Join(pkiIssueWrite, "privkey.pem"), os.O_CREATE|os.O_WRONLY, 0600)
+		check(err)
+		defer priv.Close()
+		check(secret.WritePrivateKey(priv))
 	},
 }
