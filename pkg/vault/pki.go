@@ -63,6 +63,14 @@ func (s *PKIIssueSecret) WritePrivateKey(w io.Writer) error {
 	return nil
 }
 
+func (s *PKIIssueSecret) WriteCertificate(w io.Writer) error {
+	_, err := io.WriteString(w, s.Certificate)
+	if err != nil {
+		return errors.Wrap(err, "failed to write certificate")
+	}
+	return nil
+}
+
 func (s *PKIIssueSecret) WriteJSON(w io.Writer) error {
 	return json.NewEncoder(w).Encode(s)
 }
@@ -83,4 +91,13 @@ func (v *vault) PKIIssue(options *PKIIssueOptions) (*PKIIssueSecret, error) {
 		return nil, err
 	}
 	return NewPKIIssueSecret(secret.Data)
+}
+
+
+func (v *vault) PKIGetCACert(enginePath string) (string, error) {
+	secret, err := v.Logical().Read(path.Join(enginePath, "cert", "ca"))
+	if err != nil {
+		return "", err
+	}
+	return secret.Data["certificate"].(string), nil
 }

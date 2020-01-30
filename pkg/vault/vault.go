@@ -25,6 +25,7 @@ type Vault interface {
 
 	PKICreateFiles(secret *api.Secret, path string) error
 	PKIIssue(options *PKIIssueOptions) (*PKIIssueSecret, error)
+	PKIGetCACert(enginePath string) (string, error)
 
 	SSHSignPubKey(publicKeyBytes []byte, usage string) (*api.Secret, error)
 	SSHCA(path string) (string, error)

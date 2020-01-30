@@ -2,6 +2,7 @@ package mf_vault
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -14,6 +15,7 @@ func init() {
 	rootCmd.AddCommand(pkiCmd)
 	pkiCmd.AddCommand(pkiCreateFilesCmd)
 	pkiCmd.AddCommand(pkiIssueCmd)
+	pkiCmd.AddCommand(pkiCACmd)
 
 	wd, _ := os.Getwd()
 	pkiCmd.PersistentFlags().StringVar(&pkiCreateFilesDir, "dir", wd, "directory to create files in")
@@ -58,7 +60,7 @@ var pkiCreateFilesCmd = &cobra.Command{
 var (
 	pkiIssueTTL    string
 	pkiIssueFormat string
-	pkiIssueWrite string
+	pkiIssueWrite  string
 )
 
 var pkiIssueCmd = &cobra.Command{
@@ -82,14 +84,28 @@ var pkiIssueCmd = &cobra.Command{
 			return
 		}
 
-		chain, err := os.OpenFile(filepath.Join(pkiIssueWrite, "fullchain.pem"), os.O_CREATE|os.O_WRONLY, 0600)
+		chain, err := os.OpenFile(filepath.Join(pkiIssueWrite, "certificate.pem"), os.O_CREATE|os.O_WRONLY, 0600)
 		check(err)
 		defer chain.Close()
-		check(secret.WriteChain(chain))
+		check(secret.WriteCertificate(chain))
 
 		priv, err := os.OpenFile(filepath.Join(pkiIssueWrite, "privkey.pem"), os.O_CREATE|os.O_WRONLY, 0600)
 		check(err)
 		defer priv.Close()
 		check(secret.WritePrivateKey(priv))
+	},
+}
+
+var pkiCACmd = &cobra.Command{
+	Use: "ca",
+	Short: "Get the CA certificate of the Vault CA",
+	Run: func(cmd *cobra.Command, args []string) {
+		client, err := getClientWithToken()
+		check(err)
+		v := vault.New(client)
+
+		cert, err := v.PKIGetCACert(vault.DefaultPKIEnginePath)
+		check (err)
+		fmt.Print(cert)
 	},
 }
