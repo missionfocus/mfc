@@ -1,19 +1,22 @@
-## mf-vault pki create-files
+## mf-vault pki issue
 
-Parse a Vault PKI secret in JSON format and create certificate files
+Issue a new certificate signed by the Vault CA for the specified CN
 
 ### Synopsis
 
-Parse a Vault PKI secret in JSON format and create certificate files
+Issue a new certificate signed by the Vault CA for the specified CN
 
 ```
-mf-vault pki create-files [filename] [flags]
+mf-vault pki issue <common name> [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for create-files
+      --format string   format of the returned data, one of: pem, der, pem_bundle (default "pem")
+  -h, --help            help for issue
+      --ttl string      ttl of the issued cert
+  -w, --write string    location to write files
 ```
 
 ### Options inherited from parent commands
