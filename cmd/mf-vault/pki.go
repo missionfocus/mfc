@@ -97,7 +97,7 @@ var pkiIssueCmd = &cobra.Command{
 }
 
 var pkiCACmd = &cobra.Command{
-	Use: "ca",
+	Use:   "ca",
 	Short: "Get the CA certificate of the Vault CA",
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getClientWithToken()
@@ -105,7 +105,7 @@ var pkiCACmd = &cobra.Command{
 		v := vault.New(client)
 
 		cert, err := v.PKIGetCACert(vault.DefaultPKIEnginePath)
-		check (err)
+		check(err)
 		fmt.Print(cert)
 	},
 }
