@@ -1,21 +1,21 @@
-## mf-vault config docs
+## mf-vault config completion
 
-Generate documentation for mf-vault
+Generates completion script for mf-vault.
 
 ### Synopsis
 
-Generate documentation for mf-vault
+Generates completion script for mf-vault.
 
 ```
-mf-vault config docs [flags]
+mf-vault config completion [flags]
 ```
 
 ### Options
 
 ```
-  -f, --format string   format for generated docs, valid values are "md", "rst", or "man" (default "md")
-  -h, --help            help for docs
-  -p, --path string     path to where generated documentation will be written (default "/Users/ccday/go/src/git.missionfocus.com/open-source/mf-vault/docs")
+  -h, --help           help for completion
+  -s, --shell string   Provide shell to generate completions for: zsh, oh-my-zsh, bash. Defaults to bash. (default "bash")
+  -w, --write          Write autocompletion files
 ```
 
 ### Options inherited from parent commands

@@ -93,7 +93,6 @@ func (v *vault) PKIIssue(options *PKIIssueOptions) (*PKIIssueSecret, error) {
 	return NewPKIIssueSecret(secret.Data)
 }
 
-
 func (v *vault) PKIGetCACert(enginePath string) (string, error) {
 	secret, err := v.Logical().Read(path.Join(enginePath, "cert", "ca"))
 	if err != nil {

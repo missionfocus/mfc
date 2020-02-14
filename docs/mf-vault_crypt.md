@@ -1,20 +1,21 @@
-## mf-vault update
+## mf-vault crypt
 
-Update the mf-vault binary to the latest release
+Encrypt and decrypt secrets
 
 ### Synopsis
 
-Update the mf-vault binary to the latest release
+Encrypt and decrypt secrets
 
 ```
-mf-vault update [flags]
+mf-vault crypt [file] [flags]
 ```
 
 ### Options
 
 ```
-      --force   ignore checks for other package managers
-  -h, --help    help for update
+  -d, --decrypt            decrypt input ciphertext to plaintext
+  -h, --help               help for crypt
+  -r, --recipient string   recipient
 ```
 
 ### Options inherited from parent commands
