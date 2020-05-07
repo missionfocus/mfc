@@ -4,7 +4,7 @@ curl -X POST "https://git.missionfocus.com/api/v4/projects/${CI_PROJECT_ID}/rele
     -H "Content-Type: application/json" -H "PRIVATE-TOKEN: ${MARIO_PAT}" \
     -d @- << EOF
 {
-  "name": "mf-vault ${CI_COMMIT_TAG}",
+  "name": "mfc ${CI_COMMIT_TAG}",
   "tag_name": "${CI_COMMIT_TAG}",
   "ref": "${CI_COMMIT_REF_NAME}",
   "description": "Mission Focus Vault CLI.",

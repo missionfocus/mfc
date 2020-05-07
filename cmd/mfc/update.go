@@ -15,7 +15,7 @@ const projectURL = "https://git.missionfocus.com/api/v4/projects/394"
 
 var updateCmd = &cobra.Command{
 	Use:   "update",
-	Short: "Update the mf-vault binary to the latest release",
+	Short: "Update the mfc binary to the latest release",
 	Run: func(cmd *cobra.Command, args []string) {
 		updater := &autoupdate.GitLabUpdater{ProjectURL: mustParseURL(projectURL)}
 

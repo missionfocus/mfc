@@ -53,7 +53,7 @@ var configDocsCmd = &cobra.Command{
 			check(doc.GenReSTTree(mfcCmd, configDocsPath))
 		case "man":
 			header := &doc.GenManHeader{
-				Title:   "MF-VAULT",
+				Title:   "MFC",
 				Section: "1",
 			}
 			check(doc.GenManTree(mfcCmd, header, configDocsPath))
