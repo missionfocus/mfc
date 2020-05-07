@@ -1,5 +1,8 @@
-NAME := mf-vault
-BINARY ?= out/$(NAME)
+NAME := mfc
+BINARY ?= bin/$(NAME)
+
+export GOPRIVATE=git.missionfocus.com
+export GOFLAGS=-mod=vendor
 
 .PHONY: gitlab-release
 gitlab-release:
@@ -7,5 +10,5 @@ gitlab-release:
 
 .PHONY: build
 build:
-	CGO_ENABLED=0 go build -v -ldflags "-X git.missionfocus.com/open-source/mf-vault/cmd/mf-vault.version=$(CI_COMMIT_TAG)" -o $(BINARY)
+	CGO_ENABLED=0 go build -v -ldflags "-X main.version=$(CI_COMMIT_TAG)" -o $(BINARY) git.missionfocus.com/ours/code/tools/mfc/cmd/mfc
 	openssl sha1 $(BINARY) > $(BINARY).checksum

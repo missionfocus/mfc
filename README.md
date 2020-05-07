@@ -1,3 +1,3 @@
-# mf-vault
+# mfc
 
-CLI for interacting with the Mission Focus Vault. View detailed documentation [here](docs/mf-vault.md).
+Mission Focus Control CLI. View detailed documentation [here](docs/mfc.md).
