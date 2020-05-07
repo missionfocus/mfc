@@ -7,7 +7,7 @@ curl -X POST "https://git.missionfocus.com/api/v4/projects/${CI_PROJECT_ID}/rele
   "name": "mfc ${CI_COMMIT_TAG}",
   "tag_name": "${CI_COMMIT_TAG}",
   "ref": "${CI_COMMIT_REF_NAME}",
-  "description": "Mission Focus Vault CLI.",
+  "description": "Mission Focus Control CLI.",
   "assets": {
     "links": [
       {
