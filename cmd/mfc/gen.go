@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(genCmd)
+	mfcCmd.AddCommand(genCmd)
 	genCmd.AddCommand(genPasswordCmd)
 
 	genPasswordCmd.PersistentFlags().IntVarP(&genPasswordWordCount, "word-count", "w", 5, "count of words to generate")

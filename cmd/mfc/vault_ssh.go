@@ -10,45 +10,41 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(sshCmd)
-	sshCmd.AddCommand(sshSignUserCmd)
-	sshCmd.AddCommand(sshSignHostCmd)
-	sshCmd.AddCommand(sshCACmd)
+	vaultCmd.AddCommand(vaultSSHCmd)
+	vaultSSHCmd.AddCommand(vaultSSHSignUserCmd)
+	vaultSSHCmd.AddCommand(vaultSSHSignHostCmd)
+	vaultSSHCmd.AddCommand(vaultSSHCACmd)
 }
 
-const sshDefaultEngine = "ssh-signer"
-
-var sshCmd = &cobra.Command{
+var vaultSSHCmd = &cobra.Command{
 	Use:   "ssh",
 	Short: "Interact with Vault's SSH engine",
 }
 
-var sshSignUserCmd = &cobra.Command{
+var vaultSSHSignUserCmd = &cobra.Command{
 	Use:   "sign",
 	Short: "Sign client SSH key",
 	Run: func(cmd *cobra.Command, args []string) {
 		keyPath := filepath.Join(homeDir(), ".ssh", "id_rsa.pub")
 		signedKeyPath := filepath.Join(homeDir(), ".ssh", "id_rsa-cert.pub")
 
-		signPubKey(keyPath, signedKeyPath, "user")
-
+		vaultSSHSignPubKey(keyPath, signedKeyPath, "user")
 	},
 }
 
-var sshSignHostCmd = &cobra.Command{
+var vaultSSHSignHostCmd = &cobra.Command{
 	Use:   "sign-host",
 	Short: "Sign host SSH key",
 	Run: func(cmd *cobra.Command, args []string) {
 		keyPath := filepath.Join("/etc/ssh/", "ssh_host_rsa_key.pub")
 		signedKeyPath := filepath.Join("/etc/ssh/", "ssh_host_rsa_key-cert.pub")
 
-		signPubKey(keyPath, signedKeyPath, "host")
-
+		vaultSSHSignPubKey(keyPath, signedKeyPath, "host")
 	},
 }
 
-func signPubKey(keyPath string, signedKeyPath string, usage string) {
-	client, clientError := getClientWithToken()
+func vaultSSHSignPubKey(keyPath string, signedKeyPath string, usage string) {
+	client, clientError := getVaultClientWithToken()
 	check(clientError)
 
 	v := vault.New(client)
@@ -71,15 +67,15 @@ func signPubKey(keyPath string, signedKeyPath string, usage string) {
 	silentPrintf("Signed public key written to: %s\n", signedKeyPath)
 }
 
-var sshCACmd = &cobra.Command{
+var vaultSSHCACmd = &cobra.Command{
 	Use:   "ca",
 	Short: "Print the public key of the Vault SSH Signer CA",
 	Run: func(cmd *cobra.Command, args []string) {
-		client, err := getClientWithToken()
+		client, err := getVaultClientWithToken()
 		check(err)
 		v := vault.New(client)
 
-		pubKey, err := v.SSHCA(sshDefaultEngine)
+		pubKey, err := v.SSHCA(vault.SSHDefaultEngine)
 		check(err)
 		fmt.Println(pubKey)
 	},

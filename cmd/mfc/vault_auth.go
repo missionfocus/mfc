@@ -11,21 +11,21 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(authCmd)
-	authCmd.AddCommand(authApproleCmd)
-	authCmd.AddCommand(authLDAPCmd)
-	authCmd.AddCommand(authTokenCmd)
-	authCmd.AddCommand(authRADIUSCmd)
+	vaultCmd.AddCommand(vaultAuthCmd)
+	vaultAuthCmd.AddCommand(vaultAuthApproleCmd)
+	vaultAuthCmd.AddCommand(vaultAuthLDAPCmd)
+	vaultAuthCmd.AddCommand(vaultAuthTokenCmd)
+	vaultAuthCmd.AddCommand(vaultAuthRADIUSCmd)
 }
 
-var authCmd = &cobra.Command{
+var vaultAuthCmd = &cobra.Command{
 	Use:   "auth",
 	Short: "Authenticate with Vault",
 }
 
 var AppRoleCredentialsError = errors.New("both VAULT_ROLE_ID and VAULT_SECRET_ID must be set or passed as arguments to use AppRole authentication")
 
-var authApproleCmd = &cobra.Command{
+var vaultAuthApproleCmd = &cobra.Command{
 	Use:   "approle [role id] [secret id]",
 	Short: "Authenticate with Vault using AppRole RoleID/SecretID",
 	Args:  cobra.MaximumNArgs(2),
@@ -51,16 +51,16 @@ var authApproleCmd = &cobra.Command{
 			secretID = args[1]
 		}
 
-		client, err := getClient()
+		client, err := getVaultClient()
 		check(err)
 		v := vault.New(client)
 		token, err := v.AuthApprole(roleID, secretID)
 		check(err)
-		check(writeToken(token))
+		check(writeVaultToken(token))
 	},
 }
 
-var authLDAPCmd = &cobra.Command{
+var vaultAuthLDAPCmd = &cobra.Command{
 	Use:   "ldap [username] [password]",
 	Short: "Authenticate to Vault using LDAP credentials",
 	Args:  cobra.MaximumNArgs(2),
@@ -78,17 +78,17 @@ var authLDAPCmd = &cobra.Command{
 			args = append(args, pw)
 		}
 
-		client, err := getClient()
+		client, err := getVaultClient()
 		check(err)
 		v := vault.New(client)
 		token, err := v.AuthLDAP(args[0], args[1])
 		check(err)
-		check(writeToken(token))
+		check(writeVaultToken(token))
 		fmt.Printf("\nLogged in to Vault as %s.\n", args[0])
 	},
 }
 
-var authTokenCmd = &cobra.Command{
+var vaultAuthTokenCmd = &cobra.Command{
 	Use:   "token [token]",
 	Short: "Authenticate to Vault using a raw token",
 	Args:  cobra.MaximumNArgs(1),
@@ -101,11 +101,11 @@ var authTokenCmd = &cobra.Command{
 		} else {
 			token = args[0]
 		}
-		check(writeToken(token))
+		check(writeVaultToken(token))
 	},
 }
 
-var authRADIUSCmd = &cobra.Command{
+var vaultAuthRADIUSCmd = &cobra.Command{
 	Use:   "radius [username] [password] [mfa token]",
 	Short: "Authenticate to Vault using RADIUS",
 	Args:  cobra.MaximumNArgs(3),
@@ -129,12 +129,12 @@ var authRADIUSCmd = &cobra.Command{
 			args = append(args, tok)
 		}
 
-		client, err := getClient()
+		client, err := getVaultClient()
 		check(err)
 		v := vault.New(client)
 		token, err := v.AuthRADIUS(args[0], args[1], args[2])
 		check(err)
-		check(writeToken(token))
+		check(writeVaultToken(token))
 		fmt.Printf("\nLogged in to Vault as %s.\n", args[0])
 	},
 }

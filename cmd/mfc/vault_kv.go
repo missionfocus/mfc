@@ -12,37 +12,35 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(kvCmd)
+	vaultCmd.AddCommand(vaultKVCmd)
+	vaultKVCmd.AddCommand(vaultKVListAllCmd)
+	vaultKVCmd.AddCommand(vaultKVAwsCmd)
+	vaultKVCmd.AddCommand(vaultKVGPGCmd)
+	vaultKVCmd.AddCommand(vaultKVNPMCmd)
+	vaultKVCmd.AddCommand(vaultKVGetAllCmd)
+	vaultKVCmd.AddCommand(vaultKVPutAllCmd)
+	vaultKVGPGCmd.AddCommand(vaultKVGpgImportCmd)
+	vaultKVNPMCmd.AddCommand(kvNPMAuthCmd)
 
-	kvCmd.AddCommand(kvListAllCmd)
-	kvCmd.AddCommand(kvAwsCmd)
-	kvCmd.AddCommand(kvGpgCmd)
-	kvCmd.AddCommand(kvNPMCmd)
-	kvCmd.AddCommand(kvGetAllCmd)
-	kvCmd.AddCommand(kvPutAllCmd)
+	vaultKVAwsCmd.PersistentFlags().StringVarP(&vaultKVAwsProfileName, "profile", "p", "vault", "name of the profile")
+	vaultKVGpgImportCmd.PersistentFlags().BoolVar(&vaultKVGpgImportPrivate, "private", false, "import the pair's private key")
 
-	kvAwsCmd.PersistentFlags().StringVarP(&kvAwsProfileName, "profile", "p", "vault", "name of the profile")
-
-	kvGpgImportCmd.PersistentFlags().BoolVar(&kvGpgImportPrivate, "private", false, "import the pair's private key")
-	kvGpgCmd.AddCommand(kvGpgImportCmd)
-
-	kvNPMAuthCmd.PersistentFlags().BoolVar(&kvNPMStdout, "stdout", false, "write the NPM auth token to stdout instead of .npmrc")
-	kvNPMAuthCmd.PersistentFlags().StringVarP(&kvNPMRcPath, "path", "p", filepath.Join(homeDir(), ".npmrc"), "path to .npmrc")
-	kvNPMCmd.AddCommand(kvNPMAuthCmd)
+	kvNPMAuthCmd.PersistentFlags().BoolVar(&vautlKVNPMStdout, "stdout", false, "write the NPM auth token to stdout instead of .npmrc")
+	kvNPMAuthCmd.PersistentFlags().StringVarP(&vaultKVNPMRCPath, "path", "p", filepath.Join(homeDir(), ".npmrc"), "path to .npmrc")
 }
 
-var kvCmd = &cobra.Command{
+var vaultKVCmd = &cobra.Command{
 	Use:   "kv",
 	Short: "Interact with Vault's Key/Value engine",
 }
 
-var kvListAllCmd = &cobra.Command{
+var vaultKVListAllCmd = &cobra.Command{
 	Use:     "listall <key>",
 	Short:   "Lists all keys under the specified K/V engine key. Key must end with `/`",
 	Example: "  listall secret/\tLists all keys under the default K/V secrets engine",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		client, err := getClientWithToken()
+		client, err := getVaultClientWithToken()
 		check(err)
 
 		v := vault.New(client)
@@ -53,12 +51,12 @@ var kvListAllCmd = &cobra.Command{
 	},
 }
 
-var kvGetAllCmd = &cobra.Command{
+var vaultKVGetAllCmd = &cobra.Command{
 	Use:   "getall <key>",
 	Short: "Recursively gets the data for all keys under the specified path as YAML",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		client, err := getClientWithToken()
+		client, err := getVaultClientWithToken()
 		check(err)
 		v := vault.New(client)
 
@@ -76,12 +74,12 @@ var kvGetAllCmd = &cobra.Command{
 	},
 }
 
-var kvPutAllCmd = &cobra.Command{
+var vaultKVPutAllCmd = &cobra.Command{
 	Use:   "putall <file>",
 	Short: "Puts all keys in the specified YAML file into the KV engine",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		client, err := getClientWithToken()
+		client, err := getVaultClientWithToken()
 		check(err)
 		v := vault.New(client)
 
@@ -96,79 +94,77 @@ var kvPutAllCmd = &cobra.Command{
 	},
 }
 
-var kvAwsProfileName string
+var vaultKVAwsProfileName string
 
-var kvAwsCmd = &cobra.Command{
+var vaultKVAwsCmd = &cobra.Command{
 	Use:   "aws <path>",
 	Short: "Read the secret at `path` as AWS credentials",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 
-		client, err := getClientWithToken()
+		client, err := getVaultClientWithToken()
 		check(err)
 
 		v := vault.New(client)
 		secret, err := v.KvReadAws(key)
 		check(err)
 
-		check(secret.ToProfile(credentialsPath, kvAwsProfileName))
-		silentPrintf("AWS profile `%s` updated with the credentials read from `%s`.\n", kvAwsProfileName, key)
+		check(secret.ToProfile(mfcAWSCredentialsPath, vaultKVAwsProfileName))
+		silentPrintf("AWS profile `%s` updated with the credentials read from `%s`.\n", vaultKVAwsProfileName, key)
 	},
 }
 
-var kvGpgCmd = &cobra.Command{
+var vaultKVGPGCmd = &cobra.Command{
 	Use:   "gpg",
 	Short: "Interact with GPG keys stored in Vault",
 }
 
-var kvGpgImportPrivate bool
+var vaultKVGpgImportPrivate bool
 
-var kvGpgImportCmd = &cobra.Command{
+var vaultKVGpgImportCmd = &cobra.Command{
 	Use:   "import <key>",
 	Short: "Import the GPG key at the specified KV engine key",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 
-		client, err := getClientWithToken()
+		client, err := getVaultClientWithToken()
 		check(err)
 
 		v := vault.New(client)
-		out, err := v.KvGpgImport(key, kvGpgImportPrivate)
+		out, err := v.KvGpgImport(key, vaultKVGpgImportPrivate)
 		silentPrint(string(out))
 		check(err)
 	},
 }
 
-var kvNPMCmd = &cobra.Command{
+var vaultKVNPMCmd = &cobra.Command{
 	Use:   "npm",
 	Short: "Interact with NPM configuration stored in Vault",
 }
 
 var (
-	kvNPMRcPath string
-	kvNPMStdout bool
+	vaultKVNPMRCPath string
+	vautlKVNPMStdout bool
 )
-
-const npmBasePath = "secret/data/ci/shared/npm"
 
 var kvNPMAuthCmd = &cobra.Command{
 	Use:   "auth <registry>",
 	Short: "Update .npmrc with authentication data from Vault",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		client, err := getClientWithToken()
+		client, err := getVaultClientWithToken()
 		check(err)
 		v := vault.New(client)
 
-		secret, err := v.KvNPMAuth(path.Join(npmBasePath, args[0]))
+		secret, err := v.KvNPMAuth(path.Join(vault.NPMBasePath, args[0]))
 		check(err)
 
-		if kvNPMStdout {
+		if vautlKVNPMStdout {
 			fmt.Print(secret.Token)
 			return
 		}
-		check(secret.UpdateNpmrc(kvNPMRcPath))
+		check(secret.UpdateNpmrc(vaultKVNPMRCPath))
 	},
 }

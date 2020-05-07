@@ -6,32 +6,31 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(macroCmd)
-	macroCmd.AddCommand(minioMacro)
+	vaultCmd.AddCommand(vaultMacroCmd)
+	vaultMacroCmd.AddCommand(vaultMinioMacro)
 }
 
-var macroCmd = &cobra.Command{
+var vaultMacroCmd = &cobra.Command{
 	Use:   "macro",
 	Short: "Perform a high-level operation",
 }
 
-const MinioBasePath = "secret/data/ci/shared/minio"
 const MinioProfileName = "minio"
 
-var minioMacro = &cobra.Command{
+var vaultMinioMacro = &cobra.Command{
 	Use:   "minio",
 	Short: "Configure AWS credentials to use Jackie as an S3 implementation",
 	Run: func(cmd *cobra.Command, args []string) {
-		client, err := getClientWithToken()
+		client, err := getVaultClientWithToken()
 		check(err)
 
 		v := vault.New(client)
-		credentialsSecret, err := v.KvReadAws(MinioBasePath)
+		credentialsSecret, err := v.KvReadAws(vault.MinioBasePath)
 		check(err)
-		check(credentialsSecret.ToProfile(credentialsPath, MinioProfileName))
-		silentPrintf("AWS profile `%s` updated with the credentials read from `%s`.\n", MinioProfileName, MinioBasePath)
+		check(credentialsSecret.ToProfile(mfcAWSCredentialsPath, MinioProfileName))
+		silentPrintf("AWS profile `%s` updated with the credentials read from `%s`.\n", MinioProfileName, vault.MinioBasePath)
 
-		endpointSecret, err := client.Logical().Read(MinioBasePath)
+		endpointSecret, err := client.Logical().Read(vault.MinioBasePath)
 		check(err)
 		data := endpointSecret.Data["data"].(map[string]interface{})
 		endpoint := data["endpoint"].(string)

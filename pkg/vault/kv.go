@@ -4,6 +4,11 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
+const (
+	NPMBasePath   = "secret/data/ci/shared/npm"
+	MinioBasePath = "secret/data/ci/shared/minio"
+)
+
 type KVItem struct {
 	Key  string                 `yaml:"key"`
 	Data map[string]interface{} `yaml:"data,omitempty"`

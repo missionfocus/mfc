@@ -10,23 +10,23 @@ import (
 )
 
 func init() {
-	cryptCmd.PersistentFlags().BoolVarP(&cryptDecrypt, "decrypt", "d", false, "decrypt input ciphertext to plaintext")
-	cryptCmd.PersistentFlags().StringVarP(&cryptRecipient, "recipient", "r", "", "recipient")
+	vaultCmd.AddCommand(vaultCryptCmd)
 
-	rootCmd.AddCommand(cryptCmd)
+	vaultCryptCmd.PersistentFlags().BoolVarP(&vaultCryptDecrypt, "decrypt", "d", false, "decrypt input ciphertext to plaintext")
+	vaultCryptCmd.PersistentFlags().StringVarP(&vaultCryptRecipient, "recipient", "r", "", "recipient")
 }
 
 var (
-	cryptDecrypt   bool
-	cryptRecipient string
+	vaultCryptDecrypt   bool
+	vaultCryptRecipient string
 )
 
-var cryptCmd = &cobra.Command{
+var vaultCryptCmd = &cobra.Command{
 	Use:   "crypt [file]",
 	Short: "Encrypt and decrypt secrets",
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		v, err := getClientWithToken()
+		v, err := getVaultClientWithToken()
 		check(err)
 		crypt := vault.NewCryptClient(v)
 
@@ -42,12 +42,12 @@ var cryptCmd = &cobra.Command{
 		check(err)
 		txt := string(in)
 
-		if cryptDecrypt {
-			pt, err := crypt.De(cryptRecipient, txt)
+		if vaultCryptDecrypt {
+			pt, err := crypt.De(vaultCryptRecipient, txt)
 			check(err)
 			fmt.Print(pt)
 		} else {
-			ct, err := crypt.En(cryptRecipient, txt)
+			ct, err := crypt.En(vaultCryptRecipient, txt)
 			check(err)
 			fmt.Print(ct)
 		}

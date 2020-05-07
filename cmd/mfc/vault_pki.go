@@ -12,27 +12,27 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(pkiCmd)
-	pkiCmd.AddCommand(pkiCreateFilesCmd)
-	pkiCmd.AddCommand(pkiIssueCmd)
-	pkiCmd.AddCommand(pkiCACmd)
+	vaultCmd.AddCommand(vaultPKICmd)
+	vaultPKICmd.AddCommand(vaultPKICreateFilesCmd)
+	vaultPKICmd.AddCommand(vaultPKIIssueCmd)
+	vaultPKICmd.AddCommand(vaultPKICACmd)
 
 	wd, _ := os.Getwd()
-	pkiCmd.PersistentFlags().StringVar(&pkiCreateFilesDir, "dir", wd, "directory to create files in")
 
-	pkiIssueCmd.PersistentFlags().StringVar(&pkiIssueTTL, "ttl", "", "ttl of the issued cert")
-	pkiIssueCmd.PersistentFlags().StringVar(&pkiIssueFormat, "format", "pem", "format of the returned data, one of: pem, der, pem_bundle")
-	pkiIssueCmd.PersistentFlags().StringVarP(&pkiIssueWrite, "write", "w", "", "location to write files")
+	vaultPKICmd.PersistentFlags().StringVar(&vaultPKICreateFilesDir, "dir", wd, "directory to create files in")
+	vaultPKIIssueCmd.PersistentFlags().StringVar(&vaultPKIIssueTTL, "ttl", "", "ttl of the issued cert")
+	vaultPKIIssueCmd.PersistentFlags().StringVar(&vaultPKIIssueFormat, "format", "pem", "format of the returned data, one of: pem, der, pem_bundle")
+	vaultPKIIssueCmd.PersistentFlags().StringVarP(&vaultPKIIssueWrite, "write", "w", "", "location to write files")
 }
 
-var pkiCmd = &cobra.Command{
+var vaultPKICmd = &cobra.Command{
 	Use:   "pki",
 	Short: "Interact with Vault's PKI engine",
 }
 
-var pkiCreateFilesDir string
+var vaultPKICreateFilesDir string
 
-var pkiCreateFilesCmd = &cobra.Command{
+var vaultPKICreateFilesCmd = &cobra.Command{
 	Use:   "create-files [filename]",
 	Short: "Parse a Vault PKI secret in JSON format and create certificate files",
 	Args:  cobra.MaximumNArgs(1),
@@ -50,57 +50,57 @@ var pkiCreateFilesCmd = &cobra.Command{
 		err := json.NewDecoder(r).Decode(&secret)
 		check(err)
 
-		client, err := getClientWithToken()
+		client, err := getVaultClientWithToken()
 		check(err)
 		v := vault.New(client)
-		check(v.PKICreateFiles(&secret, pkiCreateFilesDir))
+		check(v.PKICreateFiles(&secret, vaultPKICreateFilesDir))
 	},
 }
 
 var (
-	pkiIssueTTL    string
-	pkiIssueFormat string
-	pkiIssueWrite  string
+	vaultPKIIssueTTL    string
+	vaultPKIIssueFormat string
+	vaultPKIIssueWrite  string
 )
 
-var pkiIssueCmd = &cobra.Command{
+var vaultPKIIssueCmd = &cobra.Command{
 	Use:   "issue <common name>",
 	Short: "Issue a new certificate signed by the Vault CA for the specified CN",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		client, err := getClientWithToken()
+		client, err := getVaultClientWithToken()
 		check(err)
 		v := vault.New(client)
 		secret, err := v.PKIIssue(&vault.PKIIssueOptions{
 			RoleName:   vault.DefaultPKIEngineRole,
 			CommonName: args[0],
-			TTL:        pkiIssueTTL,
-			Format:     pkiIssueFormat,
+			TTL:        vaultPKIIssueTTL,
+			Format:     vaultPKIIssueFormat,
 		})
 		check(err)
 
-		if pkiIssueWrite == "" {
+		if vaultPKIIssueWrite == "" {
 			check(secret.WriteJSON(os.Stdout))
 			return
 		}
 
-		chain, err := os.OpenFile(filepath.Join(pkiIssueWrite, "certificate.pem"), os.O_CREATE|os.O_WRONLY, 0600)
+		chain, err := os.OpenFile(filepath.Join(vaultPKIIssueWrite, "certificate.pem"), os.O_CREATE|os.O_WRONLY, 0600)
 		check(err)
 		defer chain.Close()
 		check(secret.WriteCertificate(chain))
 
-		priv, err := os.OpenFile(filepath.Join(pkiIssueWrite, "privkey.pem"), os.O_CREATE|os.O_WRONLY, 0600)
+		priv, err := os.OpenFile(filepath.Join(vaultPKIIssueWrite, "privkey.pem"), os.O_CREATE|os.O_WRONLY, 0600)
 		check(err)
 		defer priv.Close()
 		check(secret.WritePrivateKey(priv))
 	},
 }
 
-var pkiCACmd = &cobra.Command{
+var vaultPKICACmd = &cobra.Command{
 	Use:   "ca",
 	Short: "Get the CA certificate of the Vault CA",
 	Run: func(cmd *cobra.Command, args []string) {
-		client, err := getClientWithToken()
+		client, err := getVaultClientWithToken()
 		check(err)
 		v := vault.New(client)
 

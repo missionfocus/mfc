@@ -39,7 +39,11 @@ func New(client *api.Client) Vault {
 	return &vault{client}
 }
 
-const awsEnginePrefix = "aws"
+const (
+	DefaultAddr      = "https://vault.missionfocus.com"
+	SSHDefaultEngine = "ssh-signer"
+	awsEnginePrefix  = "aws"
+)
 
 func (v *vault) AWSReadSTS(account string, role string, ttl string) (*api.Secret, error) {
 	secret, err := v.Logical().Write(path.Join(awsEnginePrefix, account, "sts", role), map[string]interface{}{
