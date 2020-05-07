@@ -39,7 +39,7 @@ publish:sftp:
   stage: publish
   only:
     - tags
-  image: hub.missionfocus.com/devops/ci-images/alpine/general:master
+  image: hub.missionfocus.com/ours/code/cicd/ci-images/alpine/general:master
   dependencies:
     - build:x86_64-linux
     - build:x86_64-darwin
@@ -56,7 +56,7 @@ publish:gitlab-release:
   stage: publish
   only:
     - tags
-  image: hub.missionfocus.com/devops/ci-images/alpine/general:master
+  image: hub.missionfocus.com/ours/code/cicd/ci-images/alpine/general:master
   dependencies:
     - build:x86_64-linux
     - build:x86_64-darwin
