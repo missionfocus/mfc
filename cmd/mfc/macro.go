@@ -1,4 +1,4 @@
-package mfc
+package main
 
 import (
 	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"

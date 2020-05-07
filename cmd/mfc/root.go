@@ -1,4 +1,4 @@
-package mfc
+package main
 
 import (
 	"fmt"
@@ -43,7 +43,7 @@ var rootCmd = &cobra.Command{
 	Short: "CLI for interacting with the Mission Focus Vault",
 }
 
-func Execute() {
+func main() {
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}

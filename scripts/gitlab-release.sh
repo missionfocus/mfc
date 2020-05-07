@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-curl -X POST https://git.missionfocus.com/api/v4/projects/${CI_PROJECT_ID}/releases \
+curl -X POST "https://git.missionfocus.com/api/v4/projects/${CI_PROJECT_ID}/releases" \
     -H "Content-Type: application/json" -H "PRIVATE-TOKEN: ${MARIO_PAT}" \
     -d @- << EOF
 {
@@ -12,27 +12,27 @@ curl -X POST https://git.missionfocus.com/api/v4/projects/${CI_PROJECT_ID}/relea
     "links": [
       {
         "name": "Linux",
-        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-linux/mf-vault"
+        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-linux/mfc"
       },
       {
         "name": "Linux (Checksum)",
-        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-linux/mf-vault.checksum"
+        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-linux/mfc.checksum"
       },
       {
         "name": "macOS",
-        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-darwin/mf-vault"
+        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-darwin/mfc"
       },
       {
         "name": "macOS (Checksum)",
-        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-darwin/mf-vault.checksum"
+        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-darwin/mfc.checksum"
       },
       {
         "name": "Windows",
-        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-windows/mf-vault.exe"
+        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-windows/mfc.exe"
       },
       {
         "name": "Windows (Checksum)",
-        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-darwin/mf-vault.exe.checksum"
+        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-darwin/mfc.exe.checksum"
       }
     ]
   }

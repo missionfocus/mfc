@@ -43,7 +43,7 @@ Temporary Items
 .vagrant
 
 # Artifacts
-/out
+/bin
 
 # IDE
 /.idea
