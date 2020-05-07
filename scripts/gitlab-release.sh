@@ -12,27 +12,27 @@ curl -X POST https://git.missionfocus.com/api/v4/projects/${CI_PROJECT_ID}/relea
     "links": [
       {
         "name": "Linux",
-        "url": "https://git.missionfocus.com/open-source/mf-vault/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-linux/mf-vault"
+        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-linux/mf-vault"
       },
       {
         "name": "Linux (Checksum)",
-        "url": "https://git.missionfocus.com/open-source/mf-vault/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-linux/mf-vault.checksum"
+        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-linux/mf-vault.checksum"
       },
       {
         "name": "macOS",
-        "url": "https://git.missionfocus.com/open-source/mf-vault/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-darwin/mf-vault"
+        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-darwin/mf-vault"
       },
       {
         "name": "macOS (Checksum)",
-        "url": "https://git.missionfocus.com/open-source/mf-vault/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-darwin/mf-vault.checksum"
+        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-darwin/mf-vault.checksum"
       },
       {
         "name": "Windows",
-        "url": "https://git.missionfocus.com/open-source/mf-vault/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-windows/mf-vault.exe"
+        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-windows/mf-vault.exe"
       },
       {
         "name": "Windows (Checksum)",
-        "url": "https://git.missionfocus.com/open-source/mf-vault/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-darwin/mf-vault.exe.checksum"
+        "url": "https://git.missionfocus.com/ours/code/tools/mfc/-/jobs/${CI_JOB_ID}/artifacts/raw/out/binaries/x86_64-darwin/mf-vault.exe.checksum"
       }
     ]
   }

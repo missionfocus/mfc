@@ -1,6 +1,6 @@
 package main
 
-import cmd "git.missionfocus.com/open-source/mf-vault/cmd/mf-vault"
+import cmd "git.missionfocus.com/ours/code/tools/mfc/cmd/mfc"
 
 func main() {
 	cmd.Execute()
