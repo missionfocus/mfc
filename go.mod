@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	git.missionfocus.com/ours/libraries/go v0.0.0-00010101000000-000000000000
+	github.com/aws/aws-sdk-go v1.19.19
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/frankban/quicktest v1.4.1 // indirect
 	github.com/go-git/go-git/v5 v5.0.0
@@ -20,6 +21,7 @@ require (
 	github.com/rsteube/cobra-zsh-gen v1.1.0
 	github.com/sethvargo/go-diceware v0.0.0-20181002232325-908b539e6e65
 	github.com/spf13/cobra v0.0.4
+	github.com/stretchr/testify v1.4.0
 	github.com/xanzy/go-gitlab v0.31.0
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
 	gopkg.in/square/go-jose.v2 v2.4.0 // indirect

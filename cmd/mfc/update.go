@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"git.missionfocus.com/ours/code/tools/mfc/pkg/autoupdate"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/spf13/cobra"
 )
 
@@ -11,13 +12,17 @@ func init() {
 	mfcCmd.AddCommand(updateCmd)
 }
 
-const projectURL = "https://git.missionfocus.com/api/v4/projects/394"
+const (
+	updateBucket = "public.missionfocus.com"
+	updatePrefix = "mfc"
+)
 
 var updateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update the mfc binary to the latest release",
 	Run: func(cmd *cobra.Command, args []string) {
-		updater := &autoupdate.GitLabUpdater{ProjectURL: mustParseURL(projectURL)}
+		sess := session.Must(session.NewSession())
+		updater := autoupdate.NewS3Updater(sess, updateBucket, updatePrefix)
 
 		fmt.Println("Checking for update...")
 		nextVer, err := updater.Check(version)
