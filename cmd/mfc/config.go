@@ -22,7 +22,7 @@ func init() {
 	wd, err := os.Getwd()
 	check(err)
 
-	configDocsCmd.PersistentFlags().StringVarP(&configDocsPath, "path", "p", filepath.Join(wd, "docs"), "path to where generated documentation will be written")
+	configDocsCmd.PersistentFlags().StringVarP(&configDocsPath, "path", "p", filepath.Join(wd, "docs", "generated"), "path to where generated documentation will be written")
 	configDocsCmd.PersistentFlags().StringVarP(&configDocsFormat, "format", "f", "md", `format for generated docs, valid values are "md", "rst", or "man"`)
 
 	configCompletionCmd.PersistentFlags().StringVarP(&configCompletionShell, "shell", "s", "bash", "Provide shell to generate completions for: zsh, oh-my-zsh, bash. Defaults to bash.")
