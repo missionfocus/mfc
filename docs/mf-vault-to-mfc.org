@@ -1,0 +1,18 @@
+#+TITLE: Migrating from mf-vault to mfc
+
+1. If you installed mf-vault manually, delete the binary, e.g: ~rm
+   /usr/local/bin/mf-vault~. If you installed mf-vault using Homebrew:
+
+   1. Uninstall the mf-vault formula: ~brew uninstall mf-vault~
+   2. Remove the tap: ~brew untap mf-open-source/mf-vault~
+
+2. Install mfc from the [[https://git.missionfocus.com/ours/code/tools/mfc/-/releases][GitLab Releases page]]:
+
+   1. Select the correct binary for your platform
+   2. Copy it into your preferred location on your PATH, e.g.
+      ~/usr/local/bin/mfc~
+   3. Add execute permissions: ~chmod +x /usr/local/bin/mfc~
+   4. Confirm the install was successful by opening a new terminal session and
+      running ~mfc --version~. You should see something like "mfc version v2.0.0"
+
+3. In the future, update mfc using ~mfc update~

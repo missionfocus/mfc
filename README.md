@@ -1,3 +1,3 @@
 # mfc
 
-Mission Focus Control CLI. View detailed documentation [here](docs/mfc.md).
+Mission Focus Control CLI. View detailed documentation [here](docs/generated/mfc.md).
