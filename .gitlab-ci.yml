@@ -87,9 +87,9 @@ publish:s3:
     - . auth_vault.sh
     - mf-vault aws issue oit public-writer --silent --profile default
   script:
-    - aws s3 cp $BINARIES_DIR/x86_64-linux/mfc s3://$BUCKET/$PREFIX/mfc_$CI_COMMIT_TAG_linux
-    - aws s3 cp $BINARIES_DIR/x86_64-darwin/mfc s3://$BUCKET/$PREFIX/mfc_$CI_COMMIT_TAG_darwin
-    - aws s3 cp $BINARIES_DIR/x86_64-windows/mfc.exe s3://$BUCKET/$PREFIX/mfc_$CI_COMMIT_TAG_windows.exe
+    - aws s3 cp $BINARIES_DIR/x86_64-linux/mfc s3://$BUCKET/$PREFIX/mfc_${CI_COMMIT_TAG}_linux
+    - aws s3 cp $BINARIES_DIR/x86_64-darwin/mfc s3://$BUCKET/$PREFIX/mfc_${CI_COMMIT_TAG}_darwin
+    - aws s3 cp $BINARIES_DIR/x86_64-windows/mfc.exe s3://$BUCKET/$PREFIX/mfc_${CI_COMMIT_TAG}_windows.exe
 
 trigger:ci-images:
   stage: trigger
