@@ -14,7 +14,7 @@ func init() {
 
 const (
 	updateBucket = "public.missionfocus.com"
-	updatePrefix = "mfc"
+	updatePrefix = "mfc/"
 )
 
 var updateCmd = &cobra.Command{
