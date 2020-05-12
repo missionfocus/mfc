@@ -71,6 +71,26 @@ publish:gitlab-release:
     paths:
       - $BINARIES_DIR
 
+publish:s3:
+  stage: publish
+  only:
+    - tags
+  image: hub.missionfocus.com/ours/code/cicd/ci-images/alpine/general:master
+  dependencies:
+    - build:x86_64-linux
+    - build:x86_64-darwin
+    - build:x86_64-windows
+  variables:
+    BUCKET: public.missionfocus.com
+    PREFIX: mfc
+  before_script:
+    - . auth_vault.sh
+    - mf-vault aws issue oit public-writer --silent --profile default
+  script:
+    - aws s3 cp $BINARIES_DIR/x86_64-linux/mfc s3://$BUCKET/$PREFIX/mfc_$CI_COMMIT_TAG_linux
+    - aws s3 cp $BINARIES_DIR/x86_64-darwin/mfc s3://$BUCKET/$PREFIX/mfc_$CI_COMMIT_TAG_darwin
+    - aws s3 cp $BINARIES_DIR/x86_64-windows/mfc.exe s3://$BUCKET/$PREFIX/mfc_$CI_COMMIT_TAG_windows.exe
+
 trigger:ci-images:
   stage: trigger
   only:
