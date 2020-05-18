@@ -75,14 +75,19 @@ func (g *GitLab) ListAllGroups() ([]*gitlab.Group, error) {
 
 // ListAllProjects lists all of the projects the caller has access to.
 func (g *GitLab) ListAllProjects() ([]*gitlab.Project, error) {
-	projects := make([]*gitlab.Project, 0)
-
 	opt := &gitlab.ListProjectsOptions{
 		ListOptions: gitlab.ListOptions{
 			PerPage: 20,
 			Page:    1,
 		},
 	}
+
+	return g.ListAllProjectsWithOptions(opt)
+}
+
+// ListAllProjects lists all of the projects the caller has access to.
+func (g *GitLab) ListAllProjectsWithOptions(opt *gitlab.ListProjectsOptions) ([]*gitlab.Project, error) {
+	projects := make([]*gitlab.Project, 0)
 
 	for {
 		ps, res, err := g.client.Projects.ListProjects(opt)
@@ -116,4 +121,22 @@ func (g *GitLab) ListAllProjectsWithRe(re *regexp.Regexp) ([]*gitlab.Project, er
 	}
 
 	return matches, nil
+}
+
+func (g *GitLab) GetIssue(projID interface{}, issueID int) (*gitlab.Issue, error) {
+	issue, _, err := g.client.Issues.GetIssue(projID, issueID);
+	if err != nil {
+		return nil, fmt.Errorf("Retrieving issue: %w", err)
+	}
+
+	return issue, nil
+}
+
+func (g *GitLab) GetMergeRequest(projID interface{}, mergeRequestID int) (*gitlab.MergeRequest, error) {
+	mr, _, err := g.client.MergeRequests.GetMergeRequest(projID, mergeRequestID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Retrieving issue: %w", err)
+	}
+
+	return mr, nil
 }

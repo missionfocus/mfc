@@ -1,6 +1,42 @@
+# git.missionfocus.com/ours/code/tools/tmetric-api v0.0.0 => /opt/semapp/tools/tmetric-swagger
+git.missionfocus.com/ours/code/tools/tmetric-api/client
+git.missionfocus.com/ours/code/tools/tmetric-api/client/account_members
+git.missionfocus.com/ours/code/tools/tmetric-api/client/accounts
+git.missionfocus.com/ours/code/tools/tmetric-api/client/activity
+git.missionfocus.com/ours/code/tools/tmetric-api/client/api_version
+git.missionfocus.com/ours/code/tools/tmetric-api/client/clients
+git.missionfocus.com/ours/code/tools/tmetric-api/client/demo_data
+git.missionfocus.com/ours/code/tools/tmetric-api/client/integrations
+git.missionfocus.com/ours/code/tools/tmetric-api/client/invoices
+git.missionfocus.com/ours/code/tools/tmetric-api/client/projects
+git.missionfocus.com/ours/code/tools/tmetric-api/client/recent_tasks
+git.missionfocus.com/ours/code/tools/tmetric-api/client/report_detailed
+git.missionfocus.com/ours/code/tools/tmetric-api/client/report_long_timers
+git.missionfocus.com/ours/code/tools/tmetric-api/client/report_projects
+git.missionfocus.com/ours/code/tools/tmetric-api/client/report_summary_activity
+git.missionfocus.com/ours/code/tools/tmetric-api/client/report_tasks
+git.missionfocus.com/ours/code/tools/tmetric-api/client/report_team
+git.missionfocus.com/ours/code/tools/tmetric-api/client/synchronized_versions
+git.missionfocus.com/ours/code/tools/tmetric-api/client/tags
+git.missionfocus.com/ours/code/tools/tmetric-api/client/tasks
+git.missionfocus.com/ours/code/tools/tmetric-api/client/time_entries
+git.missionfocus.com/ours/code/tools/tmetric-api/client/time_off_balances
+git.missionfocus.com/ours/code/tools/tmetric-api/client/time_off_policies
+git.missionfocus.com/ours/code/tools/tmetric-api/client/time_off_requests
+git.missionfocus.com/ours/code/tools/tmetric-api/client/timeline
+git.missionfocus.com/ours/code/tools/tmetric-api/client/timer
+git.missionfocus.com/ours/code/tools/tmetric-api/client/user_groups
+git.missionfocus.com/ours/code/tools/tmetric-api/client/user_profile
+git.missionfocus.com/ours/code/tools/tmetric-api/models
 # git.missionfocus.com/ours/libraries/go v0.0.0-00010101000000-000000000000 => git.missionfocus.com/ours/libraries/go.git v1.0.0
 git.missionfocus.com/ours/libraries/go/gpg
 git.missionfocus.com/ours/libraries/go/multierror
+# github.com/PuerkitoBio/purell v1.1.1
+github.com/PuerkitoBio/purell
+# github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
+github.com/PuerkitoBio/urlesc
+# github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
+github.com/asaskevich/govalidator
 # github.com/aws/aws-sdk-go v1.19.19
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
@@ -106,6 +142,36 @@ github.com/go-git/go-git/v5/utils/merkletrie/filesystem
 github.com/go-git/go-git/v5/utils/merkletrie/index
 github.com/go-git/go-git/v5/utils/merkletrie/internal/frame
 github.com/go-git/go-git/v5/utils/merkletrie/noder
+# github.com/go-openapi/analysis v0.19.10
+github.com/go-openapi/analysis
+github.com/go-openapi/analysis/internal
+# github.com/go-openapi/errors v0.19.4
+github.com/go-openapi/errors
+# github.com/go-openapi/jsonpointer v0.19.3
+github.com/go-openapi/jsonpointer
+# github.com/go-openapi/jsonreference v0.19.3
+github.com/go-openapi/jsonreference
+# github.com/go-openapi/loads v0.19.5
+github.com/go-openapi/loads
+# github.com/go-openapi/runtime v0.19.15
+github.com/go-openapi/runtime
+github.com/go-openapi/runtime/client
+github.com/go-openapi/runtime/logger
+github.com/go-openapi/runtime/middleware
+github.com/go-openapi/runtime/middleware/denco
+github.com/go-openapi/runtime/middleware/header
+github.com/go-openapi/runtime/middleware/untyped
+github.com/go-openapi/runtime/security
+# github.com/go-openapi/spec v0.19.8
+github.com/go-openapi/spec
+# github.com/go-openapi/strfmt v0.19.5
+github.com/go-openapi/strfmt
+# github.com/go-openapi/swag v0.19.9
+github.com/go-openapi/swag
+# github.com/go-openapi/validate v0.19.8
+github.com/go-openapi/validate
+# github.com/go-stack/stack v1.8.0
+github.com/go-stack/stack
 # github.com/golang/protobuf v1.3.1
 github.com/golang/protobuf/proto
 # github.com/golang/snappy v0.0.1
@@ -160,6 +226,10 @@ github.com/juju/ansiterm/tabwriter
 github.com/kevinburke/ssh_config
 # github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a
 github.com/lunixbochs/vtclean
+# github.com/mailru/easyjson v0.7.1
+github.com/mailru/easyjson/buffer
+github.com/mailru/easyjson/jlexer
+github.com/mailru/easyjson/jwriter
 # github.com/manifoldco/promptui v0.7.0
 github.com/manifoldco/promptui
 github.com/manifoldco/promptui/list
@@ -170,7 +240,7 @@ github.com/mattn/go-colorable
 github.com/mattn/go-isatty
 # github.com/mitchellh/go-homedir v1.1.0
 github.com/mitchellh/go-homedir
-# github.com/mitchellh/mapstructure v1.1.2
+# github.com/mitchellh/mapstructure v1.3.0
 github.com/mitchellh/mapstructure
 # github.com/pierrec/lz4 v2.2.6+incompatible
 github.com/pierrec/lz4
@@ -202,6 +272,14 @@ github.com/stretchr/testify/assert
 github.com/xanzy/go-gitlab
 # github.com/xanzy/ssh-agent v0.2.1
 github.com/xanzy/ssh-agent
+# go.mongodb.org/mongo-driver v1.3.3
+go.mongodb.org/mongo-driver/bson
+go.mongodb.org/mongo-driver/bson/bsoncodec
+go.mongodb.org/mongo-driver/bson/bsonoptions
+go.mongodb.org/mongo-driver/bson/bsonrw
+go.mongodb.org/mongo-driver/bson/bsontype
+go.mongodb.org/mongo-driver/bson/primitive
+go.mongodb.org/mongo-driver/x/bsonx/bsoncore
 # golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/cast5
@@ -223,7 +301,7 @@ golang.org/x/crypto/ssh/agent
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/knownhosts
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20200301022130-244492dfa37a
+# golang.org/x/net v0.0.0-20200513185701-a91f0712d120
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http/httpguts
@@ -235,7 +313,7 @@ golang.org/x/net/proxy
 # golang.org/x/oauth2 v0.0.0-20181106182150-f42d05182288
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527
+# golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows
@@ -244,6 +322,7 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
+golang.org/x/text/width
 # golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 golang.org/x/time/rate
 # google.golang.org/appengine v1.4.0
@@ -261,5 +340,5 @@ gopkg.in/square/go-jose.v2/json
 gopkg.in/square/go-jose.v2/jwt
 # gopkg.in/warnings.v0 v0.1.2
 gopkg.in/warnings.v0
-# gopkg.in/yaml.v2 v2.2.4
+# gopkg.in/yaml.v2 v2.3.0
 gopkg.in/yaml.v2
