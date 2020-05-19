@@ -167,7 +167,10 @@ func getReports() {
 							idNum, err := strconv.Atoi(matches[2])
 							check(err)
 							issue, err = git.GetIssue(projID, idNum);
-							check(err)
+							if err  != nil {
+								fmt.Printf("Error retrieving issue: %s", err)
+								continue
+							}
 
 							weight = issue.Weight
 
