@@ -20,7 +20,8 @@ import (
 
 var (
 	format string
-	date string
+	startDate string
+	endDate string
 	tmetricCmd = &cobra.Command{
 		Use:     "tmetric",
 		Short:   "Interact with GitLab",
@@ -66,7 +67,8 @@ func (r taskPerformanceRecord) More(other taskPerformanceRecord) (bool) {
 func init() {
 	mfcCmd.AddCommand(tmetricCmd)
 	tmetricCmd.Flags().StringVarP(&format, "format", "f", "md", "output format to use for performace records")
-	tmetricCmd.Flags().StringVarP(&date, "date", "d", "", "start date from which to query time entries")
+	tmetricCmd.Flags().StringVarP(&startDate, "start-date", "d", "", "start date from which to query time entries")
+	tmetricCmd.Flags().StringVarP(&endDate, "end-date", "e", "", "end date from which to query time entries")
 }
 
 func getReports() {
@@ -104,7 +106,7 @@ func getReports() {
 		projMap[p.PathWithNamespace] = p
 	}
 
-	silentPrint("Fetching TMetric Members...")
+	silentPrint("Fetching TMetric Members...\n")
 
 	// Get TMetric account scope seems to be the best way to get the list of members
 	resp, err := tmetric.Default.Accounts.AccountsGetAccountScope(params,  auth)
@@ -115,13 +117,20 @@ func getReports() {
 	for _, m := range scope.Members {
 		profileId := m.UserProfileID
 
-		dt, err := strfmt.ParseDateTime(date)
+		startDt, err := strfmt.ParseDateTime(startDate)
 		check(err)
+
+		endDt := strfmt.DateTime(time.Now())
+		if endDate != "" {
+			endDt, err = strfmt.ParseDateTime(startDate)
+			check(err)
+		}
 
 		params := time_entries.NewTimeEntriesGetTimeEntriesParams().
 			WithAccountID(TMETRIC_ACCOUNT_ID).
 			WithUserProfileID(profileId).
-			WithTimeRangeStartTime(&dt)
+			WithTimeRangeStartTime(&startDt).
+			WithTimeRangeEndTime(&endDt)
 
 		resp, err := tmetric.Default.TimeEntries.TimeEntriesGetTimeEntries(params, auth)
 		check(err)
