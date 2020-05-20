@@ -30,5 +30,4 @@ require (
 	gopkg.in/yaml.v2 v2.3.0
 )
 
-
-replace git.missionfocus.com/ours/libraries/go => git.missionfocus.com/ours/libraries/go.git v1.0.0
+replace git.missionfocus.com/ours/libraries/go => git.missionfocus.com/ours/libraries/go.git v1.1.0
