@@ -31,5 +31,4 @@ require (
 )
 
 
-// replace git.missionfocus.com/ours/libraries/go => git.missionfocus.com/ours/libraries/go.git v1.0.0
-replace git.missionfocus.com/ours/libraries/go => /opt/semapp/libraries/go
+replace git.missionfocus.com/ours/libraries/go => git.missionfocus.com/ours/libraries/go.git v1.0.0
