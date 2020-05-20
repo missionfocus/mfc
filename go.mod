@@ -3,7 +3,6 @@ module git.missionfocus.com/ours/code/tools/mfc
 go 1.13
 
 require (
-	git.missionfocus.com/ours/code/tools/tmetric-api v0.0.0
 	git.missionfocus.com/ours/libraries/go v0.0.0-00010101000000-000000000000
 	github.com/aws/aws-sdk-go v1.19.19
 	github.com/blang/semver v3.5.1+incompatible
@@ -31,6 +30,6 @@ require (
 	gopkg.in/yaml.v2 v2.3.0
 )
 
-replace git.missionfocus.com/ours/code/tools/tmetric-api => /opt/semapp/tools/tmetric-swagger
 
-replace git.missionfocus.com/ours/libraries/go => git.missionfocus.com/ours/libraries/go.git v1.0.0
+// replace git.missionfocus.com/ours/libraries/go => git.missionfocus.com/ours/libraries/go.git v1.0.0
+replace git.missionfocus.com/ours/libraries/go => /opt/semapp/libraries/go

@@ -10,9 +10,9 @@ import (
 	"time"
 
 	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
-	tmetric "git.missionfocus.com/ours/code/tools/tmetric-api/client"
-	"git.missionfocus.com/ours/code/tools/tmetric-api/client/accounts"
-	"git.missionfocus.com/ours/code/tools/tmetric-api/client/time_entries"
+	tmetric "git.missionfocus.com/ours/libraries/go/tmetric/client"
+	"git.missionfocus.com/ours/libraries/go/tmetric/client/accounts"
+	"git.missionfocus.com/ours/libraries/go/tmetric/client/time_entries"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	"github.com/spf13/cobra"
@@ -178,7 +178,7 @@ func getReports() {
 							check(err)
 							issue, err = git.GetIssue(projID, idNum)
 							if err != nil {
-								fmt.Printf("Error retrieving issue: %s", err)
+								fmt.Printf("Error retrieving issue: %s\n", err)
 								continue
 							}
 
