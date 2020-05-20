@@ -3,25 +3,26 @@ package main
 import (
 	"fmt"
 	"os"
-	"sort"
-	"time"
 	"regexp"
+	"sort"
 	"strconv"
 	"text/tabwriter"
-	"github.com/spf13/cobra"
-	"github.com/go-openapi/strfmt"
-	"github.com/xanzy/go-gitlab"
+	"time"
+
 	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
 	tmetric "git.missionfocus.com/ours/code/tools/tmetric-api/client"
 	"git.missionfocus.com/ours/code/tools/tmetric-api/client/accounts"
 	"git.missionfocus.com/ours/code/tools/tmetric-api/client/time_entries"
 	httptransport "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
+	"github.com/spf13/cobra"
+	"github.com/xanzy/go-gitlab"
 )
 
 var (
-	format string
-	startDate string
-	endDate string
+	format     string
+	startDate  string
+	endDate    string
 	tmetricCmd = &cobra.Command{
 		Use:     "tmetric",
 		Short:   "Interact with GitLab",
@@ -33,20 +34,20 @@ var (
 )
 
 const (
-	UTC = "2006-01-02T00:00:00.000Z"
+	UTC                = "2006-01-02T00:00:00.000Z"
 	TMETRIC_ACCOUNT_ID = 105432
 )
 
 type taskPerformanceRecord struct {
 	description string
-	url string
+	url         string
 	pointsSpent float64
-	weight int
-	skill int
-	score float64
+	weight      int
+	skill       int
+	score       float64
 }
 
-func (r taskPerformanceRecord) More(other taskPerformanceRecord) (bool) {
+func (r taskPerformanceRecord) More(other taskPerformanceRecord) bool {
 	more := false
 	if r.score > other.score {
 		more = true
@@ -93,7 +94,7 @@ func getReports() {
 	git := gl.New(glClient)
 
 	// Query for all projects
-	simpleQuery := true;
+	simpleQuery := true
 	opts := &gitlab.ListProjectsOptions{
 		Simple: &simpleQuery,
 	}
@@ -109,7 +110,7 @@ func getReports() {
 	silentPrint("Fetching TMetric Members...\n")
 
 	// Get TMetric account scope seems to be the best way to get the list of members
-	resp, err := tmetric.Default.Accounts.AccountsGetAccountScope(params,  auth)
+	resp, err := tmetric.Default.Accounts.AccountsGetAccountScope(params, auth)
 	check(err)
 
 	scope := resp.Payload
@@ -175,8 +176,8 @@ func getReports() {
 							var issue *gitlab.Issue = nil
 							idNum, err := strconv.Atoi(matches[2])
 							check(err)
-							issue, err = git.GetIssue(projID, idNum);
-							if err  != nil {
+							issue, err = git.GetIssue(projID, idNum)
+							if err != nil {
 								fmt.Printf("Error retrieving issue: %s", err)
 								continue
 							}
@@ -201,11 +202,11 @@ func getReports() {
 			} else {
 				record[ref] = taskPerformanceRecord{
 					description: desc,
-					url: url,
+					url:         url,
 					pointsSpent: points,
-					weight: weight,
-					skill: skill,
-					score: 0.0,
+					weight:      weight,
+					skill:       skill,
+					score:       0.0,
 				}
 			}
 		}

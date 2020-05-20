@@ -124,7 +124,7 @@ func (g *GitLab) ListAllProjectsWithRe(re *regexp.Regexp) ([]*gitlab.Project, er
 }
 
 func (g *GitLab) GetIssue(projID interface{}, issueID int) (*gitlab.Issue, error) {
-	issue, _, err := g.client.Issues.GetIssue(projID, issueID);
+	issue, _, err := g.client.Issues.GetIssue(projID, issueID)
 	if err != nil {
 		return nil, fmt.Errorf("Retrieving issue: %w", err)
 	}
