@@ -18,7 +18,7 @@ func init() {
 
 	mfcCmd.PersistentFlags().StringVar(&mfcVaultTokenFile, "token-file", defaultTokenPath, "path to vault token file")
 	mfcCmd.PersistentFlags().StringVar(&mfcAWSCredentialsPath, "aws-creds-file", defaultCredentialsPath, "path to AWS credentials file")
-	mfcCmd.PersistentFlags().BoolVarP(&mfcSilent, "silent", "s", false, "suppress output to stdout")
+	mfcCmd.PersistentFlags().BoolVar(&mfcSilent, "silent", false, "suppress output to stdout")
 }
 
 // Globals
