@@ -8,6 +8,8 @@ require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/frankban/quicktest v1.4.1 // indirect
 	github.com/go-git/go-git/v5 v5.0.0
+	github.com/go-openapi/runtime v0.19.15
+	github.com/go-openapi/strfmt v0.19.5
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/hcl v1.0.1-0.20180906183839-65a6292f0157 // indirect
@@ -25,7 +27,7 @@ require (
 	github.com/xanzy/go-gitlab v0.31.0
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
 	gopkg.in/square/go-jose.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/yaml.v2 v2.3.0
 )
 
-replace git.missionfocus.com/ours/libraries/go => git.missionfocus.com/ours/libraries/go.git v1.0.0
+replace git.missionfocus.com/ours/libraries/go => git.missionfocus.com/ours/libraries/go.git v1.1.0
