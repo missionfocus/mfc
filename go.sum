@@ -1,6 +1,6 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
-git.missionfocus.com/ours/libraries/go.git v1.1.0 h1:6q4OBpHBFj8awJZh457THZU8b75Tc7St4b54fBRYBe4=
-git.missionfocus.com/ours/libraries/go.git v1.1.0/go.mod h1:ZTXwXfm/36t5aZd7p6wIpQE5b2YbpBYnrPhkgrvC2Q8=
+git.missionfocus.com/ours/code/libraries/go.git v1.1.1 h1:iJIT0/5SsWwEIQ/SmGAA06OiSYzJ9PsJlAhD1BCeceg=
+git.missionfocus.com/ours/code/libraries/go.git v1.1.1/go.mod h1:X0V8Dapi+2thwnhVPMfIfRXpE5fLSARubfVZ8zq4gic=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/PuerkitoBio/purell v1.1.0/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/purell v1.1.1 h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tNFfI=
