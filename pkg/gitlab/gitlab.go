@@ -38,6 +38,16 @@ func (g *GitLab) CloneAll(projects []*gitlab.Project, directory string, progress
 			Progress: progress,
 		})
 		if err != nil {
+			if err.Error() == "repository already exists" {
+				fmt.Fprint(progress, "--> Repository exists, skipping\n")
+				continue
+			}
+
+			if err.Error() == "remote repository is empty" {
+				fmt.Fprint(progress, "--> Repository is empty, skipping\n")
+				continue
+			}
+
 			return fmt.Errorf("cloning repo: %w", err)
 		}
 	}
