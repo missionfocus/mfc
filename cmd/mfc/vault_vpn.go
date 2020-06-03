@@ -66,12 +66,6 @@ var vaultVPNInitCmd = &cobra.Command{
 			err = ioutil.WriteFile(path.Join(vaultVPNPath, vaultVPNGroup+"_down.scpt"), []byte(script), 0755)
 			check(err)
 
-			cmd := exec.Command("/usr/bin/defaults", "write", "net.tunnelblick.tunnelblick", vaultVPNGroup+"-resetPrimaryInterfaceAfterDisconnect", "-bool", "true")
-			out, err := cmd.CombinedOutput()
-			if err != nil {
-				fmt.Printf("%s %v\n", string(out), err)
-			}
-
 			fmt.Println("Make sure tunnelblick is present with `brew cask install tunnelblick`")
 			fmt.Println("Run `mfc vault vpn renew <ldap username>`")
 		case "linux":
@@ -119,6 +113,12 @@ var vaultVPNRenewCmd = &cobra.Command{
 		confFile := path.Join(vaultVPNPath, vaultVPNGroup+".ovpn")
 		oCmd := exec.Command("/usr/bin/open", confFile)
 		out, err := oCmd.CombinedOutput()
+		if err != nil {
+			fmt.Printf("%s %v\n", string(out), err)
+		}
+
+		oCmd = exec.Command("/usr/bin/defaults", "write", "net.tunnelblick.tunnelblick", vaultVPNGroup+"-resetPrimaryInterfaceAfterDisconnect", "-bool", "true")
+		out, err = oCmd.CombinedOutput()
 		if err != nil {
 			fmt.Printf("%s %v\n", string(out), err)
 		}
