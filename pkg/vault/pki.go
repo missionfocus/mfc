@@ -56,7 +56,7 @@ func (s *PKIIssueSecret) WriteChain(w io.Writer) error {
 }
 
 func (s *PKIIssueSecret) WritePrivateKey(w io.Writer) error {
-	_, err := io.WriteString(w, s.PrivateKey)
+	_, err := io.WriteString(w, s.PrivateKey+"\n")
 	if err != nil {
 		return errors.Wrap(err, "failed to write private key")
 	}
@@ -64,7 +64,7 @@ func (s *PKIIssueSecret) WritePrivateKey(w io.Writer) error {
 }
 
 func (s *PKIIssueSecret) WriteCertificate(w io.Writer) error {
-	_, err := io.WriteString(w, s.Certificate)
+	_, err := io.WriteString(w, s.Certificate+"\n")
 	if err != nil {
 		return errors.Wrap(err, "failed to write certificate")
 	}
