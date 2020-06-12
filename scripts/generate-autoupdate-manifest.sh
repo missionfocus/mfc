@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # Generates and uploads a manifest that points to the latest mfc version in S3.
 set -e
 
