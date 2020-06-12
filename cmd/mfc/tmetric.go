@@ -9,10 +9,10 @@ import (
 	"text/tabwriter"
 	"time"
 
-	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
 	tmetric "git.missionfocus.com/ours/code/libraries/go/tmetric/client"
 	"git.missionfocus.com/ours/code/libraries/go/tmetric/client/accounts"
 	"git.missionfocus.com/ours/code/libraries/go/tmetric/client/time_entries"
+	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	"github.com/spf13/cobra"
