@@ -90,6 +90,7 @@ publish:s3:
     - aws s3 cp $BINARIES_DIR/x86_64-linux/mfc s3://$BUCKET/$PREFIX/mfc_${CI_COMMIT_TAG}_linux
     - aws s3 cp $BINARIES_DIR/x86_64-darwin/mfc s3://$BUCKET/$PREFIX/mfc_${CI_COMMIT_TAG}_darwin
     - aws s3 cp $BINARIES_DIR/x86_64-windows/mfc.exe s3://$BUCKET/$PREFIX/mfc_${CI_COMMIT_TAG}_windows.exe
+    - ./scripts/generate-autoupdate-manifest.sh
 
 trigger:ci-images:
   stage: trigger
