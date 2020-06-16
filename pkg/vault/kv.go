@@ -1,12 +1,16 @@
 package vault
 
 import (
+	"path"
+
 	"github.com/hashicorp/go-multierror"
+	"github.com/hashicorp/vault/api"
 )
 
 const (
 	NPMBasePath   = "secret/data/ci/shared/npm"
 	MinioBasePath = "secret/data/ci/shared/minio"
+	UserBasePath  = "secret/data/user"
 )
 
 type KVItem struct {
@@ -94,4 +98,30 @@ func (v *vault) KVPutAll(items []KVItem) error {
 		}
 	}
 	return me.ErrorOrNil()
+}
+
+func (v *vault) KVUserGet(key string) (*api.Secret, error) {
+	self, err := v.lookupSelf()
+	if err != nil {
+		return nil, err
+	}
+
+	return v.Logical().Read(path.Join(UserBasePath, self, key))
+}
+
+func (v *vault) KVUserWrite(key string, data map[string]interface{}) (*api.Secret, error) {
+	self, err := v.lookupSelf()
+	if err != nil {
+		return nil, err
+	}
+
+	return v.Logical().Write(path.Join(UserBasePath, self, key), data)
+}
+
+func (v *vault) lookupSelf() (string, error) {
+	tok, err := v.Auth().Token().LookupSelf()
+	if err != nil {
+		return "", err
+	}
+	return tok.Data["display_name"].(string), nil
 }

@@ -1,14 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
-	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+
+	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 func init() {
@@ -19,8 +21,12 @@ func init() {
 	vaultKVCmd.AddCommand(vaultKVNPMCmd)
 	vaultKVCmd.AddCommand(vaultKVGetAllCmd)
 	vaultKVCmd.AddCommand(vaultKVPutAllCmd)
+	vaultKVCmd.AddCommand(vaultKVUserCmd)
 	vaultKVGPGCmd.AddCommand(vaultKVGpgImportCmd)
 	vaultKVNPMCmd.AddCommand(kvNPMAuthCmd)
+
+	vaultKVUserCmd.AddCommand(vaultKVUserGetCmd)
+	vaultKVUserCmd.AddCommand(vaultKVUserWriteCmd)
 
 	vaultKVAwsCmd.PersistentFlags().StringVarP(&vaultKVAwsProfileName, "profile", "p", "vault", "name of the profile")
 	vaultKVGpgImportCmd.PersistentFlags().BoolVar(&vaultKVGpgImportPrivate, "private", false, "import the pair's private key")
@@ -166,5 +172,59 @@ var kvNPMAuthCmd = &cobra.Command{
 			return
 		}
 		check(secret.UpdateNpmrc(vaultKVNPMRCPath))
+	},
+}
+
+var vaultKVUserCmd = &cobra.Command{
+	Use:   "user",
+	Short: "Interact with the user's personal namespace in Vault",
+}
+
+var vaultKVUserGetCmd = &cobra.Command{
+	Use:   "get <key>",
+	Short: "Get the value at the specified key",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		client, err := getVaultClientWithToken()
+		check(err)
+		v := vault.New(client)
+
+		secret, err := v.KVUserGet(args[0])
+		check(err)
+		if secret == nil {
+			check(fmt.Errorf("unknown key %s", args[0]))
+		}
+
+		check(json.NewEncoder(os.Stdout).Encode(secret.Data["data"]))
+	},
+}
+
+var vaultKVUserWriteExample = `
+	echo '{ "data": { "mysecret": "some secret data!" } }' | mfc vault kv user write mykey # Writes JSON data from stdin
+	mfc vault kv user write mykey mydata.json                                              # Writes JSON data from a file`
+
+var vaultKVUserWriteCmd = &cobra.Command{
+	Use:     "write <key> [file]",
+	Short:   "Write JSON data to the specified key",
+	Args:    cobra.RangeArgs(1, 2),
+	Example: vaultKVUserWriteExample,
+	Run: func(cmd *cobra.Command, args []string) {
+		client, err := getVaultClientWithToken()
+		check(err)
+		v := vault.New(client)
+
+		r := os.Stdin
+		if len(args) > 0 {
+			f, err := os.Open(args[1])
+			check(err)
+			defer f.Close()
+			r = f
+		}
+
+		data := make(map[string]interface{})
+		check(json.NewDecoder(r).Decode(&data))
+
+		_, err = v.KVUserWrite(args[0], data)
+		check(err)
 	},
 }

@@ -1,12 +1,9 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
 	"os"
-	"path/filepath"
-	"strings"
 
+	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
 	"github.com/spf13/cobra"
 	"github.com/xanzy/go-gitlab"
 )
@@ -25,21 +22,16 @@ var gitlabCmd = &cobra.Command{
 
 const gitlabBaseURL = "https://git.missionfocus.com"
 
-func getGitLabClient() (*gitlab.Client, error) {
+func getGitLabClient(vault vault.Vault) (*gitlab.Client, error) {
 	baseURLOpt := gitlab.WithBaseURL(gitlabBaseURL)
 	if token := os.Getenv("GITLAB_PAT"); token != "" {
 		return gitlab.NewClient(token, baseURLOpt)
 	}
 
-	tokenFile := filepath.Join(homeDir(), ".gitlab-pat")
-	_, err := os.Stat(tokenFile)
+	secret, err := vault.KVUserGet("gitlab")
 	if err != nil {
-		return nil, fmt.Errorf("failed to get GitLab client: %w", err)
+		return nil, err
 	}
 
-	txt, err := ioutil.ReadFile(tokenFile)
-	if err != nil {
-		return nil, fmt.Errorf("could not read GitLab token file: %w", err)
-	}
-	return gitlab.NewClient(strings.TrimSpace(string(txt)), baseURLOpt)
+	return gitlab.NewClient(secret.Data["token"].(string), baseURLOpt)
 }
