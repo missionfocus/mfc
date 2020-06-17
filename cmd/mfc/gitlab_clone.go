@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
+	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
@@ -35,7 +36,11 @@ var gitlabCloneCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Example: gitlabCloneExample,
 	Run: func(cmd *cobra.Command, args []string) {
-		client, err := getGitLabClient()
+		vClient, err := getVaultClientWithToken()
+		check(err)
+		v := vault.New(vClient)
+
+		client, err := getGitLabClient(v)
 		check(err)
 		gl := gitlab.New(client)
 

@@ -1,0 +1,44 @@
+#+TITLE: Personal KV Namespace
+
+MFC's Personal KV Namespace feature provides a secure place to store personal
+secrets. It also integrates with other MFC commands to provide automatic
+authentication with services such as GitLab and TMetric.
+
+* Storing and Retrieving Personal Secrets
+
+Two commands allow for manual storage and retrieval of secrets:
+
+- ~mfc vault kv user get <key>~ :: Retrieves the secret stored at ~key~ as JSON.
+- ~mfc vault kv user write <key> [file]~ :: Write JSON as a secret from either stdin
+  or the specified file.
+
+Secrets are stored in JSON format and typically consist of key-value string
+pairs, e.g:
+
+#+BEGIN_SRC json
+{
+    "username": "example",
+    "password": "mysecretpassword"
+}
+#+END_SRC
+
+The secrets are stored in Vault's KV engine under the path
+~secret/data/user/<username>/<key>~. All paths under
+~secret/data/user/<username>/*~ are accessible to the user only. This is
+enforced by the ~engineer.hcl~ policy in the Vault configuration repo.
+
+* Service Integration
+
+MFC will automatically pull credentials for Mission Focus services from the
+user's KV namespace when authenticating with those services. However, the
+credentials must be stored in the user's namespace before using this
+functionality. MFC currently provides two convenience commands for this as an
+alternative to writing the secrets manually.
+
+- ~mfc gitlab set-token <token>~ :: Writes the specified token to
+  ~secret/data/user/<username>/gitlab~
+- ~mfc tmetric set-token <token>~ :: Writes the specified token to
+  ~secret/data/user/<username>/tmetric~
+
+After successfully running these commands, all future GitLab or TMetric
+subcommands will authenticate using the provided credentials.

@@ -22,6 +22,8 @@ type Vault interface {
 	KvNPMAuth(key string) (*NPMSecret, error)
 	KVGetAll(key string) ([]KVItem, []*TreeNode)
 	KVPutAll(items []KVItem) error
+	KVUserGet(key string) (*api.Secret, error)
+	KVUserWrite(key string, data map[string]interface{}) (*api.Secret, error)
 
 	PKICreateFiles(secret *api.Secret, path string) error
 	PKIIssue(options *PKIIssueOptions) (*PKIIssueSecret, error)
