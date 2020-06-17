@@ -8,8 +8,8 @@ authentication with services such as GitLab and TMetric.
 
 Two commands allow for manual storage and retrieval of secrets:
 
-- ~mfc kv user get <key>~ :: Retrieves the secret stored at ~key~ as JSON.
-- ~mfc kv user write <key> [file]~ :: Write JSON as a secret from either stdin
+- ~mfc vault kv user get <key>~ :: Retrieves the secret stored at ~key~ as JSON.
+- ~mfc vault kv user write <key> [file]~ :: Write JSON as a secret from either stdin
   or the specified file.
 
 Secrets are stored in JSON format and typically consist of key-value string
