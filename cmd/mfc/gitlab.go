@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 
 	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
@@ -32,6 +33,10 @@ func getGitLabClient(vault vault.Vault) (*gitlab.Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	if secret == nil {
+		return nil, errors.New("missing GitLab PAT, you may need to set it with `mfc gitlab set-token`")
+	}
 
-	return gitlab.NewClient(secret.Data["token"].(string), baseURLOpt)
+	tok := secret.Data["data"].(map[string]interface{})["token"].(string)
+	return gitlab.NewClient(tok, baseURLOpt)
 }

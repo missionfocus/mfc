@@ -1,6 +1,7 @@
 package tmetric
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -59,11 +60,15 @@ func GetReports(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Wr
 	skillRe := regexp.MustCompile(`^skill::([0-9]+)`)
 
 	secret, err := vaultClient.KVUserGet("tmetric")
-	if secret == nil || err != nil {
-		return fmt.Errorf("could not retrieve TMetric token. You may need to set it with `mfc tmetric set-token`: %w", err)
+	if err != nil {
+		return err
+	}
+	if secret == nil {
+		return errors.New("could not retrieve TMetric token. You may need to set it with `mfc tmetric set-token`")
 	}
 
-	auth := httptransport.BearerToken(secret.Data["token"].(string))
+	tok := secret.Data["data"].(map[string]interface{})["token"].(string)
+	auth := httptransport.BearerToken(tok)
 	params := accounts.NewAccountsGetAccountScopeParams().WithAccountID(AccountID)
 
 	fmt.Fprintln(progress, "Fetching GL Projects...")
