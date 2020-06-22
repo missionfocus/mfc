@@ -50,6 +50,10 @@ func (r taskPerformanceRecord) More(other taskPerformanceRecord) bool {
 	return more
 }
 
+func TmetricAuth() {
+
+}
+
 func GetReports(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Writer, startDate string, endDate string, format string) error {
 	// Set up tabwriter for formatting output
 	w := new(tabwriter.Writer)
@@ -259,4 +263,148 @@ func GetReports(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Wr
 	}
 
 	return nil
+}
+
+
+// TODO
+func GetSummary(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Writer) error {
+
+	return nil
+}
+
+type tmetricScanner struct {
+
+}
+
+// TODO: Formatting
+func ScanAll (vaultClient vault.Vault, progress io.Writer) error {
+	// Set up tabwriter for formatting output
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 0, 8, 0, ' ', 0)
+
+	// Init regexps to get issue and MR info from paths
+
+	secret, err := vaultClient.KVUserGet("tmetric")
+	if err != nil {
+		return err
+	}
+	if secret == nil {
+		return errors.New("could not retrieve TMetric token. You may need to set it with `mfc tmetric set-token`")
+	}
+
+	tok := secret.Data["data"].(map[string]interface{})["token"].(string)
+	auth := httptransport.BearerToken(tok)
+	params := accounts.NewAccountsGetAccountScopeParams().WithAccountID(AccountID)
+
+	fmt.Fprintln(progress, "Fetching TMetric Members...")
+
+	// Get TMetric account scope seems to be the best way to get the list of members
+	resp, err := tmetric.Default.Accounts.AccountsGetAccountScope(params, auth)
+	if err != nil {
+		return err
+	}
+
+	scope := resp.Payload
+
+	for _, m := range scope.Members {
+		profileId := m.UserProfileID
+		if (m.UserProfile.UserName == "Mission Focus") { // #TODO Verify that Mission Focus` does not need to be reported.
+			continue
+		}
+		fmt.Printf("\n## %s\n\n", m.UserProfile.UserName)
+
+		// Check acceptable usernames
+		fmt.Print("Checking username... ")
+		if !Contains(acceptedUserNames, m.UserProfile.UserName) {
+			fmt.Println("Failed. Unable to find " + m.UserProfile.UserName + " in profile database (username was changed or does not exist).")
+		} else {
+			fmt.Println("Passed")
+		}
+
+		// DMB - We are checking times for the previous day.
+		startDt := strfmt.DateTime(time.Now().AddDate(0, 0 , -1))
+		endDt := strfmt.DateTime(time.Now().AddDate(0, 0 , -1))
+		params := time_entries.NewTimeEntriesGetTimeEntriesParams().
+			WithAccountID(AccountID).
+			WithUserProfileID(profileId).
+			WithTimeRangeStartTime(&startDt).
+			WithTimeRangeEndTime(&endDt)
+
+		resp, err := tmetric.Default.TimeEntries.TimeEntriesGetTimeEntries(params, auth)
+		if err != nil {
+			return err
+		}
+
+		timeEntries := resp.Payload
+
+		fmt.Print("Checking project names... ")
+		var totalWorkedHours time.Duration
+		var requiredHours = time.Duration(8)*time.Hour
+		projsPassed := true
+
+		for _, e := range timeEntries {
+			desc := e.Details.Description
+
+			// DMB - Checks if the project for each entry
+			if !Contains(acceptedProjects, e.ProjectName) {
+				projsPassed = false
+				fmt.Println("Failed. The entry " + desc + " by " + m.UserProfile.UserName + " has the invalid project of " + e.ProjectName)
+			}
+
+			// DMB - Summing up hours worked yesterday
+			start, err := time.Parse(time.RFC3339, e.StartTime.String())
+			if err != nil {
+				return err
+			}
+			end, err := time.Parse(time.RFC3339, e.EndTime.String())
+			if err != nil {
+				return err
+			}
+			duration := end.Sub(start)
+			totalWorkedHours = totalWorkedHours + duration
+		}
+		if (projsPassed) {
+			fmt.Println("Passed")
+		}
+
+		fmt.Print("Checking total worked hours... ")
+		if (totalWorkedHours < 0) { 	// DMB - A negative number (i.e. -2562043h23m16.854775808s) is thrown when someone has their clock still running.
+			fmt.Println("Failed. User is still logging hours.")
+		} else if (totalWorkedHours < requiredHours) {
+			fmt.Println("Failed. Total hours are less than 8 hours.")
+		} else { fmt.Println("Passed")}
+	}
+	return nil
+}
+
+// # TODO Load username from external file. Cannot see @maeick and @SYStover - Verify if they want to be added
+var acceptedUserNames = []string {
+	"Jacob Stover",
+	"Collin Day" ,
+	"Cam Cook",
+	"Eric Capito" ,
+	"Wei Zhu" ,
+	"John Kroeker",
+	"Matthew Smith",
+	"Casey Sault",
+	"Alexander Gronowski",
+	"Matthew Harbour",
+	"Arlo Parker",
+	"David Busey",
+	"Levi Paulk",
+	"Abraham Moshekh",
+	"Andrew Zaw",
+}
+
+// # TODO Load project names from external file
+var acceptedProjects = []string{"GDAC", "BD-EDM", "PTO", "Overhead"}
+
+// Contains tells whether A [array] contains S [String].
+func Contains(a []string, s string) bool {
+	for _, n := range a {
+		if s == n {
+			return true
+		}
+	}
+	return false
 }
