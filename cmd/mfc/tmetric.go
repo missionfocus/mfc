@@ -10,13 +10,14 @@ import (
 func init() {
 	mfcCmd.AddCommand(tmetricCmd)
 	tmetricCmd.AddCommand(tmetricSetTokenCmd)
-	tmetricCmd.AddCommand(tmPerform)
-	tmetricCmd.AddCommand(tmFind)
-	tmetricCmd.AddCommand(tmScan)
+	tmetricCmd.AddCommand(tmetricPerformanceCmd)
+	tmetricCmd.AddCommand(tmetricSummaryCommand)
+	tmetricCmd.AddCommand(tmetricScannerCommand)
 
-	tmPerform.Flags().StringVarP(&tmetricFormat, "format", "f", "md", "output format to use for performance records")
-	tmPerform.Flags().StringVarP(&tmetricStartDate, "start-date", "d", "", "start date from which to query time entries")
-	tmPerform.Flags().StringVarP(&tmetricEndDate, "end-date", "e", "", "end date from which to query time entries")
+	tmetricPerformanceCmd.Flags().StringVarP(&tmetricFormat, "format", "f", "md", "output format to use for performance records")
+	tmetricPerformanceCmd.Flags().StringVarP(&tmetricStartDate, "start-date", "d", "", "start date from which to query time entries")
+	tmetricPerformanceCmd.Flags().StringVarP(&tmetricEndDate, "end-date", "e", "", "end date from which to query time entries")
+	tmetricSummaryCommand.Flags().StringVarP(&tmetricPerson, "person", "p", "", "Insert MFM to search")
 }
 
 var tmetricCmd = &cobra.Command{
@@ -54,7 +55,7 @@ var (
 )
 
 // Prints Individual's performance records.
-var tmPerform = &cobra.Command{
+var tmetricPerformanceCmd = &cobra.Command{
 	Use:     "performance",
 	Short:   "Overview of all each individual's performance",
 	Aliases: []string{"perf"},
@@ -70,16 +71,35 @@ var tmPerform = &cobra.Command{
 	},
 }
 
+// For summarizing people or issues. (defaults to all if none)
+var (
+	tmetricPerson  	  string
+	gitlabIssueURL	  string
+)
+
+var tmetricSummaryCommand = &cobra.Command{
+	Use:     "summary",
+	Short:   "Summarize an Individual's hours",
+	Aliases: []string{"sum"},
+	Run: func(cmd *cobra.Command, args []string) {
+		vaultAPIClient, err := getVaultClientWithToken()
+		check(err)
+		vaultClient := vault.New(vaultAPIClient)
+
+		check(tmetric.GetPersonHoursSummary(vaultClient, os.Stdout, tmetricPerson))
+	},
+}
+
 // For pipeline to run each night to find errors in TMetric times.
-var tmScan = &cobra.Command{
-	Use:     "scan",
-	Short:   "Nightly TMetric Scan",
+var tmetricScannerCommand = &cobra.Command{
+	Use:     "scanner",
+	Short:   "Pipeline TMetric Scan",
 	Aliases: []string{"scan"},
 	Run: func(cmd *cobra.Command, args []string) {
 		vaultAPIClient, err := getVaultClientWithToken()
 		check(err)
 		vaultClient := vault.New(vaultAPIClient)
 
-		check(tmetric.ScanAll(vaultClient, os.Stdout))
+		check(tmetric.Scanner(vaultClient, os.Stdout))
 	},
 }

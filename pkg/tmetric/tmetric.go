@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -28,7 +29,6 @@ type taskPerformanceRecord struct {
 	url         string
 	pointsSpent float64
 	weight      int
-	skill       int
 	score       float64
 }
 
@@ -40,18 +40,12 @@ func (r taskPerformanceRecord) More(other taskPerformanceRecord) bool {
 		if r.weight > other.weight {
 			more = true
 		} else if r.weight == other.weight {
-			if r.skill > other.skill {
-				more = true
-			} else if (r.url != "") && (other.url == "") {
+			if (r.url != "") && (other.url == "") {
 				more = true
 			}
 		}
 	}
 	return more
-}
-
-func TmetricAuth() {
-
 }
 
 func GetReports(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Writer, startDate string, endDate string, format string) error {
@@ -61,7 +55,6 @@ func GetReports(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Wr
 
 	// Init regexps to get issue and MR info from paths
 	issueRe := regexp.MustCompile(`/(.*)/-/issues/([0-9]+)`)
-	skillRe := regexp.MustCompile(`^skill::([0-9]+)`)
 
 	secret, err := vaultClient.KVUserGet("tmetric")
 	if err != nil {
@@ -157,7 +150,6 @@ func GetReports(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Wr
 			desc := e.Details.Description
 			url := ""
 			weight := 0
-			skill := 0
 
 			if task := e.Details.ProjectTask; task != nil {
 				ref = task.RelativeIssueURL
@@ -183,16 +175,6 @@ func GetReports(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Wr
 							}
 
 							weight = issue.Weight
-
-							for _, l := range issue.Labels {
-								if matches := skillRe.FindStringSubmatch(l); len(matches) == 2 {
-									s, err := strconv.Atoi(matches[1])
-									if err != nil {
-										return err
-									}
-									skill = s
-								}
-							}
 						}
 					}
 				}
@@ -207,7 +189,6 @@ func GetReports(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Wr
 					url:         url,
 					pointsSpent: points,
 					weight:      weight,
-					skill:       skill,
 					score:       0.0,
 				}
 			}
@@ -215,7 +196,6 @@ func GetReports(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Wr
 
 		totalSpent := 0.0
 		totalWeight := 0
-		totalSkill := 0
 		totalScore := 0.0
 
 		switch format {
@@ -224,20 +204,19 @@ func GetReports(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Wr
 		case "org":
 			fmt.Printf("\n** %s\n\n", m.UserProfile.UserName)
 		}
-		fmt.Fprintln(w, "| Issue\t| Points Spent\t| Weight\t| Skill\t| Score \t|")
-		fmt.Fprintln(w, "|-\t|-\t|-\t|-\t|-\t|")
+		fmt.Fprintln(w, "| Issue\t| Points Spent\t| Weight\t| Score \t|")
+		fmt.Fprintln(w, "|-\t|-\t|-\t-|-\t|")
 
 		entries := make([]taskPerformanceRecord, 0, len(record))
 		for _, v := range record {
 			score := 0.0
 			if v.pointsSpent > 0 {
-				score = (float64(v.weight) / v.pointsSpent) * float64(v.skill)
+				score = (float64(v.weight) / v.pointsSpent)
 			}
 			v.score = score
 
 			totalSpent += v.pointsSpent
 			totalWeight += v.weight
-			totalSkill += v.skill
 			totalScore += score
 
 			entries = append(entries, v)
@@ -247,18 +226,18 @@ func GetReports(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Wr
 
 		for _, v := range entries {
 			if v.url == "" {
-				fmt.Fprintf(w, "| %s \t| %.2f \t| %d \t| %d \t| %.2f \t|\n", v.description, v.pointsSpent, v.weight, v.skill, v.score)
+				fmt.Fprintf(w, "| %s \t| %.2f \t| %d \t| %.2f \t|\n", v.description, v.pointsSpent, v.weight, v.score)
 			} else {
 				switch format {
 				case "md":
-					fmt.Fprintf(w, "| [%s](%s) \t| %.2f \t| %d \t| %d \t| %.2f \t|\n", v.description, v.url, v.pointsSpent, v.weight, v.skill, v.score)
+					fmt.Fprintf(w, "| [%s](%s) \t| %.2f \t| %d \t| %.2f \t|\n", v.description, v.url, v.pointsSpent, v.weight, v.score)
 				case "org":
-					fmt.Fprintf(w, "| [[%s][%s]] \t| %.2f \t| %d \t| %d \t| %.2f \t|\n", v.url, v.description, v.pointsSpent, v.weight, v.skill, v.score)
+					fmt.Fprintf(w, "| [[%s][%s]] \t| %.2f \t| %d \t| %.2f \t|\n", v.url, v.description, v.pointsSpent, v.weight, v.score)
 				}
 			}
 		}
 
-		fmt.Fprintf(w, "| Total\t| %.2f\t| %d\t| %d\t| %.2f \t|\n", totalSpent, totalWeight, totalSkill, totalScore)
+		fmt.Fprintf(w, "| Total\t| %.2f\t| %d\t | %.2f \t|\n", totalSpent, totalWeight, totalScore)
 		w.Flush()
 	}
 
@@ -266,18 +245,100 @@ func GetReports(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Wr
 }
 
 
-// TODO
-func GetSummary(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Writer) error {
+// Get summary of user
+func GetPersonHoursSummary(vaultClient vault.Vault, progress io.Writer, person string) error {
+	//Change data type from string to *models.AccountMember
+	// Set up tabwriter for formatting output
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 0, 8, 0, ' ', 0)
 
+
+	secret, err := vaultClient.KVUserGet("tmetric")
+	if err != nil {
+		return err
+	}
+	if secret == nil {
+		return errors.New("could not retrieve TMetric token. You may need to set it with `mfc tmetric set-token`")
+	}
+
+	tok := secret.Data["data"].(map[string]interface{})["token"].(string)
+	auth := httptransport.BearerToken(tok)
+	params := accounts.NewAccountsGetAccountScopeParams().WithAccountID(AccountID)
+
+	fmt.Fprintln(progress, "Fetching TMetric Member(s)...")
+
+	// Get TMetric account scope seems to be the best way to get the list of members
+	resp, err := tmetric.Default.Accounts.AccountsGetAccountScope(params, auth)
+	if err != nil {
+		return err
+	}
+
+	scope := resp.Payload
+	foundUser := false
+
+	for _, m := range scope.Members {
+		emailPointerValue := *m.UserProfile.Email
+		profileId := m.UserProfileID
+		if strings.ToLower(m.UserProfile.UserName) == strings.ToLower(person) {
+			foundUser = true
+		} else if emailPointerValue == person + "@missionfocus.com"  { // Accepts usernames (i.e maeick)
+			foundUser = true
+		} else {foundUser = false}
+		if foundUser {
+			calRange := []string{"day", "week", "month", "start date"}
+			for _, t := range calRange {
+				startDt := strfmt.DateTime(time.Now())
+				endDt := strfmt.DateTime(time.Now())
+				switch t {
+				case "day":
+					startDt = strfmt.DateTime(time.Now().AddDate(0, 0, -1).Add(time.Hour * -10))
+					endDt = strfmt.DateTime(time.Now().AddDate(0, 0, -1).Add(time.Hour * 13).Add(time.Minute * 59))
+				case "week":
+					startDt = strfmt.DateTime(time.Now().AddDate(0, 0, -7).Add(time.Hour * -10))
+					endDt = strfmt.DateTime(time.Now().AddDate(0, 0, -1).Add(time.Hour * 13).Add(time.Minute * 59))
+				case "month":
+					startDt = strfmt.DateTime(time.Now().AddDate(0, -1, 0).Add(time.Hour * -10))
+					endDt = strfmt.DateTime(time.Now().AddDate(0, 0, -1).Add(time.Hour * 13).Add(time.Minute * 59))
+				case "start date":
+					startDt = strfmt.DateTime(time.Now().AddDate(-100, -1, 0).Add(time.Hour * -10))
+					endDt = strfmt.DateTime(time.Now().AddDate(0, 0, -1).Add(time.Hour * 13).Add(time.Minute * 59))
+				}
+				params := time_entries.NewTimeEntriesGetTimeEntriesParams().
+					WithAccountID(AccountID).
+					WithUserProfileID(profileId).
+					WithTimeRangeStartTime(&startDt).
+					WithTimeRangeEndTime(&endDt)
+
+				resp, err := tmetric.Default.TimeEntries.TimeEntriesGetTimeEntries(params, auth)
+				if err != nil {
+					return err
+				}
+				timeEntries := resp.Payload
+
+				var totalWorkedHours time.Duration = 0
+				for _, e := range timeEntries {
+					start, err := time.Parse(time.RFC3339, e.StartTime.String())
+					if err != nil {
+						return err
+					}
+					end, err := time.Parse(time.RFC3339, e.EndTime.String())
+					if err != nil {
+						return err
+					}
+					duration := end.Sub(start)
+					totalWorkedHours = totalWorkedHours + duration
+				}
+				fmt.Println(m.UserProfile.UserName + "'s","time since", t, " is a total of ", totalWorkedHours)
+			}
+		}
+	}
 	return nil
 }
 
-type tmetricScanner struct {
-
-}
-
-// TODO: Formatting
-func ScanAll (vaultClient vault.Vault, progress io.Writer) error {
+/*
+ * An automated TMetric scanner to run each day at 10:00 am
+ */
+func Scanner (vaultClient vault.Vault, progress io.Writer) error {
 	// Set up tabwriter for formatting output
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 0, 8, 0, ' ', 0)
@@ -308,7 +369,7 @@ func ScanAll (vaultClient vault.Vault, progress io.Writer) error {
 
 	for _, m := range scope.Members {
 		profileId := m.UserProfileID
-		if (m.UserProfile.UserName == "Mission Focus") { // #TODO Verify that Mission Focus` does not need to be reported.
+		if m.UserProfile.UserName == "Mission Focus" {
 			continue
 		}
 		fmt.Printf("\n## %s\n\n", m.UserProfile.UserName)
@@ -322,8 +383,10 @@ func ScanAll (vaultClient vault.Vault, progress io.Writer) error {
 		}
 
 		// DMB - We are checking times for the previous day.
-		startDt := strfmt.DateTime(time.Now().AddDate(0, 0 , -1))
-		endDt := strfmt.DateTime(time.Now().AddDate(0, 0 , -1))
+		// This is expected to run at 10:00 AM each day; start time = 12:00 AM; end time = 11:59 PM.
+		startDt := strfmt.DateTime(time.Now().AddDate(0, 0 , -1).Add(time.Hour * -10)) // Start time = 12:00 AM
+		endDt := strfmt.DateTime(time.Now().AddDate(0, 0 , -1).Add(time.Hour * 13).Add(time.Minute * 59)) // End Time = 11:59 PM
+		//fmt.Println(startDt, endDt)
 		params := time_entries.NewTimeEntriesGetTimeEntriesParams().
 			WithAccountID(AccountID).
 			WithUserProfileID(profileId).
@@ -363,21 +426,28 @@ func ScanAll (vaultClient vault.Vault, progress io.Writer) error {
 			duration := end.Sub(start)
 			totalWorkedHours = totalWorkedHours + duration
 		}
-		if (projsPassed) {
+		if projsPassed {
 			fmt.Println("Passed")
 		}
-
 		fmt.Print("Checking total worked hours... ")
-		if (totalWorkedHours < 0) { 	// DMB - A negative number (i.e. -2562043h23m16.854775808s) is thrown when someone has their clock still running.
-			fmt.Println("Failed. User is still logging hours.")
-		} else if (totalWorkedHours < requiredHours) {
-			fmt.Println("Failed. Total hours are less than 8 hours.")
+
+		if totalWorkedHours < 0 { 	// DMB - A negative number (i.e. -2562043h23m16.854775808s) is thrown when someone has their clock still running.
+			fmt.Println("Error. User is still logging hours.")
+		} else if totalWorkedHours < requiredHours {
+			fmt.Print(totalWorkedHours)
+			if totalWorkedHours < time.Duration(7)*time.Hour + time.Duration(30)*time.Minute { // If an employee has less than 7.5 hrs
+				fmt.Println("Failed. Total hours is less than 7 hours and 30 minutes.")
+			} else if totalWorkedHours < time.Duration(8)*time.Hour + time.Duration(30)*time.Minute {
+				fmt.Println("Failed. Total hours is MORE than 8 hours and 30 minutes.")
+			} else {
+				fmt.Println("Warning. Total hours are less than 8 hours.")
+			}
 		} else { fmt.Println("Passed")}
 	}
 	return nil
 }
 
-// # TODO Load username from external file. Cannot see @maeick and @SYStover - Verify if they want to be added
+// # TODO Load usernames from external file. Cannot see @maeick and @SYStover - Verify if they want to be added
 var acceptedUserNames = []string {
 	"Jacob Stover",
 	"Collin Day" ,
