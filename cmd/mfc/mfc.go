@@ -33,6 +33,13 @@ var (
 	mfcSilent             bool
 )
 
+const mfcExample = `
+  mfc config completion -h       # Set up mfc auto completion for your shell
+  mfc vault auth ldap <username> # Renew vault-token through LDAP credentials
+  mfc vault aws -h               # See options for AWS 
+  mfc vault macro minio          # Set up minio authentication
+  mfc vault crypt -h             # See usage for encrypting, and decrypting messages`
+
 var mfcCmd = &cobra.Command{
 	Use: "mfc",
 	Version: func() string {
@@ -41,7 +48,8 @@ var mfcCmd = &cobra.Command{
 		}
 		return version
 	}(),
-	Short: "Mission Focus Control CLI",
+	Short:   "Mission Focus Control CLI",
+	Example: mfcExample,
 }
 
 func main() {

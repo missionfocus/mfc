@@ -5,7 +5,7 @@ set -e
 CI_COMMIT_TAG=${CI_COMMIT_TAG:=0.0.0}
 BUCKET=${BUCKET:=public.missionfocus.com}
 PREFIX=${PREFIX:=mfc}
-S3_WEBSITE_ENDPOINT=http://$BUCKET.s3-website-us-east-1.amazonaws.com
+S3_WEBSITE_ENDPOINT=http://${BUCKET}.s3-website-us-east-1.amazonaws.com
 
 mkdir -p ./scripts/files
 cat << EOF > ./scripts/files/manifest.yaml

@@ -41,9 +41,14 @@ var (
 	configCompletionWriteToFile bool
 )
 
+const configDocsExample = `
+  mfc docs        # Generate documentation for mfc in markdown format
+  mfc docs -f man # Generate documentation for mfc in man format`
+
 var configDocsCmd = &cobra.Command{
-	Use:   "docs",
-	Short: "Generate documentation for mfc",
+	Use:     "docs",
+	Short:   "Generate documentation for mfc",
+	Example: configDocsExample,
 	Run: func(cmd *cobra.Command, args []string) {
 		check(os.MkdirAll(configDocsPath, 0700))
 		switch configDocsFormat {
@@ -61,9 +66,15 @@ var configDocsCmd = &cobra.Command{
 	},
 }
 
+const configCompletionExample = `
+  mfc config completion -w              # Save autocompletion for bash
+  mfc config completion -s oh-my-zsh -w # Save autocompletion files for oh-my-zsh
+  mfc config completion -s zsh -w       # Save autocompletion files for zsh`
+
 var configCompletionCmd = &cobra.Command{
-	Use:   "completion",
-	Short: "Generate completion scripts for mfc",
+	Use:     "completion",
+	Short:   "Generate completion scripts for mfc",
+	Example: configCompletionExample,
 	Run: func(cmd *cobra.Command, args []string) {
 		switch configCompletionShell {
 		case "bash", "zsh":
@@ -78,7 +89,7 @@ var configCompletionCmd = &cobra.Command{
 					check(zsh.Wrap(mfcCmd).GenZshCompletionFile(completionsFile))
 				}
 				rcFile := path.Join(homeDir(), "."+configCompletionShell+"rc")
-				fmt.Printf("For first run:\n`echo . %s >> %s`.\n\n", completionsFile, rcFile)
+				fmt.Printf("For first run:\necho . %s >> %s\n\n", completionsFile, rcFile)
 			} else {
 				switch configCompletionShell {
 				case "bash":

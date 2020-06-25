@@ -21,9 +21,14 @@ var (
 	vaultCryptRecipient string
 )
 
+const vaultCryptExample = `
+  echo "String to encrypt" | mfc vault crypt -r <recipient> # Encrypt string for recipient specified.
+  echo "vault:v1:encryptedString" | mfc vault crypt -d      # Decrypt vault encrypted string intended for myself.`
+
 var vaultCryptCmd = &cobra.Command{
 	Use:   "crypt [file]",
 	Short: "Encrypt and decrypt secrets",
+	Example: vaultCryptExample,
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		v, err := getVaultClientWithToken()

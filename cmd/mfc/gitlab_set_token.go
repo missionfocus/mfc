@@ -9,10 +9,14 @@ func init() {
 	gitlabCmd.AddCommand(gitLabSetTokenCmd)
 }
 
+const gitlabSetTokenExample = `
+  mfc gitlab set-token <gitlab user api token> # Upload your gitlab pat token to Mission Focus vault`
+
 var gitLabSetTokenCmd = &cobra.Command{
-	Use:   "set-token <token>",
-	Short: "Sets the GitLab Personal Access Token that will be used to authenticate with GitLab",
-	Args:  cobra.ExactArgs(1),
+	Use:     "set-token <token>",
+	Short:   "Sets the GitLab Personal Access Token that will be used to authenticate with GitLab",
+	Example: gitlabSetTokenExample,
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getVaultClientWithToken()
 		check(err)

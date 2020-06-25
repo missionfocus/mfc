@@ -28,9 +28,15 @@ var (
 	genPasswordShouldCapitalize bool
 )
 
+const genPasswordExample = `
+  mfc gen password                  # Generates string with randomized dictionary words in the format of Aa-Bb-Cc-Dd-Ee-1234
+  mfc gen password -w 4 -s "_" -d 6 # Generates string with randomized dictionary words in the format of Aa_Bb_Cc_Dd-12345
+`
+
 var genPasswordCmd = &cobra.Command{
-	Use:   "password",
-	Short: "Generate a password using the Diceware algorithm",
+	Use:     "password",
+	Short:   "Generate a password using the Diceware algorithm",
+	Example: genPasswordExample,
 	Run: func(cmd *cobra.Command, args []string) {
 		pwGen, err := gen.NewPassword()
 		check(err)
