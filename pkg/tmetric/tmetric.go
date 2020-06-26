@@ -244,14 +244,9 @@ func GetReports(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Wr
 	return nil
 }
 
-
-// Get summary of user
 func GetPersonHoursSummary(vaultClient vault.Vault, progress io.Writer, person string) error {
-	//Change data type from string to *models.AccountMember
-	// Set up tabwriter for formatting output
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 0, 8, 0, ' ', 0)
-
 
 	secret, err := vaultClient.KVUserGet("tmetric")
 	if err != nil {
@@ -267,7 +262,6 @@ func GetPersonHoursSummary(vaultClient vault.Vault, progress io.Writer, person s
 
 	fmt.Fprintln(progress, "Fetching TMetric Member(s)...")
 
-	// Get TMetric account scope seems to be the best way to get the list of members
 	resp, err := tmetric.Default.Accounts.AccountsGetAccountScope(params, auth)
 	if err != nil {
 		return err
@@ -277,29 +271,28 @@ func GetPersonHoursSummary(vaultClient vault.Vault, progress io.Writer, person s
 	foundUser := false
 
 	for _, m := range scope.Members {
+		//emailPointerValue enables username (i.e. @maeick)
 		emailPointerValue := *m.UserProfile.Email
 		profileId := m.UserProfileID
-		if strings.ToLower(m.UserProfile.UserName) == strings.ToLower(person) {
-			foundUser = true
-		} else if emailPointerValue == person + "@missionfocus.com"  { // Accepts usernames (i.e maeick)
+		if person == "" ||  strings.ToLower(m.UserProfile.UserName) == strings.ToLower(person) || emailPointerValue == person + "@missionfocus.com"  {
 			foundUser = true
 		} else {foundUser = false}
 		if foundUser {
-			calRange := []string{"day", "week", "month", "start date"}
+			calRange := []string{"past day", "week", "month", "lifetime"}
 			for _, t := range calRange {
 				startDt := strfmt.DateTime(time.Now())
 				endDt := strfmt.DateTime(time.Now())
 				switch t {
-				case "day":
+				case "past day":
 					startDt = strfmt.DateTime(time.Now().AddDate(0, 0, -1).Add(time.Hour * -10))
 					endDt = strfmt.DateTime(time.Now().AddDate(0, 0, -1).Add(time.Hour * 13).Add(time.Minute * 59))
 				case "week":
-					startDt = strfmt.DateTime(time.Now().AddDate(0, 0, -7).Add(time.Hour * -10))
+					startDt = strfmt.DateTime(time.Now().AddDate(0, 0, -5).Add(time.Hour * -10))
 					endDt = strfmt.DateTime(time.Now().AddDate(0, 0, -1).Add(time.Hour * 13).Add(time.Minute * 59))
 				case "month":
 					startDt = strfmt.DateTime(time.Now().AddDate(0, -1, 0).Add(time.Hour * -10))
 					endDt = strfmt.DateTime(time.Now().AddDate(0, 0, -1).Add(time.Hour * 13).Add(time.Minute * 59))
-				case "start date":
+				case "lifetime":
 					startDt = strfmt.DateTime(time.Now().AddDate(-100, -1, 0).Add(time.Hour * -10))
 					endDt = strfmt.DateTime(time.Now().AddDate(0, 0, -1).Add(time.Hour * 13).Add(time.Minute * 59))
 				}
@@ -328,22 +321,16 @@ func GetPersonHoursSummary(vaultClient vault.Vault, progress io.Writer, person s
 					duration := end.Sub(start)
 					totalWorkedHours = totalWorkedHours + duration
 				}
-				fmt.Println(m.UserProfile.UserName + "'s","time since", t, " is a total of ", totalWorkedHours)
+				fmt.Println(m.UserProfile.UserName + "'s time this", t, "is a total of ", totalWorkedHours)
 			}
 		}
 	}
 	return nil
 }
 
-/*
- * An automated TMetric scanner to run each day at 10:00 am
- */
 func Scanner (vaultClient vault.Vault, progress io.Writer) error {
-	// Set up tabwriter for formatting output
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 0, 8, 0, ' ', 0)
-
-	// Init regexps to get issue and MR info from paths
 
 	secret, err := vaultClient.KVUserGet("tmetric")
 	if err != nil {
@@ -359,7 +346,6 @@ func Scanner (vaultClient vault.Vault, progress io.Writer) error {
 
 	fmt.Fprintln(progress, "Fetching TMetric Members...")
 
-	// Get TMetric account scope seems to be the best way to get the list of members
 	resp, err := tmetric.Default.Accounts.AccountsGetAccountScope(params, auth)
 	if err != nil {
 		return err
@@ -374,7 +360,6 @@ func Scanner (vaultClient vault.Vault, progress io.Writer) error {
 		}
 		fmt.Printf("\n## %s\n\n", m.UserProfile.UserName)
 
-		// Check acceptable usernames
 		fmt.Print("Checking username... ")
 		if !Contains(acceptedUserNames, m.UserProfile.UserName) {
 			fmt.Println("Failed. Unable to find " + m.UserProfile.UserName + " in profile database (username was changed or does not exist).")
@@ -382,11 +367,9 @@ func Scanner (vaultClient vault.Vault, progress io.Writer) error {
 			fmt.Println("Passed")
 		}
 
-		// DMB - We are checking times for the previous day.
-		// This is expected to run at 10:00 AM each day; start time = 12:00 AM; end time = 11:59 PM.
+		// startDt/startDt test expected be at 10:00 AM each day; making start time = 12:00 AM and end time = 11:59 PM.
 		startDt := strfmt.DateTime(time.Now().AddDate(0, 0 , -1).Add(time.Hour * -10)) // Start time = 12:00 AM
 		endDt := strfmt.DateTime(time.Now().AddDate(0, 0 , -1).Add(time.Hour * 13).Add(time.Minute * 59)) // End Time = 11:59 PM
-		//fmt.Println(startDt, endDt)
 		params := time_entries.NewTimeEntriesGetTimeEntriesParams().
 			WithAccountID(AccountID).
 			WithUserProfileID(profileId).
@@ -408,13 +391,11 @@ func Scanner (vaultClient vault.Vault, progress io.Writer) error {
 		for _, e := range timeEntries {
 			desc := e.Details.Description
 
-			// DMB - Checks if the project for each entry
 			if !Contains(acceptedProjects, e.ProjectName) {
 				projsPassed = false
 				fmt.Println("Failed. The entry " + desc + " by " + m.UserProfile.UserName + " has the invalid project of " + e.ProjectName)
 			}
 
-			// DMB - Summing up hours worked yesterday
 			start, err := time.Parse(time.RFC3339, e.StartTime.String())
 			if err != nil {
 				return err
@@ -430,9 +411,8 @@ func Scanner (vaultClient vault.Vault, progress io.Writer) error {
 			fmt.Println("Passed")
 		}
 		fmt.Print("Checking total worked hours... ")
-
-		if totalWorkedHours < 0 { 	// DMB - A negative number (i.e. -2562043h23m16.854775808s) is thrown when someone has their clock still running.
-			fmt.Println("Error. User is still logging hours.")
+		if totalWorkedHours < 0 {
+			fmt.Println("Critical Error! User is still logging hours.")
 		} else if totalWorkedHours < requiredHours {
 			fmt.Print(totalWorkedHours)
 			if totalWorkedHours < time.Duration(7)*time.Hour + time.Duration(30)*time.Minute { // If an employee has less than 7.5 hrs
@@ -447,7 +427,7 @@ func Scanner (vaultClient vault.Vault, progress io.Writer) error {
 	return nil
 }
 
-// # TODO Load usernames from external file. Cannot see @maeick and @SYStover - Verify if they want to be added
+// # TODO Load usernames from external file.
 var acceptedUserNames = []string {
 	"Jacob Stover",
 	"Collin Day" ,

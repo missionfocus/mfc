@@ -11,13 +11,13 @@ func init() {
 	mfcCmd.AddCommand(tmetricCmd)
 	tmetricCmd.AddCommand(tmetricSetTokenCmd)
 	tmetricCmd.AddCommand(tmetricPerformanceCmd)
-	tmetricCmd.AddCommand(tmetricSummaryCommand)
+	tmetricCmd.AddCommand(tmetricHoursCommand)
 	tmetricCmd.AddCommand(tmetricScannerCommand)
 
 	tmetricPerformanceCmd.Flags().StringVarP(&tmetricFormat, "format", "f", "md", "output format to use for performance records")
 	tmetricPerformanceCmd.Flags().StringVarP(&tmetricStartDate, "start-date", "d", "", "start date from which to query time entries")
 	tmetricPerformanceCmd.Flags().StringVarP(&tmetricEndDate, "end-date", "e", "", "end date from which to query time entries")
-	tmetricSummaryCommand.Flags().StringVarP(&tmetricPerson, "person", "p", "", "Insert MFM to search")
+	tmetricHoursCommand.Flags().StringVarP(&tmetricPerson, "person", "p", "", "Insert MFM to search")
 }
 
 var tmetricCmd = &cobra.Command{
@@ -44,17 +44,13 @@ var tmetricSetTokenCmd = &cobra.Command{
 	},
 }
 
-/*
- * Subcommands
- */
-
 var (
 	tmetricFormat    string
 	tmetricStartDate string
 	tmetricEndDate   string
 )
 
-// Prints Individual's performance records.
+// tmetricPerformanceCmd prints MFM's performance records.
 var tmetricPerformanceCmd = &cobra.Command{
 	Use:     "performance",
 	Short:   "Overview of all each individual's performance",
@@ -71,16 +67,15 @@ var tmetricPerformanceCmd = &cobra.Command{
 	},
 }
 
-// For summarizing people or issues. (defaults to all if none)
 var (
 	tmetricPerson  	  string
 	gitlabIssueURL	  string
 )
 
-var tmetricSummaryCommand = &cobra.Command{
-	Use:     "summary",
+var tmetricHoursCommand = &cobra.Command{
+	Use:     "hours",
 	Short:   "Summarize an Individual's hours",
-	Aliases: []string{"sum"},
+	Aliases: []string{"hrs"},
 	Run: func(cmd *cobra.Command, args []string) {
 		vaultAPIClient, err := getVaultClientWithToken()
 		check(err)
@@ -90,7 +85,6 @@ var tmetricSummaryCommand = &cobra.Command{
 	},
 }
 
-// For pipeline to run each night to find errors in TMetric times.
 var tmetricScannerCommand = &cobra.Command{
 	Use:     "scanner",
 	Short:   "Pipeline TMetric Scan",
