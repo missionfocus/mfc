@@ -16,9 +16,13 @@ func init() {
 	vaultSSHCmd.AddCommand(vaultSSHCACmd)
 }
 
+const vaultSSHSignUserExample = `
+  mfc vault ssh sign # Sign current users ssh key`
+
 var vaultSSHCmd = &cobra.Command{
 	Use:   "ssh",
 	Short: "Interact with Vault's SSH engine",
+	Example: vaultSSHSignUserExample,
 }
 
 var vaultSSHSignUserCmd = &cobra.Command{

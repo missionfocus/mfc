@@ -25,14 +25,20 @@ var (
 )
 
 var vaultAWSCmd = &cobra.Command{
-	Use:   "aws",
-	Short: "Interact Vault's AWS secrets engine",
+	Use:     "aws",
+	Short:   "Interact Vault's AWS secrets engine",
+	Example: vaultAWSListRolesExample + vaultAWSIssueExample,
 }
 
+const vaultAWSIssueExample = `
+  mfc vault aws issue missionfocus engineer # Issues credentials for a engineer role under missionfocus 
+  mfc vault aws issue sandbox engineer      # Issues credentials for a engineer role under sandbox`
+
 var vaultAWSIssueCmd = &cobra.Command{
-	Use:   "issue <account> <role>",
-	Short: "Issue AWS credentials for the specified account and role",
-	Args:  cobra.ExactArgs(2),
+	Use:     "issue <account> <role>",
+	Short:   "Issue AWS credentials for the specified account and role",
+	Example: vaultAWSIssueExample,
+	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		account := args[0]
 		role := args[1]
@@ -65,10 +71,15 @@ var vaultAWSIssueCmd = &cobra.Command{
 	},
 }
 
+const vaultAWSListRolesExample = `
+  mfc vault aws list-roles missionfocus     # List available roles under missionfocus
+  mfc vault aws list-roles sandbox          # List available roles under sandbox`
+
 var vaultAWSListRolesCmd = &cobra.Command{
-	Use:   "list-roles <account>",
-	Short: "List available roles for the specified account",
-	Args:  cobra.ExactArgs(1),
+	Use:     "list-roles <account>",
+	Short:   "List available roles for the specified account",
+	Example: vaultAWSListRolesExample,
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getVaultClientWithToken()
 		check(err)

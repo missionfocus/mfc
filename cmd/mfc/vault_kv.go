@@ -40,10 +40,13 @@ var vaultKVCmd = &cobra.Command{
 	Short: "Interact with Vault's Key/Value engine",
 }
 
+const vaultKVListAllExample = `
+	mfc vault kv listall /secret/user/ldap-<user>/        # Lists all accessible keys under specified K/V engine key`
+
 var vaultKVListAllCmd = &cobra.Command{
 	Use:     "listall <key>",
 	Short:   "Lists all keys under the specified K/V engine key. Key must end with `/`",
-	Example: "  listall secret/\tLists all keys under the default K/V secrets engine",
+	Example: vaultKVListAllExample,
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getVaultClientWithToken()
@@ -57,10 +60,14 @@ var vaultKVListAllCmd = &cobra.Command{
 	},
 }
 
+const vaultKVGetAllExample = `
+	mfc vault kv getall /secret/data/user/ldap-<username>/ # Gets recursive listing of available data`
+
 var vaultKVGetAllCmd = &cobra.Command{
-	Use:   "getall <key>",
-	Short: "Recursively gets the data for all keys under the specified path as YAML",
-	Args:  cobra.ExactArgs(1),
+	Use:     "getall <key>",
+	Short:   "Recursively gets the data for all keys under the specified path as YAML",
+	Example: vaultKVGetAllExample,
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getVaultClientWithToken()
 		check(err)
@@ -80,10 +87,14 @@ var vaultKVGetAllCmd = &cobra.Command{
 	},
 }
 
+const vaultPutAllExample = `
+	mfc vault kv putall ./key.yml # Gets JSON data from a file`
+
 var vaultKVPutAllCmd = &cobra.Command{
-	Use:   "putall <file>",
-	Short: "Puts all keys in the specified YAML file into the KV engine",
-	Args:  cobra.ExactArgs(1),
+	Use:     "putall <file>",
+	Short:   "Puts all keys in the specified YAML file into the KV engine",
+	Example: vaultPutAllExample,
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getVaultClientWithToken()
 		check(err)
@@ -102,10 +113,15 @@ var vaultKVPutAllCmd = &cobra.Command{
 
 var vaultKVAwsProfileName string
 
+const vaultKVAwsExample = `
+	mf-vault aws issue missionfocus engineer # Sets npm fontawsome credentials
+	mf-vault aws issue sandbox engineer      # Sets npm fontawsome credentials`
+
 var vaultKVAwsCmd = &cobra.Command{
-	Use:   "aws <path>",
-	Short: "Read the secret at `path` as AWS credentials",
-	Args:  cobra.ExactArgs(1),
+	Use:     "aws <path>",
+	Short:   "Read the secret at `path` as AWS credentials",
+	Example: vaultKVAwsExample,
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 
@@ -155,10 +171,16 @@ var (
 	vautlKVNPMStdout bool
 )
 
+const vaultNPMAuthExample = `
+	mfc vault kv npm auth fontawsome -p $HOME/.npmrc  # Sets npm fontawsome credentials
+	mfc vault kv npm auth nexus -p $HOME/.npmrc       # Sets npm fontawsome credentials
+	mfc vault kv npm auth fortawsome  -p $HOME/.npmrc # Sets fortawsome credentials`
+
 var kvNPMAuthCmd = &cobra.Command{
-	Use:   "auth <registry>",
-	Short: "Update .npmrc with authentication data from Vault",
-	Args:  cobra.ExactArgs(1),
+	Use:     "auth <registry>",
+	Short:   "Update .npmrc with authentication data from Vault",
+	Example: vaultNPMAuthExample,
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getVaultClientWithToken()
 		check(err)
@@ -180,10 +202,14 @@ var vaultKVUserCmd = &cobra.Command{
 	Short: "Interact with the user's personal namespace in Vault",
 }
 
+const vaultKVUserGetExample = `
+	mfc vault kv user get gitlab | jq -r '.token' # Gets value for a key`
+
 var vaultKVUserGetCmd = &cobra.Command{
-	Use:   "get <key>",
-	Short: "Get the value at the specified key",
-	Args:  cobra.ExactArgs(1),
+	Use:     "get <key>",
+	Short:   "Get the value at the specified key",
+	Example: vaultKVUserGetExample,
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getVaultClientWithToken()
 		check(err)

@@ -19,8 +19,9 @@ func init() {
 }
 
 var vaultAuthCmd = &cobra.Command{
-	Use:   "auth",
-	Short: "Authenticate with Vault",
+	Use:     "auth",
+	Short:   "Authenticate with Vault",
+	Example: vaultAuthExample,
 }
 
 var AppRoleCredentialsError = errors.New("both VAULT_ROLE_ID and VAULT_SECRET_ID must be set or passed as arguments to use AppRole authentication")
@@ -60,10 +61,15 @@ var vaultAuthApproleCmd = &cobra.Command{
 	},
 }
 
+const vaultAuthExample = `
+  mfc vault auth ldap                       # Authenticate with ldap with prompts for username & password
+  mfc vault auth ldap <username>            # Authenticate with ldap by passing in username`
+
 var vaultAuthLDAPCmd = &cobra.Command{
-	Use:   "ldap [username] [password]",
-	Short: "Authenticate to Vault using LDAP credentials",
-	Args:  cobra.MaximumNArgs(2),
+	Use:     "ldap [username] [password]",
+	Short:   "Authenticate to Vault using LDAP credentials",
+	Example: vaultAuthExample,
+	Args:    cobra.MaximumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		switch len(args) {
 		case 0:

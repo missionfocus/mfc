@@ -32,9 +32,13 @@ var vaultPKICmd = &cobra.Command{
 
 var vaultPKICreateFilesDir string
 
+const vaultPKICreateFileExample = `
+  mfc vault pki create-files pki.json # Reads in a json formatted file`
+
 var vaultPKICreateFilesCmd = &cobra.Command{
 	Use:   "create-files [filename]",
 	Short: "Parse a Vault PKI secret in JSON format and create certificate files",
+	Example: vaultPKICreateFileExample,
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		r := os.Stdin
@@ -63,9 +67,13 @@ var (
 	vaultPKIIssueWrite  string
 )
 
+const vaultPKIIssueExample = `
+  mfc vault pki issue <example>.missionfocus.com --ttl 31556952 -w ./ # Generate pki certificate for example host with a ttl of one year to current dir`
+
 var vaultPKIIssueCmd = &cobra.Command{
 	Use:   "issue <common name>",
 	Short: "Issue a new certificate signed by the Vault CA for the specified CN",
+	Example: vaultPKIIssueExample,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getVaultClientWithToken()
@@ -96,9 +104,13 @@ var vaultPKIIssueCmd = &cobra.Command{
 	},
 }
 
+const vaultPKICAExample = `
+  mfc vault pki ca --dir ./ # Get the vault CA certificate`
+
 var vaultPKICACmd = &cobra.Command{
 	Use:   "ca",
 	Short: "Get the CA certificate of the Vault CA",
+	Example: vaultPKICAExample,
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getVaultClientWithToken()
 		check(err)

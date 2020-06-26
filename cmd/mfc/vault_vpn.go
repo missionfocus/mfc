@@ -31,9 +31,16 @@ var (
 	vaultVPNPath  string
 )
 
+const vaultVPNExample = `
+  mfc vault vpn init                   # Setup vpn configuration
+  mfc vault vpn renew <ldap username>  # Renew vpn lease for ldap user
+  mfc vault vpn up                     # Connect to vpn
+  mfc vault vpn down                   # Disconnect from vpn`
+
 var vaultVPNCmd = &cobra.Command{
 	Use:   "vpn",
 	Short: "Setup client vpn config",
+	Example: vaultVPNExample,
 }
 
 var vaultVPNInitCmd = &cobra.Command{
@@ -84,9 +91,13 @@ var (
 	vaultVPNRenewTTL string
 )
 
+const vaultVPNRenewExample = `
+  mfc vault vpn renew <ldap username>  # Renew vpn lease for ldap user`
+
 var vaultVPNRenewCmd = &cobra.Command{
-	Use:   "renew <ldap username>",
+	Use:   "renew <ldap_username>",
 	Short: "Renew client vpn",
+	Example: vaultVPNRenewExample,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getVaultClientWithToken()
