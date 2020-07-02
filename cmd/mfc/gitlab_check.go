@@ -15,14 +15,16 @@ func init() {
 
 
 	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabLocation, "Location", "l", "", "Define a location")
-	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabDate, "Date", "d", "", "Define a date Date | Date")
-	gitlabCheckCmd.PersistentFlags().BoolVarP(&gitlabOpenOnly, "Open", "o", false,"")
+	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabCreationDate, "CreationDate", "c", "", "AfterDate|BeforeDate")
+	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabUpdatedDate, "UpdateDate", "u", "", "AfterDate|BeforeDate")
+	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabStatus, "Status", "s", "", "Retrieve only closed/open issues and/or epics")
 }
 
 var (
-	gitlabLocation	string
-	gitlabDate 		string
-	gitlabOpenOnly	bool
+	gitlabLocation			string
+	gitlabCreationDate 		string
+	gitlabUpdatedDate		string
+	gitlabStatus			string
 )
 
 const gitlabCheckExample = `
@@ -35,10 +37,10 @@ var gitlabCheckCmd = &cobra.Command{
 	Aliases: []string{"ck"},
 }
 
-var gitlabCheckIssuesCmd = &cobra.Command {
-	Use:     "issuesepics",
+var gitlabCheckIssuesAndEpicsCmd = &cobra.Command {
+	Use:     "all",
 	Short:   "Check all issues and epics.",
-	Aliases: []string{"ie"},
+	Aliases: []string{"all"},
 	Run: func(cmd *cobra.Command, args []string) {
 		vClient, err := getVaultClientWithToken()
 		check(err)
@@ -48,7 +50,8 @@ var gitlabCheckIssuesCmd = &cobra.Command {
 		check(err)
 		gl := gitlab.New(client)
 
-		check(gl.CheckAllIssuesAndEpics(gitlabLocation, gitlabDate, gitlabOpenOnly))
+		check(gl.CheckEpics(gitlabLocation, gitlabCreationDate, gitlabUpdatedDate, gitlabStatus))
+		check(gl.CheckIssues(gitlabLocation, gitlabCreationDate, gitlabUpdatedDate, gitlabStatus))
 	},
 }
 
@@ -65,11 +68,11 @@ var gitlabCheckEpicsCmd = &cobra.Command {
 		check(err)
 		gl := gitlab.New(client)
 
-		check(gl.CheckEpics(gitlabLocation, gitlabDate, gitlabOpenOnly))
+		check(gl.CheckEpics(gitlabLocation, gitlabCreationDate, gitlabUpdatedDate, gitlabStatus))
 	},
 }
 
-var gitlabCheckIssuesAndEpicsCmd = &cobra.Command {
+var gitlabCheckIssuesCmd = &cobra.Command {
 	Use:     "issues",
 	Short:   "Check issues for errors",
 	Aliases: []string{"i"},
@@ -82,7 +85,7 @@ var gitlabCheckIssuesAndEpicsCmd = &cobra.Command {
 		check(err)
 		gl := gitlab.New(client)
 
-		check(gl.CheckIssues(gitlabLocation, gitlabDate, gitlabOpenOnly))
+		check(gl.CheckIssues(gitlabLocation, gitlabCreationDate, gitlabUpdatedDate, gitlabStatus))
 	},
 }
 

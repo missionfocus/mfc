@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/xanzy/go-gitlab"
@@ -15,19 +17,19 @@ type GitLab struct {
 	client *gitlab.Client
 }
 
-type checkEpicReport struct {
-	title    string
-	groupURL string
-	error    string
-}
+//type checkEpicReport struct {
+//	title    string
+//	groupURL string
+//	error    string
+//}
+//
+//type checkIssueReport struct {
+//	title string
+//	url   string
+//	error string
+//}
 
-type checkIssueReport struct {
-	title string
-	url   string
-	error string
-}
-
-type postComment struct {
+type PostComment struct {
 	comment *string
 }
 
@@ -111,6 +113,89 @@ func (g *GitLab) ListAllProjects() ([]*gitlab.Project, error) {
 	return g.ListAllProjectsWithOptions(opt)
 }
 
+// ListAllProjectIssues retrieves all the issues within a project
+func (g *GitLab) ListAllProjectIssues(projID interface{}) ([]*gitlab.Issue, error) {
+	issues := make([]*gitlab.Issue, 0)
+
+	opt := &gitlab.ListProjectIssuesOptions{
+		ListOptions: gitlab.ListOptions{
+			PerPage: 20,
+			Page:    1,
+		},
+	}
+
+	for {
+		is, res, err := g.client.Issues.ListProjectIssues(projID, opt)
+		if err != nil {
+			return nil, fmt.Errorf("listing project project issues: %w", err)
+		}
+
+		issues = append(issues, is...)
+
+		if res.CurrentPage >= res.TotalPages {
+			break
+		}
+		opt.Page = res.NextPage
+	}
+
+	return issues, nil
+}
+
+// ListAllGroupIssues retrieves all the issues within a group
+func (g *GitLab) ListAllGroupIssues(projID interface{}) ([]*gitlab.Issue, error) {
+	issues := make([]*gitlab.Issue, 0)
+
+	opt := &gitlab.ListGroupIssuesOptions{
+		ListOptions: gitlab.ListOptions{
+			PerPage: 20,
+			Page:    1,
+		},
+	}
+
+	for {
+		is, res, err := g.client.Issues.ListGroupIssues(projID, opt)
+		if err != nil {
+			return nil, fmt.Errorf("listing project group issues: %w", err)
+		}
+
+		issues = append(issues, is...)
+
+		if res.CurrentPage >= res.TotalPages {
+			break
+		}
+		opt.Page = res.NextPage
+	}
+	return issues, nil
+
+}
+
+// ListAllGroupEpics returns all the epics related to a group
+func (g *GitLab) ListAllGroupEpics(gid interface{}) ([]*gitlab.Epic, error) {
+	Epic := make([]*gitlab.Epic, 0)
+
+	opt := &gitlab.ListGroupEpicsOptions{
+		ListOptions: gitlab.ListOptions{
+			PerPage: 20,
+			Page:    1,
+		},
+	}
+	for {
+		es, res, err := g.client.Epics.ListGroupEpics(gid, opt)
+		if err != nil {
+			return nil, fmt.Errorf("listing group epics: %w", err)
+		}
+
+		Epic = append(Epic, es...)
+
+		if res.CurrentPage >= res.TotalPages {
+			break
+		}
+		opt.Page = res.NextPage
+	}
+
+	return Epic, nil
+}
+
 // ListAllProjects lists all of the projects the caller has access to.
 func (g *GitLab) ListAllProjectsWithOptions(opt *gitlab.ListProjectsOptions) ([]*gitlab.Project, error) {
 	projects := make([]*gitlab.Project, 0)
@@ -177,92 +262,9 @@ func (g *GitLab) GetMergeRequest(projID interface{}, mergeRequestID int) (*gitla
 	return mr, nil
 }
 
-// GetProjectIssues retrieves all the issues within a project TODO refactor to ListAllProjectIssues
-func (g *GitLab) GetProjectIssues(projID interface{}) ([]*gitlab.Issue, error) {
-	issues := make([]*gitlab.Issue, 0)
-
-	opt := &gitlab.ListProjectIssuesOptions{
-		ListOptions: gitlab.ListOptions{
-			PerPage: 20,
-			Page:    1,
-		},
-	}
-
-	for {
-		is, res, err := g.client.Issues.ListProjectIssues(projID, opt)
-		if err != nil {
-			return nil, fmt.Errorf("listing project project issues: %w", err)
-		}
-
-		issues = append(issues, is...)
-
-		if res.CurrentPage >= res.TotalPages {
-			break
-		}
-		opt.Page = res.NextPage
-	}
-
-	return issues, nil
-}
-
-// GetGroupIssues retrieves all the issues within a group TODO refactor to ListAllGroupIssues
-func (g *GitLab) GetGroupIssues(projID interface{}) ([]*gitlab.Issue, error) {
-	issues := make([]*gitlab.Issue, 0)
-
-	opt := &gitlab.ListGroupIssuesOptions{
-		ListOptions: gitlab.ListOptions{
-			PerPage: 20,
-			Page:    1,
-		},
-	}
-
-	for {
-		is, res, err := g.client.Issues.ListGroupIssues(projID, opt)
-		if err != nil {
-			return nil, fmt.Errorf("listing project group issues: %w", err)
-		}
-
-		issues = append(issues, is...)
-
-		if res.CurrentPage >= res.TotalPages {
-			break
-		}
-		opt.Page = res.NextPage
-	}
-	return issues, nil
-
-}
-
-// GetGroupEpics returns all the epics related to a group TODO refactor to ListAllGroupEpics
-func (g *GitLab) GetGroupEpics(gid interface{}) ([]*gitlab.Epic, error) {
-	Epic := make([]*gitlab.Epic, 0)
-
-	opt := &gitlab.ListGroupEpicsOptions{
-		ListOptions: gitlab.ListOptions{
-			PerPage: 20,
-			Page:    1,
-		},
-	}
-	for {
-		es, res, err := g.client.Epics.ListGroupEpics(gid, opt)
-		if err != nil {
-			return nil, fmt.Errorf("listing group epics: %w", err)
-		}
-
-		Epic = append(Epic, es...)
-
-		if res.CurrentPage >= res.TotalPages {
-			break
-		}
-		opt.Page = res.NextPage
-	}
-
-	return Epic, nil
-}
-
 // PostNoteOnIssue posts a "note" (comment) onto an Issue
 func (g *GitLab) PostNoteOnIssue(pid interface{}, issue int, message *string) (*gitlab.Note, error) {
-	opt := &gitlab.CreateIssueNoteOptions{
+	opt := &gitlab.CreateIssueNoteOptions {
 		message,
 		nil,
 	}
@@ -303,7 +305,7 @@ func (g *GitLab) ListAllIssueNotes(pid interface{}, issue int) ([]*gitlab.Note, 
 
 // PostNoteOnEpic posts a "note" (comment) onto an epic
 func (g *GitLab) PostNoteOnEpic(gid interface{}, epic int, message *string) (*gitlab.Note, error) {
-	opt := &gitlab.CreateEpicNoteOptions{
+	opt := &gitlab.CreateEpicNoteOptions {
 		message,
 	}
 	n, _, err := g.client.Notes.CreateEpicNote(gid, epic, opt)
@@ -341,17 +343,101 @@ func (g *GitLab) ListAllEpicNotes(gid interface{}, epic int) ([]*gitlab.Note, er
 	return notes, nil
 }
 
-// TODO ListAllEpicIssues - https://github.com/xanzy/go-gitlab/blob/master/epic_issues.go (not in current release)
-func (g *GitLab) ListAllEpicIssues(gid int, epic int) ([]*gitlab.Issue, error) {
+func (g *GitLab) GetEpicIssues(gid interface{}, epic int) ([]*gitlab.Issue, error) {
 	issues := make([]*gitlab.Issue, 0)
+
+	opt := &gitlab.ListOptions{
+			PerPage: 20,
+			Page:    1,
+	}
+
+	for {
+		i, res, err := g.client.EpicIssues.ListEpicIssues(gid, epic, opt)
+		if err != nil {
+			return nil, fmt.Errorf("listing Issue notes: %w", err)
+		}
+
+		issues = append(issues, i...)
+
+		if res.CurrentPage >= res.TotalPages {
+			break
+		}
+		opt.Page = res.NextPage
+	}
 
 	return issues, nil
 }
 
-// TODO ListAllSubEpics
+//TODO GetAllEpicIssues was a test for finding all epics related to a given issue. If this will be used, add a return function
+func (g *GitLab) GetAllEpicIssues() error {
+	groups, err := g.ListAllGroups()
+	if err != nil {
+		return err
+	}
 
-// CheckIssues checks all issues for errors ---- TODO needs to be refactored.
-func (g *GitLab) CheckIssues(location string, dates string, open bool) error {
+	for _, group := range groups {
+		groupEpics, _ := g.ListAllGroupEpics(group.ID)
+		for _, epic := range groupEpics {
+			fmt.Println(g.GetEpicIssues(group.ID, epic.ID)) //returns issues that relate to epic, under a group
+		}
+	}
+
+return nil
+}
+
+// SetState ensures that the state can be queried
+func SetState(status string) string {
+	state := strings.ToLower(status)
+	if state == "open" {
+		state = "opened"
+	}
+	if state == "close" {
+		state = "closed"
+	} else {
+		state = ""
+	}
+	return state
+}
+
+const (
+	glTimeFormat    = "2006-01-02"
+	inputTimeFormat = "01/02/2006"
+)
+
+//GetTimeParameters is used to alter the format [date] | [date] into a comparable format
+func GetTimeParameters(str string) []time.Time {
+	if len(str) == 0 {
+		return nil
+	}
+	date := make([]time.Time, 0)
+	splitDateStrings := strings.Split(str, "|")
+
+	for _, d := range splitDateStrings {
+		strToDate := strings.Replace(d, " ", "", -1)
+		t, _ := time.Parse(inputTimeFormat, strToDate)
+		t.Format(glTimeFormat)
+		date = append(date, t)
+	}
+
+	return date
+}
+
+// CheckIssues checks all issues for errors
+func (g *GitLab) CheckIssues(location string, creationDates string, updatedDates string, status string) error {
+	state := SetState(status)
+	cd := GetTimeParameters(creationDates)
+	ud := GetTimeParameters(updatedDates)
+
+	checkForCD := false
+	if cd != nil {
+		checkForCD = true
+	}
+	checkForUD := false
+	if ud != nil {
+		checkForUD = true
+	}
+
+	fmt.Println("Gathering all projects...")
 	projects, err := g.ListAllProjects()
 	if err != nil {
 		return nil
@@ -360,90 +446,200 @@ func (g *GitLab) CheckIssues(location string, dates string, open bool) error {
 	if err != nil {
 		return nil
 	}
+
+	fmt.Println("Finding Issue within project(s)...")
 	for _, proj := range projects {
-		projIssues, _ := g.GetProjectIssues(proj.ID)
-		for _, issue := range projIssues {
-			if issue.Labels == nil {
-				//fmt.Println("Issue", issue.Title, issue.WebURL, "has no labels")
-			}
-			if issue.Description == "" {
-				//fmt.Println("Issue", issue.Title, issue.WebURL, "has no description")
-			}
-			if issue.Milestone == nil {
-				missingMilestoneAndLabel := true
-				labels := issue.Labels
-				for _, label := range labels {
-					if label == "backlog" || label == "waiting" {
-						missingMilestoneAndLabel = false
-					}
-				}
-				if missingMilestoneAndLabel {
-					//fmt.Println("Issue", issue.Title, issue.WebURL, "has no milestones or labels set")
-				}
-			} else {
-				if issue.Weight == 0 {
-					//fmt.Println("Issue", issue.Title, issue.WebURL, "has no weight set")
+		if proj.WebURL == location || location == "" {
+			g.CheckIssuesWithinProject(proj.ID, state, cd, ud, checkForCD, checkForUD)
+		} else {
+			fmt.Println("Location requested not in projects, attempting to find issue in groups...")
+			for _, group := range groups {
+				if group.WebURL == location {
+					fmt.Println("Found Location. Finding Issues within group.")
+					fmt.Println("Warning, if this is a parent group, duplicated result can occur") //TODO fix duplicates...
+					g.CheckIssuesWithinGroup(group.ID, state, cd, ud, checkForCD, checkForUD)
+					return nil
+				} else {
+					fmt.Println("Error - Unable to find location given. Please try again.")
+					continue
 				}
 			}
 		}
 	}
-	for _, group := range groups {
-		groupIssues, _ := g.GetGroupIssues(group.ID)
-		for _, issue := range groupIssues {
-			if issue.Labels == nil {
-				//fmt.Println("Issue", issue.Title, issue.WebURL, "has no labels")
+
+	return nil
+}
+
+// CheckIssuesWithinGroup will produce duplicate reports due to subgroups. Also issues are under projects anyways. TODO - Fix error with duplications occuring.
+func (g *GitLab) CheckIssuesWithinGroup(groupID int, status string, creationDates []time.Time, updatedDates []time.Time, checkForCD bool, checkForUD bool) error {
+	state := SetState(status)
+	groupIssues, _ := g.ListAllGroupIssues(groupID)
+
+	for _, issue := range groupIssues {
+		if checkForCD {
+			if !creationDates[0].IsZero() && issue.CreatedAt.Before(creationDates[0]) || !creationDates[1].IsZero() && issue.CreatedAt.After(creationDates[1]) {
+				continue
+			}
+		}
+		if checkForUD {
+			fmt.Println(issue.CreatedAt.After(updatedDates[0]))
+			if issue.UpdatedAt.Before(updatedDates[0]) || issue.UpdatedAt.After(updatedDates[1]) {
+				continue
+			}
+		}
+		if issue.State == state || state == "" {
+			if issue.Description == "Acceptance Criteria\n- [ ]   \n- [ ] Automated test: FILEPATHNAME\n- [ ] Pipeline passes with no critical / high vulnerabilities\n" {
+				fmt.Println(issue.WebURL, "has not filled out the acceptance criteria.")
 			}
 			if issue.Description == "" {
-				//fmt.Println("Issue", issue.Title, issue.WebURL, "has no description")
+				fmt.Println(issue.WebURL, "has no description")
 			}
-			if issue.Milestone == nil {
-				missingMilestoneAndLabel := true
-				labels := issue.Labels
-				for _, label := range labels {
-					if label == "backlog" || label == "waiting" {
-						missingMilestoneAndLabel = false
+
+			needMilestoneAndLabel, needMilestoneHasLabel, needLabelHasMilestone, needLabelStateChange := false, false, false, false
+
+			if issue.Labels == nil {
+				if issue.Milestone == nil {
+					needMilestoneAndLabel = true
+				}
+			}
+
+			for _, label := range issue.Labels {
+				if label == "state::in-progress" {
+					if issue.Milestone == nil {
+						needMilestoneHasLabel = true
 					}
 				}
-				if missingMilestoneAndLabel {
-					//fmt.Println("Issue", issue.Title, issue.WebURL, "has no milestones or labels set")
+				//if label != "backlog" || label != "waiting" {
+				//
+				//}
+				if issue.State == "closed" {
+					//	if label != "state::resolved" ||  label != "scrum::abandoned" { needLabelHasMilestone = true }
+					if label == "state::in-progress" {
+						needLabelStateChange = true
+					}
 				}
-			} else {
-				if issue.Weight == 0 {
-					//fmt.Println("Issue", issue.Title, issue.WebURL, "has no weight set")
-				}
+			}
+
+			if needMilestoneAndLabel {
+				fmt.Println(issue.WebURL, "This issue has no milestones or labels set")
+			}
+			if needMilestoneHasLabel {
+				fmt.Println(issue.WebURL, "This Issue is in-progress, but has no milestone")
+			}
+			if needLabelHasMilestone {
+				fmt.Println(issue.WebURL, "This Issue is missing a `state::abandoned` or `state::resolved` label")
+			}
+			if needLabelStateChange {
+				fmt.Println(issue.WebURL, "This Issue has a `state::in-progress` label, but is closed.")
 			}
 		}
 	}
 	return nil
 }
 
-func (g *GitLab) CheckEpics(location string, dates string, open bool) error {
+func (g *GitLab) CheckIssuesWithinProject(projID int, status string, creationDates []time.Time, updatedDates []time.Time, checkForCD bool, checkForUD bool) error {
+	state := SetState(status)
+
+	projIssues, _ := g.ListAllProjectIssues(projID)
+
+	for _, issue := range projIssues {
+		if checkForCD {
+			if !creationDates[0].IsZero() && issue.CreatedAt.Before(creationDates[0]) || !creationDates[1].IsZero() && issue.CreatedAt.After(creationDates[1]) {
+				continue
+			}
+		}
+		if checkForUD {
+			fmt.Println(issue.CreatedAt.After(updatedDates[0]))
+			if issue.UpdatedAt.Before(updatedDates[0]) || issue.UpdatedAt.After(updatedDates[1]) {
+				continue
+			}
+		}
+		if issue.State == state || state == "" {
+			if issue.Description == "Acceptance Criteria\n- [ ]   \n- [ ] Automated test: FILEPATHNAME\n- [ ] Pipeline passes with no critical / high vulnerabilities\n" {
+				fmt.Println(issue.WebURL, "has not filled out the acceptance criteria.")
+			}
+			if issue.Description == "" {
+				fmt.Println(issue.WebURL, "has no description")
+			}
+
+			needMilestoneAndLabel, needMilestoneHasLabel, needLabelHasMilestone, needLabelStateChange := false, false, false, false
+
+			if issue.Labels == nil {
+				if issue.Milestone == nil {
+					needMilestoneAndLabel = true
+				}
+			}
+
+			for _, label := range issue.Labels {
+				if label == "state::in-progress" {
+					if issue.Milestone == nil {
+						needMilestoneHasLabel = true
+					}
+				}
+				//if label != "backlog" || label != "waiting" {
+				//
+				//}
+				if issue.State == "closed" {
+					//	if label != "state::resolved" ||  label != "scrum::abandoned" { needLabelHasMilestone = true }
+					if label == "state::in-progress" {
+						needLabelStateChange = true
+					}
+				}
+			}
+
+			if needMilestoneAndLabel {
+				fmt.Println(issue.WebURL, "This issue has no milestones or labels set")
+			}
+			if needMilestoneHasLabel {
+				fmt.Println(issue.WebURL, "This Issue is in-progress, but has no milestone")
+			}
+			if needLabelHasMilestone {
+				fmt.Println(issue.WebURL, "This Issue is missing a `state::abandoned` or `state::resolved` label")
+			}
+			if needLabelStateChange {
+				fmt.Println(issue.WebURL, "This Issue has a `state::in-progress` label, but is closed.")
+			}
+		}
+	}
+	return nil
+}
+
+func (g *GitLab) CheckEpics(location string, creationDates string, updatedDates string, status string) error {
+	state := SetState(status)
+
 	groups, err := g.ListAllGroups()
 	if err != nil {
 		return nil
 	}
 
 	for _, group := range groups {
-		groupEpics, _ := g.GetGroupEpics(group.ID)
+		groupEpics, _ := g.ListAllGroupEpics(group.ID)
 		for _, epic := range groupEpics {
-			fmt.Println(epic.State)
-			fmt.Println(group.WebURL)
-			if epic.Labels == nil {
-				fmt.Println("Within group ", group.Description, "Epic", epic.Title, "has no labels")
-			}
-			if epic.Description == "" {
-				fmt.Println("Within group ", group.Description, "Epic,", epic.Title, "has no description")
+			if epic.State == state || state == "" {
+
+				if epic.Description == "\n**Initial State**\n- SayWhatItIs" {
+
+				}
+				if epic.Description == "" {
+					fmt.Println("has no description")
+				}
+				if epic.Labels == nil {
+					fmt.Println("Within group ", group.Description, "Epic", epic.Title, "has no labels")
+				}
 			}
 		}
 	}
 	return nil
 }
 
-// TODO CheckAllIssuesAndEpics
-func (g *GitLab) CheckAllIssuesAndEpics(location string, dates string, open bool) error {
-
+//TODO UpdateEpicIssues
+// *** Thoughts from params: Location (url), label (old label | new label) format, epic (old label | new label), milestone (old, new), status (open/close)
+func (g *GitLab) UpdateEpicIssues(location, label, epic, milestone, status string) error {
+	state := SetState(status)
+	fmt.Println(state) // I did this just so it compiles for now
 	return nil
 }
+
 
 func (g *GitLab) PostTest() error {
 	groups, err := g.ListAllGroups()
@@ -456,7 +652,7 @@ func (g *GitLab) PostTest() error {
 	}
 	//comment :=  "Epic Test Successful!"
 	for _, group := range groups {
-		groupEpics, _ := g.GetGroupEpics(group.ID)
+		groupEpics, _ := g.ListAllGroupEpics(group.ID)
 		for _, epic := range groupEpics {
 			if group.ID == 161 {
 				if epic.ID == 105 {
@@ -470,7 +666,7 @@ func (g *GitLab) PostTest() error {
 	}
 	//comment =  "Issue Test Successful!"
 	for _, proj := range projects {
-		projIssues, _ := g.GetProjectIssues(proj.ID)
+		projIssues, _ := g.ListAllProjectIssues(proj.ID)
 		for _, issue := range projIssues {
 			if issue.Title == "MFC GitLab Business Verifications" {
 				if issue.ProjectID == 394 {
