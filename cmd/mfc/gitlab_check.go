@@ -14,17 +14,17 @@ func init() {
 	gitlabCheckCmd.AddCommand(gitlabPostTestCmd)
 
 
-	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabLocation, "Location", "l", "", "Define a location")
-	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabCreationDate, "CreationDate", "c", "", "AfterDate|BeforeDate")
-	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabUpdatedDate, "UpdateDate", "u", "", "AfterDate|BeforeDate")
-	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabStatus, "Status", "s", "", "Retrieve only closed/open issues and/or epics")
+	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabCheckLocation, "Location", "l", "", "Define a location")
+	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabCheckCreationDate, "CreationDate", "c", "", "AfterDate|BeforeDate")
+	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabCheckUpdatedDate, "UpdateDate", "u", "", "AfterDate|BeforeDate")
+	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabCheckStatus, "Status", "s", "", "Retrieve only closed/open issues and/or epics")
 }
 
 var (
-	gitlabLocation			string
-	gitlabCreationDate 		string
-	gitlabUpdatedDate		string
-	gitlabStatus			string
+	gitlabCheckLocation			string
+	gitlabCheckCreationDate 	string
+	gitlabCheckUpdatedDate		string
+	gitlabCheckStatus			string
 )
 
 const gitlabCheckExample = `
@@ -50,8 +50,8 @@ var gitlabCheckIssuesAndEpicsCmd = &cobra.Command {
 		check(err)
 		gl := gitlab.New(client)
 
-		check(gl.CheckEpics(gitlabLocation, gitlabCreationDate, gitlabUpdatedDate, gitlabStatus))
-		check(gl.CheckIssues(gitlabLocation, gitlabCreationDate, gitlabUpdatedDate, gitlabStatus))
+		check(gl.CheckEpics(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
+		check(gl.CheckIssues(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
 	},
 }
 
@@ -68,7 +68,7 @@ var gitlabCheckEpicsCmd = &cobra.Command {
 		check(err)
 		gl := gitlab.New(client)
 
-		check(gl.CheckEpics(gitlabLocation, gitlabCreationDate, gitlabUpdatedDate, gitlabStatus))
+		check(gl.CheckEpics(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
 	},
 }
 
@@ -85,7 +85,7 @@ var gitlabCheckIssuesCmd = &cobra.Command {
 		check(err)
 		gl := gitlab.New(client)
 
-		check(gl.CheckIssues(gitlabLocation, gitlabCreationDate, gitlabUpdatedDate, gitlabStatus))
+		check(gl.CheckIssues(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
 	},
 }
 

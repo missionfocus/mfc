@@ -9,18 +9,13 @@ import (
 func init() {
 	gitlabCmd.AddCommand(gitlabUpdateCmd)
 	gitlabUpdateCmd.AddCommand(gitlabUpdateEpicIssuesCmd)
-
-	gitlabUpdateEpicIssuesCmd.PersistentFlags().StringVarP(&gitlabLocation, "Location", "l", "", "Define a location")
-	gitlabUpdateEpicIssuesCmd.PersistentFlags().StringVarP(&gitlabLabel, "Label", "", "", "(Removes) Old Label|New Label (Adds)")
-	gitlabUpdateEpicIssuesCmd.PersistentFlags().StringVarP(&gitlabStatus, "Status", "s", "", "Retrieve only closed/open issues and/or epics")
 }
 
-// If variables are used within the gitlab_check file, should they be moved into a parent class?  ---> gitlab.go
-var (
-	gitlabLabel			string
-	gitlabStatus			string
-)
 
+const gitlabUpdateEpicIssueLabels = `
+  mfc gitlab update eil "https://git.missionfocus.com/groups/ours/mfm/-/epics/1" "dev::coding|"      					# Deletes dev::coding label and adds no label in place.
+  mfc gitlab update eil "https://git.missionfocus.com/ours/mfm/mfm-records/-/issues/5" "check-this|dev::coding"         # Removes check-this label and adds dev:coding label
+`
 
 var gitlabUpdateCmd = &cobra.Command{
 	Use:     "update",
@@ -29,9 +24,11 @@ var gitlabUpdateCmd = &cobra.Command{
 }
 
 var gitlabUpdateEpicIssuesCmd = &cobra.Command {
-	Use:     "epicissues",
+	Use:     "EpicIssuesLabel <location> <OldLabel|NewLabel>",
 	Short:   "Check all issues and epics.",
-	Aliases: []string{"ei"},
+	Args:    cobra.ExactArgs(2),
+	Aliases: []string{"eil"},
+	Example: gitlabUpdateEpicIssueLabels,
 	Run: func(cmd *cobra.Command, args []string) {
 		vClient, err := getVaultClientWithToken()
 		check(err)
@@ -41,6 +38,10 @@ var gitlabUpdateEpicIssuesCmd = &cobra.Command {
 		check(err)
 		gl := gitlab.New(client)
 
-		check(gl.GetAllEpicIssues())
+		if args[0] == "" || args[1] == "" {
+			return
+		}
+
+		check(gl.UpdateEpicIssuesLabels(args[0], args[1]))
 	},
 }
