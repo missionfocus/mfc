@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"encoding/csv"
 	"fmt"
 	"github.com/asaskevich/govalidator"
 	"io"
@@ -19,14 +20,14 @@ type GitLab struct {
 }
 
 type EpicReport struct {
-	title    string
-	groupURL string
-	error    string
+	epic   	*gitlab.Epic
+	group 	*gitlab.Group
+	reason 	string
 }
 
 type IssueReport struct {
-	issue  *gitlab.Issue
-	reason string
+	issue  	*gitlab.Issue
+	reason 	string
 }
 
 type PostComment struct {
@@ -445,7 +446,7 @@ func (g *GitLab) CheckIssues(location string, creationDates string, updatedDates
 		fmt.Errorf("Retrieving issue: %w", err)
 	}
 
-	fmt.Println("Finding Issue within project(s)...")
+	fmt.Println("Finding Issues within projects...")
 	for _, proj := range projects {
 		if proj.WebURL == location || location == "" {
 			g.CheckIssuesWithinProject(proj.ID, state, cd, ud, checkForCD, checkForUD)
@@ -481,7 +482,6 @@ func (g *GitLab) CheckIssuesWithinProject(projID int, status string, creationDat
 			}
 		}
 		if checkForUD {
-			fmt.Println(issue.CreatedAt.After(updatedDates[0]))
 			if issue.UpdatedAt.Before(updatedDates[0]) || issue.UpdatedAt.After(updatedDates[1]) {
 				continue
 			}
@@ -538,10 +538,27 @@ func (g *GitLab) CheckIssuesWithinProject(projID int, status string, creationDat
 		}
 	}
 
+	csvfile, err := os.Create("IssueReport.csv")
+	if err != nil {
+		return err
+	}
+	defer csvfile.Close()
+
+	writer := csv.NewWriter(csvfile)
+	defer writer.Flush()
+
+	headers := []string{"Issue Title", "Issue URL", "Author", "Reason"}
+	writer.Write(headers)
+	writer.Flush()
+
+	csvfile, err = os.OpenFile("IssueReport.csv", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		return err
+	}
+
 	for _, i := range issues {
-
-		fmt.Printf("[%10s](%10s)%10s\n", i.issue.Title, i.issue.WebURL, i.reason)
-
+		record := []string{govalidator.ToString(i.issue.Title), i.issue.WebURL, i.issue.Author.Name, i.reason}
+		writer.Write(record)
 		//comment := strings.Replace("@" + govalidator.ToString(i.issue.Author), " " , "", -1) + i.reason
 		//g.PostNoteOnIssue(i.issue.ProjectID, i.issue.IID, &comment
 	}
@@ -549,8 +566,20 @@ func (g *GitLab) CheckIssuesWithinProject(projID int, status string, creationDat
 	return nil
 }
 
-func (g *GitLab) CheckEpics(location string, creationDates string, updatedDates string, status string) error {
+func (g *GitLab) CheckEpicsWithinGroup(location string, creationDates string, updatedDates string, status string) error {
+	epics := make([]EpicReport, 0)
 	state := SetState(status)
+	cd := GetTimeParameters(creationDates)
+	ud := GetTimeParameters(updatedDates)
+
+	checkForCD := false
+	if cd != nil {
+		checkForCD = true
+	}
+	checkForUD := false
+	if ud != nil {
+		checkForUD = true
+	}
 
 	groups, err := g.ListAllGroups()
 	if err != nil {
@@ -559,21 +588,115 @@ func (g *GitLab) CheckEpics(location string, creationDates string, updatedDates 
 
 	for _, group := range groups {
 		groupEpics, _ := g.ListAllGroupEpics(group.ID)
+		startCheckEpics := false
+
 		for _, epic := range groupEpics {
+			if location != "" {
+				if strings.Contains(location, group.WebURL) {
+					if strings.Contains(location, "epics/") {
+						splitURL := strings.Split(location, "epics/")
+						if splitURL[1] == govalidator.ToString(epic.IID) {
+							startCheckEpics = true
+						}
+					} else {
+						startCheckEpics = true
+					}
+					continue
+				} else {
+					break
+				}
+			} else {
+				startCheckEpics = true
+			}
+
+			if startCheckEpics == false { break }
+
 			if epic.State == state || state == "" {
+				epicIsMeeting := strings.Contains(strings.ToLower(epic.Title), "meeting")
+				isTeamEpic, epicIsManagement := false, false
 
-				if epic.Description == "\n**Initial State**\n- SayWhatItIs" {
+				if  strings.Contains(strings.ToLower(epic.Title), "team") || strings.Contains(strings.ToLower(epic.Title), "stand") || strings.Contains(strings.ToLower(epic.Title), "sustainment") || strings.Contains(strings.ToLower(epic.Title), "planning") {
+					isTeamEpic = true
+				}
 
+				if strings.Contains(strings.ToLower(epic.Title), "management") || strings.Contains(strings.ToLower(epic.Title), "managing") || strings.Contains(strings.ToLower(epic.Title), "manage") || strings.Contains(strings.ToLower(epic.Title), "mgmt") {
+					epicIsManagement = true
 				}
-				if epic.Description == "" {
-					fmt.Println("has no description")
+				if epicIsManagement || epicIsMeeting || isTeamEpic {
+					continue
 				}
-				if epic.Labels == nil {
-					fmt.Println("Within group ", group.Description, "Epic", epic.Title, "has no labels")
+
+				if checkForCD {
+					if !cd[0].IsZero() && epic.CreatedAt.Before(cd[0]) || !cd[1].IsZero() && epic.CreatedAt.After(cd[1]) {
+						continue
+					}
+				}
+				if checkForUD {
+					if epic.UpdatedAt.Before(ud[0]) || epic.UpdatedAt.After(ud[1]) {
+						continue
+					}
+				}
+
+				if epic.State == state || state == "" {
+					if epic.Description == "" {
+						epics = append(epics, EpicReport{epic, group," This epic has no description"})
+					}
+
+					if epic.Description == "## Increment Objectives\n- [ ]  " || epic.Description == "## To Do\n- [ ]   " || epic.Description == "\n**Initial State**\n- SayWhatItIs\n" {
+						epics = append(epics, EpicReport{epic, group, " This epic has blank parts of the required template."})
+					}
+
+					requiresEpicLabel, needLabelStateResolved := false, false
+
+					for _, label := range epic.Labels {
+						if strings.Contains(strings.ToLower(label), "epic-") || strings.Contains(strings.ToLower(label), "epic::") {
+							requiresEpicLabel = true
+						}
+
+						if epic.State == "closed" {
+							if strings.Contains(strings.ToLower(label), "state::") {
+								if label != "state::resolved" && label != "state::abandoned" {
+									needLabelStateResolved = true
+								}
+							}
+
+						}
+					}
+
+					if !requiresEpicLabel {
+						epics = append(epics, EpicReport{epic, group, " This epic does not contain a epic label"})
+					}
+					if needLabelStateResolved {
+						epics = append(epics, EpicReport{epic, group, " This epic is requires the `resolved` or `abandoned` label."})
+					}
 				}
 			}
 		}
 	}
+
+	csvfile, err := os.Create("EpicReport.csv")
+	if err != nil {
+		return err
+	}
+	defer csvfile.Close()
+
+	writer := csv.NewWriter(csvfile)
+	defer writer.Flush()
+
+	headers := []string{"Epic Name", "Epic URL", "Author", "Reason"}
+	writer.Write(headers)
+	writer.Flush()
+
+	csvfile, err = os.OpenFile("EpicReport.csv", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		return err
+	}
+	for _, e := range epics {
+		createEpicURL := strings.Replace(e.group.WebURL + "/-/epics/" + govalidator.ToString(e.epic.IID), " ", "", -1)
+		record := []string{e.epic.Title, createEpicURL, e.epic.Author.Name, e.reason}
+		writer.Write(record)
+	}
+
 	return nil
 }
 
@@ -630,7 +753,7 @@ func (g *GitLab) UpdateEpicIssuesLabels(location, label string) error {
 			if strings.Contains(location, "/epics/") {
 				if strings.Contains(location, group.WebURL) {
 					splitURL := strings.Split(location, "epics/")
-					if splitURL[1] ==  govalidator.ToString(epic.IID) {
+					if splitURL[1] == govalidator.ToString(epic.IID) {
 						locationFound = true
 						fmt.Println("Epic found:", epic.Title)
 						epicIssues = append(epicIssues, EpicIssuesStruct{epic, g.GetEpicIssues(group.ID, epic.IID)})
@@ -696,46 +819,12 @@ func (g *GitLab) UpdateEpicIssuesLabels(location, label string) error {
 				}
 				break
 			}
-			if locationFound {break}
-		}
-		if locationFound {break}
-	}
-	return nil
-}
-
-func (g *GitLab) PostTest() error {
-	groups, err := g.ListAllGroups()
-	if err != nil {
-		return err
-	}
-	projects, err := g.ListAllProjects()
-	if err != nil {
-		return err
-	}
-	//comment :=  "Epic Test Successful!"
-	for _, group := range groups {
-		groupEpics, _ := g.ListAllGroupEpics(group.ID)
-		for _, epic := range groupEpics {
-			if group.ID == 161 {
-				if epic.ID == 105 {
-					if epic.Title == "DMBusey" {
-						//g.PostNoteOnEpic(group.ID, epic.IID, &comment)
-						fmt.Println("...Posted Epic Comment") // https://git.missionfocus.com/groups/ours/mfm/-/epics/1#note_59800
-					}
-				}
+			if locationFound {
+				break
 			}
 		}
-	}
-	//comment =  "Issue Test Successful!"
-	for _, proj := range projects {
-		projIssues, _ := g.ListAllProjectIssues(proj.ID)
-		for _, issue := range projIssues {
-			if issue.Title == "MFC GitLab Business Verifications" {
-				if issue.ProjectID == 394 {
-					//g.PostNoteOnIssue(issue.ProjectID, issue.IID, &comment)
-					fmt.Println("...Posted Issue Comment") // https://git.missionfocus.com/ours/code/tools/mfc/-/issues/33
-				}
-			}
+		if locationFound {
+			break
 		}
 	}
 	return nil

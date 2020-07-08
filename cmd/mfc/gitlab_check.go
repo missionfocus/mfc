@@ -11,8 +11,6 @@ func init() {
 	gitlabCheckCmd.AddCommand(gitlabCheckIssuesAndEpicsCmd)
 	gitlabCheckCmd.AddCommand(gitlabCheckIssuesCmd)
 	gitlabCheckCmd.AddCommand(gitlabCheckEpicsCmd)
-	gitlabCheckCmd.AddCommand(gitlabPostTestCmd)
-
 
 	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabCheckLocation, "Location", "l", "", "Define a location")
 	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabCheckCreationDate, "CreationDate", "c", "", "AfterDate|BeforeDate")
@@ -50,7 +48,7 @@ var gitlabCheckIssuesAndEpicsCmd = &cobra.Command {
 		check(err)
 		gl := gitlab.New(client)
 
-		check(gl.CheckEpics(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
+		check(gl.CheckEpicsWithinGroup(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
 		check(gl.CheckIssues(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
 	},
 }
@@ -68,7 +66,7 @@ var gitlabCheckEpicsCmd = &cobra.Command {
 		check(err)
 		gl := gitlab.New(client)
 
-		check(gl.CheckEpics(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
+		check(gl.CheckEpicsWithinGroup(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
 	},
 }
 
@@ -86,21 +84,5 @@ var gitlabCheckIssuesCmd = &cobra.Command {
 		gl := gitlab.New(client)
 
 		check(gl.CheckIssues(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
-	},
-}
-
-var gitlabPostTestCmd = &cobra.Command {
-	Use:     "post",
-	Short:   "Post Test",
-	Run: func(cmd *cobra.Command, args []string) {
-		vClient, err := getVaultClientWithToken()
-		check(err)
-		v := vault.New(vClient)
-
-		client, err := getGitLabClient(v)
-		check(err)
-		gl := gitlab.New(client)
-
-		check(gl.PostTest())
 	},
 }
