@@ -271,7 +271,6 @@ func GetPersonHoursSummary(vaultClient vault.Vault, progress io.Writer, person s
 	foundUser := false
 
 	for _, m := range scope.Members {
-		//emailPointerValue enables username (i.e. @maeick)
 		emailPointerValue := *m.UserProfile.Email
 		profileId := m.UserProfileID
 		if person == "" ||  strings.ToLower(m.UserProfile.UserName) == strings.ToLower(person) || emailPointerValue == person + "@missionfocus.com"  {
@@ -417,7 +416,7 @@ func Scanner (vaultClient vault.Vault, progress io.Writer) error {
 			fmt.Print(totalWorkedHours)
 			if totalWorkedHours < time.Duration(7)*time.Hour + time.Duration(30)*time.Minute { // If an employee has less than 7.5 hrs
 				fmt.Println("Failed. Total hours is less than 7 hours and 30 minutes.")
-			} else if totalWorkedHours < time.Duration(8)*time.Hour + time.Duration(30)*time.Minute {
+			} else if totalWorkedHours > time.Duration(8)*time.Hour + time.Duration(30)*time.Minute {
 				fmt.Println("Failed. Total hours is MORE than 8 hours and 30 minutes.")
 			} else {
 				fmt.Println("Warning. Total hours are less than 8 hours.")
@@ -427,7 +426,7 @@ func Scanner (vaultClient vault.Vault, progress io.Writer) error {
 	return nil
 }
 
-// # TODO Load usernames from external file.
+//acceptedUserNames this should probably moved to an external file.
 var acceptedUserNames = []string {
 	"Jacob Stover",
 	"Collin Day" ,
@@ -446,7 +445,6 @@ var acceptedUserNames = []string {
 	"Andrew Zaw",
 }
 
-// # TODO Load project names from external file
 var acceptedProjects = []string{"GDAC", "BD-EDM", "PTO", "Overhead"}
 
 // Contains tells whether A [array] contains S [String].

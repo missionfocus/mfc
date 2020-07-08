@@ -1,10 +1,11 @@
 package main
 
 import (
+	"os"
+
 	"git.missionfocus.com/ours/code/tools/mfc/pkg/tmetric"
 	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 func init() {
