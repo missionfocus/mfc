@@ -20,14 +20,14 @@ type GitLab struct {
 }
 
 type EpicReport struct {
-	epic   	*gitlab.Epic
-	group 	*gitlab.Group
-	reason 	string
+	epic   *gitlab.Epic
+	group  *gitlab.Group
+	reason string
 }
 
 type IssueReport struct {
-	issue  	*gitlab.Issue
-	reason 	string
+	issue  *gitlab.Issue
+	reason string
 }
 
 type PostComment struct {
@@ -425,22 +425,22 @@ func GetTimeParameters(str string) []time.Time {
 	return date
 }
 
-// CheckIssues checks all issues for errors
-func (g *GitLab) CheckIssues(location string, creationDates string, updatedDates string, status string) error {
+func (g *GitLab) CheckIssuesWithinProject(location string, cd string, ud string, status string) error {
+	issues := make([]IssueReport, 0)
 	state := SetState(status)
-	cd := GetTimeParameters(creationDates)
-	ud := GetTimeParameters(updatedDates)
+	creationDates := GetTimeParameters(cd)
+	updatedDates := GetTimeParameters(ud)
 
 	checkForCD := false
-	if cd != nil {
+	if creationDates != nil {
 		checkForCD = true
 	}
 	checkForUD := false
-	if ud != nil {
+	if updatedDates != nil {
 		checkForUD = true
 	}
 
-	fmt.Println("Gathering all projects...")
+	fmt.Println("Gathering projects...")
 	projects, err := g.ListAllProjects()
 	if err != nil {
 		fmt.Errorf("Retrieving issue: %w", err)
@@ -449,92 +449,91 @@ func (g *GitLab) CheckIssues(location string, creationDates string, updatedDates
 	fmt.Println("Finding Issues within projects...")
 	for _, proj := range projects {
 		if proj.WebURL == location || location == "" {
-			g.CheckIssuesWithinProject(proj.ID, state, cd, ud, checkForCD, checkForUD)
-		}
-	}
+			projIssues, _ := g.ListAllProjectIssues(proj.ID)
 
-	return nil
-}
-
-func (g *GitLab) CheckIssuesWithinProject(projID int, status string, creationDates, updatedDates []time.Time, checkForCD, checkForUD bool) error {
-	issues := make([]IssueReport, 0)
-	state := SetState(status)
-	projIssues, _ := g.ListAllProjectIssues(projID)
-
-	for _, issue := range projIssues {
-		onlyOurs := strings.Contains(issue.WebURL, "/code")
-
-		issueIsMeeting := strings.Contains(strings.ToLower(issue.Title), "meeting")
-		isStandUp := strings.Contains(strings.ToLower(issue.Title), "stand")
-		issueIsManagement := false
-
-		if strings.Contains(strings.ToLower(issue.Title), "management") || strings.Contains(strings.ToLower(issue.Title), "managing") || strings.Contains(strings.ToLower(issue.Title), "manage") || strings.Contains(strings.ToLower(issue.Title), "mgmt") {
-			issueIsManagement = true
-		}
-
-		if !onlyOurs || issueIsManagement || issueIsMeeting || isStandUp {
-			continue
-		}
-
-		if checkForCD {
-			if !creationDates[0].IsZero() && issue.CreatedAt.Before(creationDates[0]) || !creationDates[1].IsZero() && issue.CreatedAt.After(creationDates[1]) {
-				continue
-			}
-		}
-		if checkForUD {
-			if issue.UpdatedAt.Before(updatedDates[0]) || issue.UpdatedAt.After(updatedDates[1]) {
-				continue
-			}
-		}
-		if issue.State == state || state == "" {
-			if issue.Description == "Acceptance Criteria\n- [ ]   \n- [ ] Automated test: FILEPATHNAME\n- [ ] Pipeline passes with no critical / high vulnerabilities\n" {
-				issues = append(issues, IssueReport{issue, " This issue has not filled out the acceptance criteria."})
-			}
-			if issue.Description == "" {
-				issues = append(issues, IssueReport{issue, " This issue has no description"})
-			}
-
-			needMilestoneAndLabel, needMilestoneHasLabel, hasLabelState, needLabelStateResolved := false, false, false, false
-
-			if issue.Labels == nil {
-				if issue.Milestone == nil {
-					needMilestoneAndLabel = true
+			for _, issue := range projIssues {
+				var onlyOurs bool
+				if location == "" {
+					onlyOurs = strings.Contains(issue.WebURL, "/ours")
+				} else  {
+					onlyOurs = true
 				}
-			}
 
-			for _, label := range issue.Labels {
-				if label == "state::in-progress" {
-					if issue.Milestone == nil {
-						needMilestoneHasLabel = true
+				issueIsMeeting := strings.Contains(strings.ToLower(issue.Title), "meeting")
+				isStandUp := strings.Contains(strings.ToLower(issue.Title), "stand")
+				issueIsManagement := false
+
+				if strings.Contains(strings.ToLower(issue.Title), "management") || strings.Contains(strings.ToLower(issue.Title), "managing") || strings.Contains(strings.ToLower(issue.Title), "manage") || strings.Contains(strings.ToLower(issue.Title), "mgmt") {
+					issueIsManagement = true
+				}
+				if !onlyOurs || issueIsManagement || issueIsMeeting || isStandUp {
+					continue
+				}
+
+				if checkForCD {
+					if !creationDates[0].IsZero() && issue.CreatedAt.Before(creationDates[0]) || !creationDates[1].IsZero() && issue.CreatedAt.After(creationDates[1]) {
+						continue
+					}
+				}
+				if checkForUD {
+					if issue.UpdatedAt.Before(updatedDates[0]) || issue.UpdatedAt.After(updatedDates[1]) {
+						continue
 					}
 				}
 
-				if strings.Contains(strings.ToLower(label), "state::") {
-					hasLabelState = true
-				}
+				if issue.State == state || state == "" {
+					if issue.Description == "Acceptance Criteria\n- [ ]   \n- [ ] Automated test: FILEPATHNAME\n- [ ] Pipeline passes with no critical / high vulnerabilities\n" {
+						issues = append(issues, IssueReport{issue, " This issue has not filled out the acceptance criteria."})
+					}
+					if issue.Description == "" {
+						issues = append(issues, IssueReport{issue, " This issue has no description"})
+					}
 
-				if issue.State == "closed" {
-					if strings.Contains(strings.ToLower(label), "state::") {
-						if label != "state::resolved" && label != "state::abandoned" {
-							needLabelStateResolved = true
+					needMilestoneAndLabel, needMilestoneHasLabel, hasLabelState, needLabelStateResolved := false, false, false, false
+
+					if issue.Labels == nil {
+						if issue.Milestone == nil {
+							needMilestoneAndLabel = true
 						}
 					}
 
+					for _, label := range issue.Labels {
+						if label == "state::in-progress" {
+							if issue.Milestone == nil {
+								needMilestoneHasLabel = true
+							}
+						}
+
+						if strings.Contains(strings.ToLower(label), "state::") {
+							hasLabelState = true
+						}
+
+						if issue.State == "closed" {
+							if strings.Contains(strings.ToLower(label), "state::") {
+								if label != "state::resolved" && label != "state::abandoned" {
+									needLabelStateResolved = true
+								}
+							}
+
+						}
+					}
+
+					if needMilestoneAndLabel {
+						issues = append(issues, IssueReport{issue, " This issue has no milestones or labels set."})
+					}
+					if needMilestoneHasLabel {
+						issues = append(issues, IssueReport{issue, " This issue is in-progress, but has no milestone."})
+					}
+					if !hasLabelState {
+						issues = append(issues, IssueReport{issue, " This issue does not contain a `state::` label"})
+					}
+					if needLabelStateResolved {
+						issues = append(issues, IssueReport{issue, " This issue is requires the `resolved` or `abandoned` label."})
+					}
 				}
 			}
-
-			if needMilestoneAndLabel {
-				issues = append(issues, IssueReport{issue, " This issue has no milestones or labels set."})
-			}
-			if needMilestoneHasLabel {
-				issues = append(issues, IssueReport{issue, " This issue is in-progress, but has no milestone."})
-			}
-			if !hasLabelState {
-				issues = append(issues, IssueReport{issue, " This issue does not contain a `state::` label"})
-			}
-			if needLabelStateResolved {
-				issues = append(issues, IssueReport{issue, " This issue is requires the `resolved` or `abandoned` label."})
-			}
+		} else {
+			continue
 		}
 	}
 
@@ -552,16 +551,14 @@ func (g *GitLab) CheckIssuesWithinProject(projID int, status string, creationDat
 	writer.Flush()
 
 	csvfile, err = os.OpenFile("IssueReport.csv", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return err
-	}
 
 	for _, i := range issues {
-		record := []string{govalidator.ToString(i.issue.Title), i.issue.WebURL, i.issue.Author.Name, i.reason}
+		record := []string{i.issue.Title, i.issue.WebURL, i.issue.Author.Name, i.reason}
 		writer.Write(record)
-		//comment := strings.Replace("@" + govalidator.ToString(i.issue.Author), " " , "", -1) + i.reason
-		//g.PostNoteOnIssue(i.issue.ProjectID, i.issue.IID, &comment
 	}
+	fmt.Println("Results printed to file IssueReport.csv")
+
+	csvfile.Close()
 
 	return nil
 }
@@ -587,35 +584,23 @@ func (g *GitLab) CheckEpicsWithinGroup(location string, creationDates string, up
 	}
 
 	for _, group := range groups {
-		groupEpics, _ := g.ListAllGroupEpics(group.ID)
-		startCheckEpics := false
+		var groupEpics []*gitlab.Epic
+
+		if location == "" && group.Name == "ours" {
+				groupEpics, _ = g.ListAllGroupEpics(group.ID) //group.ID for ours is 125
+		} else {
+			locatonSplit := strings.SplitAfter(location, "https://git.missionfocus.com/")
+			if strings.Replace(locatonSplit[0] + "groups/" + locatonSplit[1] , " ", "", -1) == group.WebURL {
+				groupEpics, _ = g.ListAllGroupEpics(group.ID)
+			}
+		}
 
 		for _, epic := range groupEpics {
-			if location != "" {
-				if strings.Contains(location, group.WebURL) {
-					if strings.Contains(location, "epics/") {
-						splitURL := strings.Split(location, "epics/")
-						if splitURL[1] == govalidator.ToString(epic.IID) {
-							startCheckEpics = true
-						}
-					} else {
-						startCheckEpics = true
-					}
-					continue
-				} else {
-					break
-				}
-			} else {
-				startCheckEpics = true
-			}
-
-			if startCheckEpics == false { break }
-
 			if epic.State == state || state == "" {
 				epicIsMeeting := strings.Contains(strings.ToLower(epic.Title), "meeting")
 				isTeamEpic, epicIsManagement := false, false
 
-				if  strings.Contains(strings.ToLower(epic.Title), "team") || strings.Contains(strings.ToLower(epic.Title), "stand") || strings.Contains(strings.ToLower(epic.Title), "sustainment") || strings.Contains(strings.ToLower(epic.Title), "planning") {
+				if strings.Contains(strings.ToLower(epic.Title), "team") || strings.Contains(strings.ToLower(epic.Title), "stand") || strings.Contains(strings.ToLower(epic.Title), "sustainment") || strings.Contains(strings.ToLower(epic.Title), "planning") {
 					isTeamEpic = true
 				}
 
@@ -639,7 +624,7 @@ func (g *GitLab) CheckEpicsWithinGroup(location string, creationDates string, up
 
 				if epic.State == state || state == "" {
 					if epic.Description == "" {
-						epics = append(epics, EpicReport{epic, group," This epic has no description"})
+						epics = append(epics, EpicReport{epic, group, " This epic has no description"})
 					}
 
 					if epic.Description == "## Increment Objectives\n- [ ]  " || epic.Description == "## To Do\n- [ ]   " || epic.Description == "\n**Initial State**\n- SayWhatItIs\n" {
@@ -688,14 +673,17 @@ func (g *GitLab) CheckEpicsWithinGroup(location string, creationDates string, up
 	writer.Flush()
 
 	csvfile, err = os.OpenFile("EpicReport.csv", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return err
-	}
+
 	for _, e := range epics {
-		createEpicURL := strings.Replace(e.group.WebURL + "/-/epics/" + govalidator.ToString(e.epic.IID), " ", "", -1)
+		var createEpicURL string
+		if location != "" {
+			createEpicURL = strings.Replace(e.group.WebURL+"/-/epics/"+govalidator.ToString(e.epic.IID), " ", "", -1)
+		} else { createEpicURL = strings.Replace(e.group.WebURL + "/-/epics/", " ", "", -1) }
 		record := []string{e.epic.Title, createEpicURL, e.epic.Author.Name, e.reason}
 		writer.Write(record)
 	}
+	fmt.Println("Results printed to file EpicReport.csv")
+	csvfile.Close()
 
 	return nil
 }

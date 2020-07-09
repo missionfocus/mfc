@@ -49,7 +49,7 @@ var gitlabCheckIssuesAndEpicsCmd = &cobra.Command {
 		gl := gitlab.New(client)
 
 		check(gl.CheckEpicsWithinGroup(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
-		check(gl.CheckIssues(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
+		check(gl.CheckIssuesWithinProject(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
 	},
 }
 
@@ -83,6 +83,6 @@ var gitlabCheckIssuesCmd = &cobra.Command {
 		check(err)
 		gl := gitlab.New(client)
 
-		check(gl.CheckIssues(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
+		check(gl.CheckIssuesWithinProject(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
 	},
 }
