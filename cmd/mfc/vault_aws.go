@@ -5,6 +5,7 @@ import (
 	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
+	"path/filepath"
 	"time"
 )
 
@@ -32,7 +33,9 @@ var vaultAWSCmd = &cobra.Command{
 
 const vaultAWSIssueExample = `
   mfc vault aws issue missionfocus engineer # Issues credentials for a engineer role under missionfocus 
-  mfc vault aws issue sandbox engineer      # Issues credentials for a engineer role under sandbox`
+  mfc vault aws issue sandbox engineer      # Issues credentials for a engineer role under sandbox
+  mfc vault aws issue minio engineer        # Issues credentials for a engineer role under minio
+  mfc vault aws issue minio read-only       # Issues credentials for a read-only role under minio`
 
 var vaultAWSIssueCmd = &cobra.Command{
 	Use:     "issue <account> <role>",
@@ -62,11 +65,16 @@ var vaultAWSIssueCmd = &cobra.Command{
 		fmt.Printf("AWS profile `%s` updated with credentials for IAM role `%s` of account `%s`.\n", vaultAWSIssueProfileName, role, account)
 		fmt.Printf("These credentials are valid for: %s\n", (time.Second * time.Duration(secret.LeaseDuration)).String())
 
-		loginURL, err := stsSecret.GenerateLoginUrl(account)
-		check(err)
-		fmt.Printf("Console login URL (valid for 15 minutes):\n\n%s\n", loginURL.String())
-		if vaultAWSIssueAutoOpenURL {
-			check(browser.OpenURL(loginURL.String()))
+		if "minio" == account {
+			fmt.Printf("\nShould the aws client mention `certificate verify failed`, run:\n`mkdir -p $HOME/.config/mf/CAs && mfc vault pki ca > $HOME/.config/mf/CAs/missionfocus_root.crt`\n")
+			fmt.Printf("Then update the minio profile in ~/.aws/config:\n\n[profile minio]\n\tregion = us-east-1\n\tca_bundle = %s\n\tendpoint_url = https://minio.missionfocus.com:9000\n", filepath.Join(homeDir(), ".config/mf/CAs/missionfocus_root.crt"))
+		} else {
+			loginURL, err := stsSecret.GenerateLoginUrl(account)
+			check(err)
+			fmt.Printf("Console login URL (valid for 15 minutes):\n\n%s\n", loginURL.String())
+			if vaultAWSIssueAutoOpenURL {
+				check(browser.OpenURL(loginURL.String()))
+			}
 		}
 	},
 }
