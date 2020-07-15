@@ -30,6 +30,7 @@ type Epic struct {
 	ID                      int         `json:"id"`
 	IID                     int         `json:"iid"`
 	GroupID                 int         `json:"group_id"`
+	ParentID				int			`json:"parent_id"`
 	Author                  *EpicAuthor `json:"author"`
 	Description             string      `json:"description"`
 	State                   string      `json:"state"`
@@ -109,6 +110,27 @@ func (s *EpicsService) GetEpic(gid interface{}, epic int, options ...RequestOpti
 
 	e := new(Epic)
 	resp, err := s.client.Do(req, e)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return e, resp, err
+}
+
+func (s *EpicsService) GetEpicLinks(gid interface{}, epic int, options ...RequestOptionFunc) ([]*Epic, *Response, error) {
+	group, err := parseID(gid)
+	if err != nil {
+		return nil, nil, err
+	}
+	u := fmt.Sprintf("groups/%s/epics/%d/epics", pathEscape(group), epic)
+
+	req, err := s.client.NewRequest("GET", u, nil, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var e []*Epic
+	resp, err := s.client.Do(req, &e)
 	if err != nil {
 		return nil, resp, err
 	}

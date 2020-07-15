@@ -388,6 +388,15 @@ func (g *GitLab) GetEpicIssues(gid interface{}, epic int) []*gitlab.Issue {
 	return issues
 }
 
+func (g *GitLab) GetEpicLinks(gid interface{}, epic int) []*gitlab.Epic {
+	epics, _, err := g.client.Epics.GetEpicLinks(gid, epic)
+	if err != nil {
+		return nil
+	}
+
+	return epics
+}
+
 // SetState ensures that the state can be queried
 func SetState(status string) string {
 	state := strings.ToLower(status)
@@ -587,7 +596,7 @@ func (g *GitLab) CheckEpicsWithinGroup(location string, creationDates string, up
 		var groupEpics []*gitlab.Epic
 
 		if location == "" && group.Name == "ours" {
-				groupEpics, _ = g.ListAllGroupEpics(group.ID) //group.ID for ours is 125
+			groupEpics, _ = g.ListAllGroupEpics(group.ID) //group.ID for ours is 125
 		} else {
 			locatonSplit := strings.SplitAfter(location, "https://git.missionfocus.com/")
 			if strings.Replace(locatonSplit[0] + "groups/" + locatonSplit[1] , " ", "", -1) == group.WebURL {
@@ -807,13 +816,81 @@ func (g *GitLab) UpdateEpicIssuesLabels(location, label string) error {
 				}
 				break
 			}
-			if locationFound {
-				break
-			}
 		}
 		if locationFound {
 			break
 		}
 	}
 	return nil
+}
+
+type EpicParentChild struct {
+	ParentEpicID	int
+	ChildEpic		*gitlab.Epic
+}
+
+//UpdateAllLabels - This will inherit parent epic labels to sub epics and issues.
+func (g *GitLab) UpdateAllLabels() error {
+	groups, err := g.ListAllGroups()
+	if err != nil {
+		return err
+	}
+
+	for _, group := range groups {
+		groupEpics, _ := g.ListAllGroupEpics(group.ID)
+		for _, epic := range groupEpics {
+			removeUpdatedEpics := g.UpdateChildEpicsAndIssues(group, epic, nil)
+			for removeUpdateEpic := range removeUpdatedEpics {
+				groupEpics = remove(groupEpics, removeUpdateEpic)
+			}
+		}
+	}
+	return nil
+}
+
+// TODO A BIG BUG IS THAT EPIC LINKS != PARENT EPIC.... IT IS THE LITERAL LINK THAT IS IN THE EPIC.
+func (g *GitLab) UpdateChildEpicsAndIssues(group *gitlab.Group, epic *gitlab.Epic, epicsToRemove []*gitlab.Epic) []*gitlab.Epic {
+	epicLabels := epic.Labels
+	issues := g.GetEpicIssues(group.ID, epic.IID)
+
+	for _, issue := range issues {
+		for _, epicLabel := range epicLabels {
+			issue.Labels = append(issue.Labels, epicLabel)
+		}
+		opt := &gitlab.UpdateIssueOptions{
+			Labels: &issue.Labels,
+		}
+		g.UpdateIssueWithOpts(issue.ProjectID, issue.IID, opt)
+	}
+
+	childEpics := g.GetEpicLinks(group.ID, epic.IID)
+	if childEpics!= nil {
+		for _, childEpic := range childEpics {
+			for _, epicLabel := range epicLabels {
+				childEpic.Labels = append(childEpic.Labels, epicLabel)
+			}
+			opt := &gitlab.UpdateEpicOptions{
+				Labels: childEpic.Labels,
+			}
+
+			g.UpdateEpicWithOpts(group.ID, childEpic.IID, opt)
+			epicsToRemove = append(epicsToRemove, childEpic)
+			g.UpdateChildEpicsAndIssues(group, childEpic, epicsToRemove)
+		}
+	}
+	return epicsToRemove
+}
+
+func remove(s []*gitlab.Epic, i int) []*gitlab.Epic {
+	s[len(s)-1], s[i] = s[i], s[len(s)-1]
+	return s[:len(s)-1]
+}
+
+func contains(arr []string, str string) bool {
+	for _, a := range arr {
+		if a == str {
+			return true
+		}
+	}
+	return false
 }
