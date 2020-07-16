@@ -839,23 +839,25 @@ func (g *GitLab) UpdateAllLabels() error {
 	for _, group := range groups {
 		groupEpics, _ := g.ListAllGroupEpics(group.ID)
 		for _, epic := range groupEpics {
-			removeUpdatedEpics := g.UpdateChildEpicsAndIssues(group, epic, nil)
-			for removeUpdateEpic := range removeUpdatedEpics {
-				groupEpics = remove(groupEpics, removeUpdateEpic)
+			if epic.ParentID == 0 {
+				fmt.Println("Updating Child Epics and Issues for the Parent Epic:", epic.Title)
+				g.UpdateChildEpicsAndIssues(group, epic)
 			}
 		}
 	}
 	return nil
 }
 
-// TODO A BIG BUG IS THAT EPIC LINKS != PARENT EPIC.... IT IS THE LITERAL LINK THAT IS IN THE EPIC.
-func (g *GitLab) UpdateChildEpicsAndIssues(group *gitlab.Group, epic *gitlab.Epic, epicsToRemove []*gitlab.Epic) []*gitlab.Epic {
+func (g *GitLab) UpdateChildEpicsAndIssues(group *gitlab.Group, epic *gitlab.Epic) error {
 	epicLabels := epic.Labels
 	issues := g.GetEpicIssues(group.ID, epic.IID)
 
+	fmt.Println(epic.Title, epic.ID, epic.IID)
 	for _, issue := range issues {
 		for _, epicLabel := range epicLabels {
-			issue.Labels = append(issue.Labels, epicLabel)
+			if strings.Contains(epicLabel, "epic") {
+				issue.Labels = append(issue.Labels, epicLabel)
+			}
 		}
 		opt := &gitlab.UpdateIssueOptions{
 			Labels: &issue.Labels,
@@ -866,31 +868,20 @@ func (g *GitLab) UpdateChildEpicsAndIssues(group *gitlab.Group, epic *gitlab.Epi
 	childEpics := g.GetEpicLinks(group.ID, epic.IID)
 	if childEpics!= nil {
 		for _, childEpic := range childEpics {
-			for _, epicLabel := range epicLabels {
-				childEpic.Labels = append(childEpic.Labels, epicLabel)
-			}
-			opt := &gitlab.UpdateEpicOptions{
-				Labels: childEpic.Labels,
-			}
+			if childEpic.ParentID == epic.ID {
+				for _, epicLabel := range epicLabels {
+					if strings.Contains(epicLabel, "epic") {
+						childEpic.Labels = append(childEpic.Labels, epicLabel)
+					}
+				}
+				opt := &gitlab.UpdateEpicOptions{
+					Labels: childEpic.Labels,
+				}
 
-			g.UpdateEpicWithOpts(group.ID, childEpic.IID, opt)
-			epicsToRemove = append(epicsToRemove, childEpic)
-			g.UpdateChildEpicsAndIssues(group, childEpic, epicsToRemove)
+				g.UpdateEpicWithOpts(group.ID, childEpic.IID, opt)
+				g.UpdateChildEpicsAndIssues(group, childEpic)
+			}
 		}
 	}
-	return epicsToRemove
-}
-
-func remove(s []*gitlab.Epic, i int) []*gitlab.Epic {
-	s[len(s)-1], s[i] = s[i], s[len(s)-1]
-	return s[:len(s)-1]
-}
-
-func contains(arr []string, str string) bool {
-	for _, a := range arr {
-		if a == str {
-			return true
-		}
-	}
-	return false
+	return nil
 }
