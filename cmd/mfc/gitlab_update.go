@@ -8,7 +8,7 @@ import (
 
 func init() {
 	gitlabCmd.AddCommand(gitlabUpdateCmd)
-	gitlabUpdateCmd.AddCommand(gitlabUpdateEpicIssuesCmd)
+	gitlabUpdateCmd.AddCommand(gitlabUpdateEpicIssuesLabelCmd)
 	gitlabUpdateCmd.AddCommand(gitlabUpdateAllLabelsCmd)
 }
 
@@ -24,7 +24,7 @@ var gitlabUpdateCmd = &cobra.Command{
 	Aliases: []string{"u"},
 }
 
-var gitlabUpdateEpicIssuesCmd = &cobra.Command {
+var gitlabUpdateEpicIssuesLabelCmd = &cobra.Command {
 	Use:     "EpicIssuesLabel <location> <OldLabel|NewLabel>",
 	Short:   "Update a specific epic and issues labels",
 	Args:    cobra.ExactArgs(2),
@@ -50,6 +50,7 @@ var gitlabUpdateEpicIssuesCmd = &cobra.Command {
 var gitlabUpdateAllLabelsCmd = &cobra.Command {
 	Use:     "all-labels",
 	Short:   "Update all Epics and Children labels",
+	Args:    cobra.ExactArgs(0),
 	Aliases: []string{"eal"},
 	Run: func(cmd *cobra.Command, args []string) {
 		vClient, err := getVaultClientWithToken()

@@ -102,6 +102,33 @@ func (g *GitLab) ListAllGroups() ([]*gitlab.Group, error) {
 	return groups, nil
 }
 
+func (g *GitLab) ListSubGroups(groupID int) ([]*gitlab.Group, error) {
+	groups := make([]*gitlab.Group, 0)
+	opt := &gitlab.ListSubgroupsOptions{
+		ListOptions: gitlab.ListOptions{
+			PerPage: 20,
+			Page:    1,
+		},
+	}
+	for {
+		gs, res, err := g.client.Groups.ListSubgroups(groupID, opt)
+		if err != nil {
+			return nil, fmt.Errorf("listing subgroups: %w", err)
+		}
+
+		groups = append(groups, gs...)
+
+		if res.CurrentPage >= res.TotalPages {
+			break
+		}
+
+		opt.Page = res.NextPage
+	}
+
+	return groups, nil
+
+}
+
 // ListAllProjects lists all of the projects the caller has access to.
 func (g *GitLab) ListAllProjects() ([]*gitlab.Project, error) {
 	opt := &gitlab.ListProjectsOptions{
@@ -824,11 +851,6 @@ func (g *GitLab) UpdateEpicIssuesLabels(location, label string) error {
 	return nil
 }
 
-type EpicParentChild struct {
-	ParentEpicID	int
-	ChildEpic		*gitlab.Epic
-}
-
 //UpdateAllLabels - This will inherit parent epic labels to sub epics and issues.
 func (g *GitLab) UpdateAllLabels() error {
 	groups, err := g.ListAllGroups()
@@ -837,12 +859,17 @@ func (g *GitLab) UpdateAllLabels() error {
 	}
 
 	for _, group := range groups {
+		fmt.Println("\nUpdating Epics under the group:", group.Name)
 		groupEpics, _ := g.ListAllGroupEpics(group.ID)
 		for _, epic := range groupEpics {
-			if epic.ParentID == 0 {
-				fmt.Println("Updating Child Epics and Issues for the Parent Epic:", epic.Title)
-				g.UpdateChildEpicsAndIssues(group, epic)
+			if epic.GroupID != group.ID {
+				continue
 			}
+			if epic.ParentID != 0 {
+				continue
+			}
+				fmt.Println("Updating Epics and Issues for the Parent Epic:", epic.Title)
+				g.UpdateChildEpicsAndIssues(group, epic)
 		}
 	}
 	return nil
@@ -852,10 +879,9 @@ func (g *GitLab) UpdateChildEpicsAndIssues(group *gitlab.Group, epic *gitlab.Epi
 	epicLabels := epic.Labels
 	issues := g.GetEpicIssues(group.ID, epic.IID)
 
-	fmt.Println(epic.Title, epic.ID, epic.IID)
 	for _, issue := range issues {
 		for _, epicLabel := range epicLabels {
-			if strings.Contains(epicLabel, "epic") {
+			if strings.Contains(epicLabel, "epic-") {
 				issue.Labels = append(issue.Labels, epicLabel)
 			}
 		}
@@ -870,12 +896,12 @@ func (g *GitLab) UpdateChildEpicsAndIssues(group *gitlab.Group, epic *gitlab.Epi
 		for _, childEpic := range childEpics {
 			if childEpic.ParentID == epic.ID {
 				for _, epicLabel := range epicLabels {
-					if strings.Contains(epicLabel, "epic") {
+					if strings.Contains(epicLabel, "epic-") {
 						childEpic.Labels = append(childEpic.Labels, epicLabel)
 					}
 				}
-				opt := &gitlab.UpdateEpicOptions{
-					Labels: childEpic.Labels,
+				opt := &gitlab.UpdateEpicOptions {
+				Labels: childEpic.Labels,
 				}
 
 				g.UpdateEpicWithOpts(group.ID, childEpic.IID, opt)
