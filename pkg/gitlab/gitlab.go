@@ -3,7 +3,6 @@ package gitlab
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/asaskevich/govalidator"
 	"io"
 	"os"
 	"path/filepath"
@@ -11,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/go-git/go-git/v5"
 	"github.com/xanzy/go-gitlab"
 )
@@ -868,8 +868,8 @@ func (g *GitLab) UpdateAllLabels() error {
 			if epic.ParentID != 0 {
 				continue
 			}
-				fmt.Println("Updating Epics and Issues for the Parent Epic:", epic.Title)
-				g.UpdateChildEpicsAndIssues(group, epic)
+			fmt.Println("Updating Epics and Issues for the Parent Epic:", epic.Title)
+			g.UpdateChildEpicsAndIssues(group, epic)
 		}
 	}
 	return nil
@@ -901,7 +901,7 @@ func (g *GitLab) UpdateChildEpicsAndIssues(group *gitlab.Group, epic *gitlab.Epi
 					}
 				}
 				opt := &gitlab.UpdateEpicOptions {
-				Labels: childEpic.Labels,
+					Labels: childEpic.Labels,
 				}
 
 				g.UpdateEpicWithOpts(group.ID, childEpic.IID, opt)
