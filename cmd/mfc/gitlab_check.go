@@ -11,6 +11,8 @@ func init() {
 	gitlabCheckCmd.AddCommand(gitlabCheckIssuesAndEpicsCmd)
 	gitlabCheckCmd.AddCommand(gitlabCheckIssuesCmd)
 	gitlabCheckCmd.AddCommand(gitlabCheckEpicsCmd)
+	gitlabCheckCmd.AddCommand(dbtest)
+
 
 	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabCheckLocation, "Location", "l", "", "Define a location")
 	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabCheckCreationDate, "CreationDate", "c", "", "AfterDate|BeforeDate")
@@ -84,5 +86,22 @@ var gitlabCheckIssuesCmd = &cobra.Command {
 		gl := gitlab.New(client)
 
 		check(gl.CheckIssuesWithinProject(gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
+	},
+}
+
+var dbtest = &cobra.Command {
+	Use:     "velocity",
+	Short:   "Check each MFM velocity for a given milestone and iteration",
+	Run: func(cmd *cobra.Command, args []string) {
+		vClient, err := getVaultClientWithToken()
+		check(err)
+		v := vault.New(vClient)
+
+		client, err := getGitLabClient(v)
+		check(err)
+		gl := gitlab.New(client)
+
+		check(gl.VelocityReport(args[0], ""))
+
 	},
 }
