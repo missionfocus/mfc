@@ -273,9 +273,11 @@ func GetPersonHoursSummary(vaultClient vault.Vault, progress io.Writer, person s
 	for _, m := range scope.Members {
 		emailPointerValue := *m.UserProfile.Email
 		profileId := m.UserProfileID
-		if person == "" ||  strings.ToLower(m.UserProfile.UserName) == strings.ToLower(person) || emailPointerValue == person + "@missionfocus.com"  {
+		if person == "" || strings.ToLower(m.UserProfile.UserName) == strings.ToLower(person) || emailPointerValue == person+"@missionfocus.com" {
 			foundUser = true
-		} else {foundUser = false}
+		} else {
+			foundUser = false
+		}
 		if foundUser {
 			calRange := []string{"past day", "week", "month", "lifetime"}
 			for _, t := range calRange {
@@ -320,14 +322,14 @@ func GetPersonHoursSummary(vaultClient vault.Vault, progress io.Writer, person s
 					duration := end.Sub(start)
 					totalWorkedHours = totalWorkedHours + duration
 				}
-				fmt.Println(m.UserProfile.UserName + "'s time this", t, "is a total of ", totalWorkedHours)
+				fmt.Println(m.UserProfile.UserName+"'s time this", t, "is a total of ", totalWorkedHours)
 			}
 		}
 	}
 	return nil
 }
 
-func Scanner (vaultClient vault.Vault, progress io.Writer) error {
+func Scanner(vaultClient vault.Vault, progress io.Writer) error {
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 0, 8, 0, ' ', 0)
 
@@ -367,8 +369,8 @@ func Scanner (vaultClient vault.Vault, progress io.Writer) error {
 		}
 
 		// startDt/startDt test expected be at 10:00 AM each day; making start time = 12:00 AM and end time = 11:59 PM.
-		startDt := strfmt.DateTime(time.Now().AddDate(0, 0 , -1).Add(time.Hour * -10)) // Start time = 12:00 AM
-		endDt := strfmt.DateTime(time.Now().AddDate(0, 0 , -1).Add(time.Hour * 13).Add(time.Minute * 59)) // End Time = 11:59 PM
+		startDt := strfmt.DateTime(time.Now().AddDate(0, 0, -1).Add(time.Hour * -10))                    // Start time = 12:00 AM
+		endDt := strfmt.DateTime(time.Now().AddDate(0, 0, -1).Add(time.Hour * 13).Add(time.Minute * 59)) // End Time = 11:59 PM
 		params := time_entries.NewTimeEntriesGetTimeEntriesParams().
 			WithAccountID(AccountID).
 			WithUserProfileID(profileId).
@@ -384,7 +386,7 @@ func Scanner (vaultClient vault.Vault, progress io.Writer) error {
 
 		fmt.Print("Checking project names... ")
 		var totalWorkedHours time.Duration
-		var requiredHours = time.Duration(8)*time.Hour
+		var requiredHours = time.Duration(8) * time.Hour
 		projsPassed := true
 
 		for _, e := range timeEntries {
@@ -414,25 +416,27 @@ func Scanner (vaultClient vault.Vault, progress io.Writer) error {
 			fmt.Println("Critical Error! User is still logging hours.")
 		} else if totalWorkedHours < requiredHours {
 			fmt.Print(totalWorkedHours)
-			if totalWorkedHours < time.Duration(7)*time.Hour + time.Duration(30)*time.Minute { // If an employee has less than 7.5 hrs
+			if totalWorkedHours < time.Duration(7)*time.Hour+time.Duration(30)*time.Minute { // If an employee has less than 7.5 hrs
 				fmt.Println("Failed. Total hours is less than 7 hours and 30 minutes.")
-			} else if totalWorkedHours > time.Duration(8)*time.Hour + time.Duration(30)*time.Minute {
+			} else if totalWorkedHours > time.Duration(8)*time.Hour+time.Duration(30)*time.Minute {
 				fmt.Println("Failed. Total hours is MORE than 8 hours and 30 minutes.")
 			} else {
 				fmt.Println("Warning. Total hours are less than 8 hours.")
 			}
-		} else { fmt.Println("Passed")}
+		} else {
+			fmt.Println("Passed")
+		}
 	}
 	return nil
 }
 
 //acceptedUserNames this should probably moved to an external file.
-var acceptedUserNames = []string {
+var acceptedUserNames = []string{
 	"Jacob Stover",
-	"Collin Day" ,
+	"Collin Day",
 	"Cam Cook",
-	"Eric Capito" ,
-	"Wei Zhu" ,
+	"Eric Capito",
+	"Wei Zhu",
 	"John Kroeker",
 	"Matthew Smith",
 	"Casey Sault",

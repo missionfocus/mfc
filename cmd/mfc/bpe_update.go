@@ -1,30 +1,29 @@
 package main
 
 import (
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
+	"git.missionfocus.com/ours/code/tools/mfc/pkg/bpe"
 	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	gitlabCmd.AddCommand(gitlabUpdateCmd)
-	gitlabUpdateCmd.AddCommand(gitlabUpdateEpicIssuesLabelCmd)
-	gitlabUpdateCmd.AddCommand(gitlabUpdateAllLabelsCmd)
+	bpeCmd.AddCommand(bpeUpdateCmd)
+	bpeCmd.AddCommand(bpeUpdateEpicIssuesLabelCmd)
+	bpeCmd.AddCommand(bpeUpdateAllLabelsCmd)
 }
-
 
 const gitlabUpdateEpicIssueLabels = `
   mfc gitlab update eil "https://git.missionfocus.com/groups/ours/mfm/-/epics/1" "dev::coding|"      					# Deletes dev::coding label and adds no label in place.
   mfc gitlab update eil "https://git.missionfocus.com/ours/mfm/mfm-records/-/issues/5" "check-this|dev::coding"         # Removes check-this label and adds dev:coding label
 `
 
-var gitlabUpdateCmd = &cobra.Command{
+var bpeUpdateCmd = &cobra.Command{
 	Use:     "update",
 	Short:   "Gitlab check <cmd>",
 	Aliases: []string{"u"},
 }
 
-var gitlabUpdateEpicIssuesLabelCmd = &cobra.Command {
+var bpeUpdateEpicIssuesLabelCmd = &cobra.Command{
 	Use:     "EpicIssuesLabel <location> <OldLabel|NewLabel>",
 	Short:   "Update a specific epic and issues labels",
 	Args:    cobra.ExactArgs(2),
@@ -37,17 +36,16 @@ var gitlabUpdateEpicIssuesLabelCmd = &cobra.Command {
 
 		client, err := getGitLabClient(v)
 		check(err)
-		gl := gitlab.New(client)
 
 		if args[0] == "" || args[1] == "" {
 			return
 		}
 
-		check(gl.UpdateEpicIssuesLabels(args[0], args[1]))
+		check(bpe.UpdateEpicIssuesLabels(client, args[0], args[1]))
 	},
 }
 
-var gitlabUpdateAllLabelsCmd = &cobra.Command {
+var bpeUpdateAllLabelsCmd = &cobra.Command{
 	Use:     "all-labels",
 	Short:   "Update all Epics and Children labels",
 	Args:    cobra.ExactArgs(0),
@@ -59,9 +57,7 @@ var gitlabUpdateAllLabelsCmd = &cobra.Command {
 
 		client, err := getGitLabClient(v)
 		check(err)
-		gl := gitlab.New(client)
 
-		check(gl.UpdateAllLabels())
+		check(bpe.UpdateAllLabels(client))
 	},
 }
-
