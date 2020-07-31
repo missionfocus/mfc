@@ -3,10 +3,11 @@ package bpe
 import (
 	"encoding/csv"
 	"fmt"
-	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
-	"github.com/xanzy/go-gitlab"
 	"os"
 	"strings"
+
+	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
+	"github.com/xanzy/go-gitlab"
 
 	"github.com/emirpasic/gods/utils"
 )

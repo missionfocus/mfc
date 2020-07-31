@@ -69,8 +69,8 @@ var tmetricPerformanceCmd = &cobra.Command{
 }
 
 var (
-	tmetricPerson  	  string
-	gitlabIssueURL	  string
+	tmetricPerson  string
+	gitlabIssueURL string
 )
 
 var tmetricHoursCommand = &cobra.Command{
