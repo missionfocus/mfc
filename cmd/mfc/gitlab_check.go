@@ -1,6 +1,7 @@
 package main
 
 import (
+	"git.missionfocus.com/ours/code/tools/mfc/pkg/bpe"
 	"git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
 	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
 	"github.com/spf13/cobra"
@@ -11,7 +12,7 @@ func init() {
 	gitlabCheckCmd.AddCommand(gitlabCheckIssuesAndEpicsCmd)
 	gitlabCheckCmd.AddCommand(gitlabCheckIssuesCmd)
 	gitlabCheckCmd.AddCommand(gitlabCheckEpicsCmd)
-	gitlabCheckCmd.AddCommand(dbtest)
+	gitlabCheckCmd.AddCommand(gitlabVelocityReportCmd)
 
 
 	gitlabCheckCmd.PersistentFlags().StringVarP(&gitlabCheckLocation, "Location", "l", "", "Define a location")
@@ -30,6 +31,10 @@ var (
 const gitlabCheckExample = `
   mfc gitlab check 
 `
+const gitlabVelocityExample = `
+    mfc gitlab check velocity  ""		# Generate documentation for mfc in markdown format
+ 	mfc gitlab check velocity "GDAC 18" # Gets the velocity for the GDAC 18 milestone`
+
 
 var gitlabCheckCmd = &cobra.Command{
 	Use:     "check",
@@ -89,9 +94,10 @@ var gitlabCheckIssuesCmd = &cobra.Command {
 	},
 }
 
-var dbtest = &cobra.Command {
+var gitlabVelocityReportCmd = &cobra.Command {
 	Use:     "velocity",
 	Short:   "Check each MFM velocity for a given milestone and iteration",
+	Example: gitlabVelocityExample,
 	Run: func(cmd *cobra.Command, args []string) {
 		vClient, err := getVaultClientWithToken()
 		check(err)
@@ -99,9 +105,7 @@ var dbtest = &cobra.Command {
 
 		client, err := getGitLabClient(v)
 		check(err)
-		gl := gitlab.New(client)
 
-		check(gl.VelocityReport(args[0], ""))
-
+		check(bpe.VelocityReport(client, args[0], ""))
 	},
 }
