@@ -29,9 +29,36 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 	m := make(map[string]*TrackVelocity)
 	labels := make(map[string]int)
 
-	var groupCodeID = 145
+	state := "opened"
+	//TODO add Weight to the Github API.
+	opts := &gitlab.ListIssuesOptions{
+		State: &state,
+		Milestone: &milestone,
+	}
+	issues, _ := g.GetIssuesWithOptions(opts)
 
-	issues, _ := g.ListAllGroupIssues(groupCodeID) //ID145 is ours/code
+	for _, issue := range issues {
+		if issue.Weight != 0 {
+			if _, ok := m[issue.Assignee.Name]; ok {
+				foundPersonVelocity := m[issue.Assignee.Name]
+				foundPersonVelocity.AppendTrackVelocity(issue.Title, issue.WebURL, issue.Weight)
+				m[issue.Assignee.Name] = foundPersonVelocity
+			} else {
+				newPersonVelocity := &TrackVelocity{[]string{issue.Title}, []string{issue.WebURL}, []int{issue.Weight}}
+				m[issue.Assignee.Name] = newPersonVelocity
+			}
+			for _, label := range issue.Labels {
+				if strings.Contains(label, "epic-") {
+					totalWeightPerLabel := labels[label]
+					labels[label] = totalWeightPerLabel + issue.Weight
+				}
+			}
+		}
+	}
+
+	//var groupCodeID = 145
+
+	/*issues, _ := g.ListAllGroupIssues(groupCodeID) //ID145 is ours/code
 	for _, issue := range issues {
 		if issue.Milestone != nil {
 			if issue.Milestone.Title != milestone {
@@ -60,7 +87,7 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 				}
 			}
 		}
-	}
+	}*/
 
 	csvfile, err := os.Create("VelocityReport.csv")
 	if err != nil {

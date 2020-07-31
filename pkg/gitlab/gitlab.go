@@ -68,6 +68,16 @@ func (g *GitLab) GetIssue(projID interface{}, issueID int) (*gitlab.Issue, error
 	return issue, nil
 }
 
+func (g *GitLab) GetIssuesWithOptions(opt *gitlab.ListIssuesOptions) ([]*gitlab.Issue, error) {
+	issues, _, err := g.client.Issues.ListIssues(opt)
+	if err != nil {
+		return nil, fmt.Errorf("Retrieving issues with options: %w", err)
+	}
+
+	return issues, nil
+}
+
+
 // GetEpic retrieves a specific epic.
 func (g *GitLab) GetEpic(gid interface{}, epic int) (*gitlab.Epic, error) {
 	Epic, _, err := g.client.Epics.GetEpic(gid, epic)
