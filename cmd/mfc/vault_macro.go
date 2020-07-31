@@ -21,8 +21,8 @@ const vaultMinioExample = `
   mfc vault macro minio # Configures ~/.aws/credentials for access to minio`
 
 var vaultMinioMacro = &cobra.Command{
-	Use:   "minio",
-	Short: "Configure AWS credentials to use Jackie as an S3 implementation",
+	Use:     "minio",
+	Short:   "Configure AWS credentials to use Jackie as an S3 implementation",
 	Example: vaultMinioExample,
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := getVaultClientWithToken()

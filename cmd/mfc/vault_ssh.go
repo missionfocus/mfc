@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+
+	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
+	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -20,8 +21,8 @@ const vaultSSHSignUserExample = `
   mfc vault ssh sign # Sign current users ssh key`
 
 var vaultSSHCmd = &cobra.Command{
-	Use:   "ssh",
-	Short: "Interact with Vault's SSH engine",
+	Use:     "ssh",
+	Short:   "Interact with Vault's SSH engine",
 	Example: vaultSSHSignUserExample,
 }
 
