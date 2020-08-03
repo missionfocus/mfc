@@ -22,116 +22,77 @@ type IssueReport struct {
 	reason string
 }
 
-func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd string, ud string, status string) error {
+func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd string, ud string, state string) error {
 	g := gl.New(glClient)
 	issues := make([]IssueReport, 0)
-	state := SetState(status)
 	creationDates := GetTimeParameters(cd)
 	updatedDates := GetTimeParameters(ud)
 
-	checkForCD := false
-	if creationDates != nil {
-		checkForCD = true
+	opts := &gitlab.ListIssuesOptions{
+		State: &state,
+		CreatedAfter: &creationDates[0],
+		CreatedBefore: &creationDates[1],
+		UpdatedAfter: &updatedDates[0],
+		UpdatedBefore: &updatedDates[1],
 	}
-	checkForUD := false
-	if updatedDates != nil {
-		checkForUD = true
-	}
+	queryIssues, _ := g.GetIssuesWithOptions(opts)
 
-	fmt.Println("Gathering projects...")
-	projects, err := g.ListAllProjects()
-	if err != nil {
-		fmt.Errorf("Retrieving issue: %w", err)
-	}
+	for _, issue := range queryIssues {
 
-	fmt.Println("Finding Issues within projects...")
-	for _, proj := range projects {
-		if proj.WebURL == location || location == "" {
-			projIssues, _ := g.ListAllProjectIssues(proj.ID)
+		issueIsMeeting := strings.Contains(strings.ToLower(issue.Title), "meeting")
+		isStandUp := strings.Contains(strings.ToLower(issue.Title), "stand")
+		issueIsManagement := false
 
-			for _, issue := range projIssues {
-				var onlyOurs bool
-				if location == "" {
-					onlyOurs = strings.Contains(issue.WebURL, "/ours")
-				} else {
-					onlyOurs = true
+		if strings.Contains(strings.ToLower(issue.Title), "management") || strings.Contains(strings.ToLower(issue.Title), "managing") || strings.Contains(strings.ToLower(issue.Title), "manage") || strings.Contains(strings.ToLower(issue.Title), "mgmt") {
+			issueIsManagement = true
+		}
+		if  issueIsManagement || issueIsMeeting || isStandUp {
+			continue
+		}
+
+		needMilestoneAndLabel, needMilestoneHasLabel, hasLabelState, needLabelStateResolved := false, false, false, false
+
+		if issue.Labels == nil {
+			if issue.Milestone == nil {
+				needMilestoneAndLabel = true
+			}
+		}
+
+		for _, label := range issue.Labels {
+			if label == "management" || label == "meeting" || label == "standup" {
+				break
+			}
+
+			if label == "state::in-progress" {
+				if issue.Milestone == nil {
+					needMilestoneHasLabel = true
 				}
+			}
 
-				issueIsMeeting := strings.Contains(strings.ToLower(issue.Title), "meeting")
-				isStandUp := strings.Contains(strings.ToLower(issue.Title), "stand")
-				issueIsManagement := false
+			if strings.Contains(strings.ToLower(label), "state::") {
+				hasLabelState = true
+			}
 
-				if strings.Contains(strings.ToLower(issue.Title), "management") || strings.Contains(strings.ToLower(issue.Title), "managing") || strings.Contains(strings.ToLower(issue.Title), "manage") || strings.Contains(strings.ToLower(issue.Title), "mgmt") {
-					issueIsManagement = true
-				}
-				if !onlyOurs || issueIsManagement || issueIsMeeting || isStandUp {
-					continue
-				}
-
-				if checkForCD {
-					if !creationDates[0].IsZero() && issue.CreatedAt.Before(creationDates[0]) || !creationDates[1].IsZero() && issue.CreatedAt.After(creationDates[1]) {
-						continue
-					}
-				}
-				if checkForUD {
-					if issue.UpdatedAt.Before(updatedDates[0]) || issue.UpdatedAt.After(updatedDates[1]) {
-						continue
-					}
-				}
-
-				if issue.State == state || state == "" {
-					if issue.Description == "Acceptance Criteria\n- [ ]   \n- [ ] Automated test: FILEPATHNAME\n- [ ] Pipeline passes with no critical / high vulnerabilities\n" {
-						issues = append(issues, IssueReport{issue, " This issue has not filled out the acceptance criteria."})
-					}
-					if issue.Description == "" {
-						issues = append(issues, IssueReport{issue, " This issue has no description"})
-					}
-
-					needMilestoneAndLabel, needMilestoneHasLabel, hasLabelState, needLabelStateResolved := false, false, false, false
-
-					if issue.Labels == nil {
-						if issue.Milestone == nil {
-							needMilestoneAndLabel = true
-						}
-					}
-
-					for _, label := range issue.Labels {
-						if label == "state::in-progress" {
-							if issue.Milestone == nil {
-								needMilestoneHasLabel = true
-							}
-						}
-
-						if strings.Contains(strings.ToLower(label), "state::") {
-							hasLabelState = true
-						}
-
-						if issue.State == "closed" {
-							if strings.Contains(strings.ToLower(label), "state::") {
-								if label != "state::resolved" && label != "state::abandoned" {
-									needLabelStateResolved = true
-								}
-							}
-
-						}
-					}
-
-					if needMilestoneAndLabel {
-						issues = append(issues, IssueReport{issue, " This issue has no milestones or labels set."})
-					}
-					if needMilestoneHasLabel {
-						issues = append(issues, IssueReport{issue, " This issue is in-progress, but has no milestone."})
-					}
-					if !hasLabelState {
-						issues = append(issues, IssueReport{issue, " This issue does not contain a `state::` label"})
-					}
-					if needLabelStateResolved {
-						issues = append(issues, IssueReport{issue, " This issue is requires the `resolved` or `abandoned` label."})
+			if issue.State == "closed" {
+				if strings.Contains(strings.ToLower(label), "state::") {
+					if label != "state::resolved" && label != "state::abandoned" && label != "state::moved"{
+						needLabelStateResolved = true
 					}
 				}
 			}
-		} else {
-			continue
+		}
+
+		if needMilestoneAndLabel {
+			issues = append(issues, IssueReport{issue, " This issue has no milestones or labels set."})
+		}
+		if needMilestoneHasLabel {
+			issues = append(issues, IssueReport{issue, " This issue is in-progress, but has no milestone."})
+		}
+		if !hasLabelState {
+			issues = append(issues, IssueReport{issue, " This issue does not contain a `state::` label"})
+		}
+		if needLabelStateResolved {
+			issues = append(issues, IssueReport{issue, " This issue is requires the `resolved` or `abandoned` label."})
 		}
 	}
 
