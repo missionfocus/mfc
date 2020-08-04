@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	gitlabCmd.AddCommand(bpeCheckCmd)
+	bpeCmd.AddCommand(bpeCheckCmd)
 	bpeCheckCmd.AddCommand(bpeCheckIssuesAndEpicsCmd)
 	bpeCheckCmd.AddCommand(bpeCheckIssuesCmd)
 	bpeCheckCmd.AddCommand(bpeCheckEpicsCmd)

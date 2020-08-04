@@ -10,41 +10,31 @@ import (
 	"github.com/xanzy/go-gitlab"
 )
 
-// SetState ensures that the state can be queried
-func SetState(status string) string {
-	state := strings.ToLower(status)
-	if state == "open" {
-		state = "opened"
-	}
-	if state == "close" {
-		state = "closed"
-	} else {
-		state = ""
-	}
-	return state
-}
-
 const (
 	glTimeFormat    = "2006-01-02"
-	inputTimeFormat = "01/02/2006"
 )
 
 //GetTimeParameters is used to alter the format [date] | [date] into a comparable format
 func GetTimeParameters(str string) []time.Time {
-	if len(str) == 0 {
-		return nil
-	}
-	date := make([]time.Time, 0)
-	splitDateStrings := strings.Split(str, "|")
+	dates := make([]time.Time, 0)
 
+	if len(str) == 0 {
+		date := "1999-12-31"
+		t, _ := time.Parse(glTimeFormat, date)
+		dates = append(dates, t)
+
+		currentTime := time.Now()
+		currentTime.Format(glTimeFormat)
+		dates = append(dates, currentTime)
+	}
+
+	splitDateStrings := strings.Split(str, "|")
 	for _, d := range splitDateStrings {
 		strToDate := strings.Replace(d, " ", "", -1)
-		t, _ := time.Parse(inputTimeFormat, strToDate)
-		t.Format(glTimeFormat)
-		date = append(date, t)
+		t, _ := time.Parse(glTimeFormat, strToDate)
+		dates = append(dates, t)
 	}
-
-	return date
+	return dates
 }
 
 type EpicIssuesStruct struct {

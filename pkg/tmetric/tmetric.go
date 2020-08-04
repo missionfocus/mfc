@@ -77,7 +77,7 @@ func GetReports(glClient *gitlab.Client, vaultClient vault.Vault, progress io.Wr
 	opts := &gitlab.ListProjectsOptions{
 		Simple: &simpleQuery,
 	}
-	projects, err := git.ListAllProjectsWithOptions(opts)
+	projects, err := git.ListProjectsWithOptions(opts)
 
 	// Create a map from the project path to the struct
 	projMap := make(map[string]*gitlab.Project)

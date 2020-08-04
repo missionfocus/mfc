@@ -78,6 +78,16 @@ func (g *GitLab) GetIssuesWithOptions(opt *gitlab.ListIssuesOptions) ([]*gitlab.
 }
 
 
+// ListAllGroupEpicsWithOptions returns epics within a specificed group and meets specified options.
+func (g *GitLab) ListGroupEpicsWithOptions(gid interface{}, opt *gitlab.ListGroupEpicsOptions) ([]*gitlab.Epic, error) {
+		epics, _, err := g.client.Epics.ListGroupEpics(gid, opt)
+		if err != nil {
+			return nil, fmt.Errorf("listing group epics with options: %w", err)
+		}
+
+	return epics, nil
+}
+
 // GetEpic retrieves a specific epic.
 func (g *GitLab) GetEpic(gid interface{}, epic int) (*gitlab.Epic, error) {
 	Epic, _, err := g.client.Epics.GetEpic(gid, epic)
@@ -152,7 +162,7 @@ func (g *GitLab) ListAllProjects() ([]*gitlab.Project, error) {
 		},
 	}
 
-	return g.ListAllProjectsWithOptions(opt)
+	return g.ListProjectsWithOptions(opt)
 }
 
 // ListAllProjectIssues retrieves all the issues within a project
@@ -238,8 +248,10 @@ func (g *GitLab) ListAllGroupEpics(gid interface{}) ([]*gitlab.Epic, error) {
 	return Epic, nil
 }
 
+
+
 // ListAllProjects lists all of the projects the caller has access to.
-func (g *GitLab) ListAllProjectsWithOptions(opt *gitlab.ListProjectsOptions) ([]*gitlab.Project, error) {
+func (g *GitLab) ListProjectsWithOptions(opt *gitlab.ListProjectsOptions) ([]*gitlab.Project, error) {
 	projects := make([]*gitlab.Project, 0)
 
 	for {
