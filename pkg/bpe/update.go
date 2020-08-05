@@ -2,40 +2,10 @@ package bpe
 
 import (
 	"fmt"
-	"strings"
-	"time"
-
 	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
-	"github.com/asaskevich/govalidator"
 	"github.com/xanzy/go-gitlab"
+	"strings"
 )
-
-const (
-	glTimeFormat    = "2006-01-02"
-)
-
-//GetTimeParameters is used to alter the format [date] | [date] into a comparable format
-func GetTimeParameters(str string) []time.Time {
-	dates := make([]time.Time, 0)
-
-	if len(str) == 0 {
-		date := "1999-12-31"
-		t, _ := time.Parse(glTimeFormat, date)
-		dates = append(dates, t)
-
-		currentTime := time.Now()
-		currentTime.Format(glTimeFormat)
-		dates = append(dates, currentTime)
-	}
-
-	splitDateStrings := strings.Split(str, "|")
-	for _, d := range splitDateStrings {
-		strToDate := strings.Replace(d, " ", "", -1)
-		t, _ := time.Parse(glTimeFormat, strToDate)
-		dates = append(dates, t)
-	}
-	return dates
-}
 
 type EpicIssuesStruct struct {
 	epic   *gitlab.Epic
@@ -60,108 +30,70 @@ func GetLabelParameters(str string) []string {
 //UpdateEpicIssuesLabels will update all labels related - includes epic and children issues
 func UpdateEpicIssuesLabels(glClient *gitlab.Client, location, label string) error {
 	g := gl.New(glClient)
-	epicIssues := make([]EpicIssuesStruct, 0)
-	fmt.Println("Location", location)
+	var epicIssues []*gitlab.Issue
+	oursGroupID := 125
+
 	labels := GetLabelParameters(label)
+	fmt.Println(labels[0])
+	fmt.Println(labels[1])
 	if labels[0] == labels[1] {
 		fmt.Println("Please try again. Error same label requested")
 		return nil
 	}
 
-	groups, err := g.ListAllGroups()
-	if err != nil {
-		return err
-	}
-
-	if location == "" {
-		return nil
-	}
-
-	locationFound := false
 	epicHasOldLabel, epicHasNewLabel := false, false
 
-	fmt.Println("Finding location epic and issues. Please wait...")
-	for _, group := range groups {
-		if !strings.Contains(location, "/code") && strings.Contains(group.WebURL, "/code") { // Included for optimization.
-			continue
-		}
-		groupEpics, _ := g.ListAllGroupEpics(group.ID)
-		for _, epic := range groupEpics {
-			// The imported API does not use WebURL for epics -- this will detect epic location.
-			if strings.Contains(location, "/epics/") {
-				if strings.Contains(location, group.WebURL) {
-					splitURL := strings.Split(location, "epics/")
-					if splitURL[1] == govalidator.ToString(epic.IID) {
-						locationFound = true
-						fmt.Println("Epic found:", epic.Title)
-						epicIssues = append(epicIssues, EpicIssuesStruct{epic, g.GetEpicIssues(group.ID, epic.IID)})
-					}
+	groupEpics, _ := g.ListAllGroupEpics(oursGroupID) //TODO find a better method for getting epic.
+	for _, epic := range groupEpics {
+		if epic.WebURL == location {
+			fmt.Println("Epic found:", epic.Title)
+			epicIssues = g.GetEpicIssues(epic.GroupID, epic.IID)
+
+			for ct, label := range epic.Labels {
+				if label == labels[0] {
+					epicHasOldLabel = true
+					epic.Labels = append(epic.Labels[:ct], epic.Labels[ct+1:]...)
+				}
+				if label == labels[1] {
+					epicHasNewLabel = true
 				}
 			}
-
-			issues := g.GetEpicIssues(group.ID, epic.IID)
-			for _, i := range issues {
-				if i.WebURL == location {
-					fmt.Println("Issue found:", i.Title)
-					epicIssues = append(epicIssues, EpicIssuesStruct{epic, g.GetEpicIssues(group.ID, epic.IID)})
-					locationFound = true
-				}
-				if locationFound == true {
-					break
-				}
+			if !epicHasNewLabel {
+				epic.Labels = append(epic.Labels, labels[1])
 			}
-
-			if locationFound {
-				for ct, label := range epic.Labels {
-					if label == labels[0] {
-						epicHasOldLabel = true
-						epic.Labels = append(epic.Labels[:ct], epic.Labels[ct+1:]...)
-					}
-					if label == labels[1] {
-						epicHasNewLabel = true
-					}
+			if epicHasOldLabel || !epicHasNewLabel {
+				opt := &gitlab.UpdateEpicOptions{
+					Labels: epic.Labels,
 				}
-				if !epicHasNewLabel {
-					epic.Labels = append(epic.Labels, labels[1])
-				}
-				if epicHasOldLabel || !epicHasNewLabel {
-					opt := &gitlab.UpdateEpicOptions{
-						Labels: epic.Labels,
-					}
-					g.UpdateEpicWithOpts(group.ID, epic.IID, opt)
-				}
-
-				for _, ei := range epicIssues {
-					for _, issue := range ei.issues {
-						issueHasOldLabel, issueHasNewLabel := false, false
-
-						for ct, label := range issue.Labels {
-							if label == labels[0] && labels[0] != "" {
-								issueHasOldLabel = true
-								issue.Labels = append(issue.Labels[:ct], issue.Labels[ct+1:]...)
-							}
-							if label == labels[1] && labels[1] != "" {
-								issueHasNewLabel = true
-							}
-						}
-						if !issueHasNewLabel {
-							issue.Labels = append(issue.Labels, labels[1])
-						}
-						if issueHasOldLabel || !issueHasNewLabel {
-							opt := &gitlab.UpdateIssueOptions{
-								Labels: &issue.Labels,
-							}
-							g.UpdateIssueWithOpts(issue.ProjectID, issue.IID, opt)
-						}
-					}
-				}
-				break
+				g.UpdateEpicWithOpts(oursGroupID, epic.IID, opt)
 			}
-		}
-		if locationFound {
 			break
 		}
 	}
+
+	for _, issue := range epicIssues {
+			issueHasOldLabel, issueHasNewLabel := false, false
+
+			for ct, label := range issue.Labels {
+				if label == labels[0] && labels[0] != "" {
+					issueHasOldLabel = true
+					issue.Labels = append(issue.Labels[:ct], issue.Labels[ct+1:]...)
+				}
+				if label == labels[1] && labels[1] != "" {
+					issueHasNewLabel = true
+				}
+			}
+			if !issueHasNewLabel {
+				issue.Labels = append(issue.Labels, labels[1])
+			}
+			if issueHasOldLabel || !issueHasNewLabel {
+				opt := &gitlab.UpdateIssueOptions{
+					Labels: &issue.Labels,
+				}
+				g.UpdateIssueWithOpts(issue.ProjectID, issue.IID, opt)
+			}
+	}
+	//Updated
 	return nil
 }
 
@@ -193,11 +125,10 @@ func UpdateAllLabels(glClient *gitlab.Client) error {
 
 func UpdateChildEpicsAndIssues(glClient *gitlab.Client, group *gitlab.Group, epic *gitlab.Epic) error {
 	g := gl.New(glClient)
-	epicLabels := epic.Labels
 	issues := g.GetEpicIssues(group.ID, epic.IID)
 
 	for _, issue := range issues {
-		for _, epicLabel := range epicLabels {
+		for _, epicLabel := range epic.Labels {
 			if strings.Contains(epicLabel, "epic-") {
 				issue.Labels = append(issue.Labels, epicLabel)
 			}
@@ -212,7 +143,7 @@ func UpdateChildEpicsAndIssues(glClient *gitlab.Client, group *gitlab.Group, epi
 	if childEpics != nil {
 		for _, childEpic := range childEpics {
 			if childEpic.ParentID == epic.ID {
-				for _, epicLabel := range epicLabels {
+				for _, epicLabel := range epic.Labels {
 					if strings.Contains(epicLabel, "epic-") {
 						childEpic.Labels = append(childEpic.Labels, epicLabel)
 					}

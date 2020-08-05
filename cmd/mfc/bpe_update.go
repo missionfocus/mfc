@@ -8,8 +8,8 @@ import (
 
 func init() {
 	bpeCmd.AddCommand(bpeUpdateCmd)
-	bpeCmd.AddCommand(bpeUpdateEpicIssuesLabelCmd)
-	bpeCmd.AddCommand(bpeUpdateAllLabelsCmd)
+	bpeUpdateCmd.AddCommand(bpeUpdateEpicIssuesLabelCmd)
+	bpeUpdateCmd.AddCommand(bpeUpdateAllLabelsCmd)
 }
 
 const gitlabUpdateEpicIssueLabels = `
@@ -36,10 +36,6 @@ var bpeUpdateEpicIssuesLabelCmd = &cobra.Command{
 
 		client, err := getGitLabClient(v)
 		check(err)
-
-		if args[0] == "" || args[1] == "" {
-			return
-		}
 
 		check(bpe.UpdateEpicIssuesLabels(client, args[0], args[1]))
 	},
