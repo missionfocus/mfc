@@ -5,6 +5,7 @@ import (
 	"fmt"
 	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
 	"github.com/xanzy/go-gitlab"
+	"log"
 	"os"
 	"strings"
 )
@@ -31,22 +32,31 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 
 	var Issues []*gitlab.Issue
 	if location == "" {
-		opts := &gitlab.ListIssuesOptions{
+		opt := &gitlab.ListIssuesOptions{
 			State:         &state,
 			CreatedAfter:  &creationDates[0],
 			CreatedBefore: &creationDates[1],
 			UpdatedAfter:  &updatedDates[0],
 			UpdatedBefore: &updatedDates[1],
 		}
-		Issues, _ = g.GetIssuesWithOptions(opts)
+		Issues, _ = g.GetIssuesWithOptions(opt)
 	} else {
-		projects, _ := g.ListAllProjects()
-		for _, proj := range projects {
-			if proj.PathWithNamespace == location {
-				Issues, _ = g.ListAllProjectIssues(proj.ID)//TODO change this to meet opts
-				break
-			}
+		searchNameSpaces := true
+		opt := &gitlab.ListProjectsOptions{
+			Search: &location,
+			SearchNamespaces: &searchNameSpaces,
 		}
+		projects, _ := g.ListProjectsWithOptions(opt)
+		for _, proj := range projects {
+			Issues, _ = g.ListAllProjectIssues(proj.ID)
+		}
+		//projects, _ := g.ListAllProjects()
+		//for _, proj := range projects {
+		//	if proj.PathWithNamespace == location {
+		//		Issues, _ = g.ListAllProjectIssues(proj.ID)//TODO change this to meet opts
+		//		break
+		//	}
+		//}
 	}
 
 	for _, issue := range Issues {
@@ -96,9 +106,9 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 		}
 	}
 
-	csvfile, err := os.OpenFile("IssueReport.csv", os.O_CREATE & os.O_APPEND, 0666)
+	csvfile, err :=os.OpenFile("IssueReport.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 	defer csvfile.Close()
 
@@ -113,7 +123,7 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 		writer.Write(record)
 	}
 	fmt.Println("Results printed to file IssueReport.csv")
-
+	writer.Flush()
 	csvfile.Close()
 
 	return nil
@@ -142,7 +152,7 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 	} else {
 		groups, _ := g.ListAllGroups()
 		for _, group := range groups {
-			if group.FullPath == location { //TODO test fullpath
+			if group.FullPath == location {
 				opt := &gitlab.ListGroupEpicsOptions{
 					State:         &state,
 					CreatedAfter:  &creationDates[0],
@@ -207,6 +217,7 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 		writer.Write(record)
 	}
 	fmt.Println("Results printed to file EpicReport.csv")
+	writer.Flush()
 	csvfile.Close()
 
 	return nil

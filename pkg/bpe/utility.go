@@ -31,4 +31,3 @@ func GetTimeParameters(str string) []time.Time { //TODO move this
 	}
 	return dates
 }
-

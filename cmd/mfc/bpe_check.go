@@ -25,8 +25,16 @@ var (
 	gitlabCheckStatus       string
 )
 
-const gitlabCheckExample = `
-  mfc gitlab check 
+const bpeCheckEpicsExample = `
+  mfc gitlab check epics									# By default checks all epics within /ours.
+  mfc gitlab check epics -l "ours/code"						# Checks epics within the group /code.
+  mfc gitlab check epics -c "1999-12-31|2020-1-1"			# Checks epics in-between the dates of December 31st, 1999 and January 1st, 2020.
+`
+
+const bpeCheckIssuesExample = `
+  mfc gitlab check issues									# By default checks all issues
+  mfc gitlab check issues -l "ours/code/tools/mfc"			# Check issues that match the project path of ours/code/tools/mfc
+  mfc gitlab check issues -c "1999-12-31|2020-1-1"			# Checks issues in-between the dates of December 31st, 1999 and January 1st, 2020.
 `
 
 var bpeCheckCmd = &cobra.Command{
@@ -56,6 +64,7 @@ var bpeCheckEpicsCmd = &cobra.Command{
 	Use:     "epics",
 	Short:   "Check epics for errors",
 	Aliases: []string{"e"},
+	Example: bpeCheckEpicsExample,
 	Run: func(cmd *cobra.Command, args []string) {
 		vClient, err := getVaultClientWithToken()
 		check(err)
@@ -72,6 +81,7 @@ var bpeCheckIssuesCmd = &cobra.Command{
 	Use:     "issues",
 	Short:   "Check issues for errors",
 	Aliases: []string{"i"},
+	Example: bpeCheckIssuesExample,
 	Run: func(cmd *cobra.Command, args []string) {
 		vClient, err := getVaultClientWithToken()
 		check(err)
