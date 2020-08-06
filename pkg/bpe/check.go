@@ -50,13 +50,6 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 		for _, proj := range projects {
 			Issues, _ = g.ListAllProjectIssues(proj.ID)
 		}
-		//projects, _ := g.ListAllProjects()
-		//for _, proj := range projects {
-		//	if proj.PathWithNamespace == location {
-		//		Issues, _ = g.ListAllProjectIssues(proj.ID)//TODO change this to meet opts
-		//		break
-		//	}
-		//}
 	}
 
 	for _, issue := range Issues {

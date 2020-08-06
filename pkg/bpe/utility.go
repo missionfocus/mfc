@@ -5,12 +5,12 @@ import (
 	"time"
 )
 
-const ( //TODO move this
+const (
 	glTimeFormat = "2006-01-02"
 )
 
 //GetTimeParameters is used to alter the format [date] | [date] into a comparable format
-func GetTimeParameters(str string) []time.Time { //TODO move this
+func GetTimeParameters(str string) []time.Time {
 	dates := make([]time.Time, 0)
 
 	if len(str) == 0 {

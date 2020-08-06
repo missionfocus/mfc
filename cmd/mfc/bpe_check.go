@@ -26,15 +26,15 @@ var (
 )
 
 const bpeCheckEpicsExample = `
-  mfc gitlab check epics									# By default checks all epics within /ours.
-  mfc gitlab check epics -l "ours/code"						# Checks epics within the group /code.
-  mfc gitlab check epics -c "1999-12-31|2020-1-1"			# Checks epics in-between the dates of December 31st, 1999 and January 1st, 2020.
+  mfc bpe check epics									# By default checks all epics within /ours.
+  mfc bpe check epics -l "ours/code"						# Checks epics within the group /code.
+  mfc bpe check epics -c "1999-12-31|2020-1-1"			# Checks epics in-between the dates of December 31st, 1999 and January 1st, 2020.
 `
 
 const bpeCheckIssuesExample = `
-  mfc gitlab check issues									# By default checks all issues
-  mfc gitlab check issues -l "ours/code/tools/mfc"			# Check issues that match the project path of ours/code/tools/mfc
-  mfc gitlab check issues -c "1999-12-31|2020-1-1"			# Checks issues in-between the dates of December 31st, 1999 and January 1st, 2020.
+  mfc bpe check issues									# By default checks all issues
+  mfc bpe check issues -l "ours/code/tools/mfc"			# Check issues that match the project path of ours/code/tools/mfc
+  mfc bpe check issues -c "1999-12-31|2020-1-1"			# Checks issues in-between the dates of December 31st, 1999 and January 1st, 2020.
 `
 
 var bpeCheckCmd = &cobra.Command{

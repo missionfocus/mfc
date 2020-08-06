@@ -4,6 +4,7 @@ import (
 	"fmt"
 	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
 	"github.com/xanzy/go-gitlab"
+	"log"
 	"strings"
 )
 
@@ -37,8 +38,7 @@ func UpdateEpicIssuesLabels(glClient *gitlab.Client, location, label string) err
 	fmt.Println(labels[0])
 	fmt.Println(labels[1])
 	if labels[0] == labels[1] {
-		fmt.Println("Please try again. Error same label requested")
-		return nil
+		log.Fatal("Please try again. Error same label requested")
 	}
 
 	epicHasOldLabel, epicHasNewLabel := false, false
@@ -93,7 +93,6 @@ func UpdateEpicIssuesLabels(glClient *gitlab.Client, location, label string) err
 				g.UpdateIssueWithOpts(issue.ProjectID, issue.IID, opt)
 			}
 	}
-	//Updated
 	return nil
 }
 

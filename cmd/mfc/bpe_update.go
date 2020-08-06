@@ -13,8 +13,8 @@ func init() {
 }
 
 const bpeUpdateEpicIssueLabels = `
-  mfc gitlab update eil "https://git.missionfocus.com/groups/ours/mfm/-/epics/1" "dev::coding|"      					# Deletes dev::coding label and adds no label in place.
-  mfc gitlab update eil "https://git.missionfocus.com/ours/mfm/mfm-records/-/issues/5" "check-this|dev::coding"         # Removes check-this label and adds dev:coding label
+  mfc bpe update eil "https://git.missionfocus.com/groups/ours/mfm/-/epics/1" "dev::coding|"      					 # Deletes dev::coding label and adds no label in place.
+  mfc bpe update eil "https://git.missionfocus.com/ours/mfm/mfm-records/-/issues/5" "check-this|dev::coding"         # Removes check-this label and adds dev:coding label
 `
 
 var bpeUpdateCmd = &cobra.Command{
