@@ -35,10 +35,8 @@ func UpdateEpicIssuesLabels(glClient *gitlab.Client, location, label string) err
 	oursGroupID := 125
 
 	labels := GetLabelParameters(label)
-	fmt.Println(labels[0])
-	fmt.Println(labels[1])
 	if labels[0] == labels[1] {
-		log.Fatal("Please try again. Error same label requested")
+		log.Fatal("Error same label requested. Please try again.")
 	}
 
 	epicHasOldLabel, epicHasNewLabel := false, false

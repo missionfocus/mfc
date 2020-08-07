@@ -46,14 +46,22 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			Search: &location,
 			SearchNamespaces: &searchNameSpaces,
 		}
+
 		projects, _ := g.ListProjectsWithOptions(opt)
-		for _, proj := range projects {
-			Issues, _ = g.ListAllProjectIssues(proj.ID)
+		opts := &gitlab.ListProjectIssuesOptions{
+			State:         &state,
+			CreatedAfter:  &creationDates[0],
+			CreatedBefore: &creationDates[1],
+			UpdatedAfter:  &updatedDates[0],
+			UpdatedBefore: &updatedDates[1],
 		}
+			Issues, _ = g.ListAllProjectIssuesWithOpts(projects[0].ID, opts)
 	}
 
+	ignoreIssue := false
 	for _, issue := range Issues {
-		needMilestoneAndLabel, needMilestoneHasLabel, hasLabelState, needLabelStateResolved := false, false, false, false
+		needMilestoneAndLabel, needMilestoneHasLabel, hasLabelState := false, false, false
+		needLabelStateResolved := true
 
 		if issue.Labels == nil {
 			if issue.Milestone == nil {
@@ -63,6 +71,7 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 
 		for _, label := range issue.Labels {
 			if label == "management" || label == "meeting" || label == "standup" {
+				ignoreIssue	= true
 				break
 			}
 
@@ -77,12 +86,14 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			}
 
 			if issue.State == "closed" {
-				if strings.Contains(strings.ToLower(label), "state::") {
-					if label != "state::resolved" && label != "state::abandoned" && label != "state::moved" {
-						needLabelStateResolved = true
-					}
+					if label == "state::resolved" || label == "state::abandoned" || label == "state::moved" {
+						needLabelStateResolved = false
 				}
 			}
+		}
+
+		if ignoreIssue {
+			break
 		}
 
 		if needMilestoneAndLabel {
@@ -133,26 +144,20 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 		state = "all"
 	}
 
+	opt := &gitlab.ListGroupEpicsOptions{
+		State:         &state,
+		CreatedAfter:  &creationDates[0],
+		CreatedBefore: &creationDates[1],
+		UpdatedAfter:  &updatedDates[0],
+		UpdatedBefore: &updatedDates[1],
+	}
+
 	if location == "" {
-		opt := &gitlab.ListGroupEpicsOptions{
-			State:         &state,
-			CreatedAfter:  &creationDates[0],
-			CreatedBefore: &creationDates[1],
-			UpdatedAfter:  &updatedDates[0],
-			UpdatedBefore: &updatedDates[1],
-		}
 		groupEpics, _ = g.ListGroupEpicsWithOptions(125, opt)
 	} else {
 		groups, _ := g.ListAllGroups()
 		for _, group := range groups {
 			if group.FullPath == location {
-				opt := &gitlab.ListGroupEpicsOptions{
-					State:         &state,
-					CreatedAfter:  &creationDates[0],
-					CreatedBefore: &creationDates[1],
-					UpdatedAfter:  &updatedDates[0],
-					UpdatedBefore: &updatedDates[1],
-				}
 				groupEpics, _ = g.ListGroupEpicsWithOptions(group.ID, opt)
 				break
 			}
@@ -164,9 +169,11 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 				epics = append(epics, EpicReport{epic, " This epic has no description"})
 			}
 
-			requiresEpicLabel, needLabelStateResolved := false, false
+			requiresEpicLabel := false
+			needLabelStateResolved := true
 
 			for _, label := range epic.Labels {
+				//TODO Idk what to do about this.
 				if label == "management" || label == "meeting" || label == "standup" {
 					break
 				}
@@ -176,12 +183,9 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 				}
 
 				if epic.State == "closed" {
-					if strings.Contains(strings.ToLower(label), "state::") {
-						if label != "state::resolved" && label != "state::abandoned" {
-							needLabelStateResolved = true
-						}
+					if label == "state::resolved" || label == "state::abandoned" || label == "state::moved" {
+						needLabelStateResolved = false
 					}
-
 				}
 			}
 

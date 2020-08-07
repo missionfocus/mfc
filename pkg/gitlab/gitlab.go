@@ -193,6 +193,19 @@ func (g *GitLab) ListAllProjectIssues(projID interface{}) ([]*gitlab.Issue, erro
 	return issues, nil
 }
 
+func (g *GitLab) ListAllProjectIssuesWithOpts(projID interface{}, opt *gitlab.ListProjectIssuesOptions) ([]*gitlab.Issue, error) {
+	issues := make([]*gitlab.Issue, 0)
+
+		is, _, err := g.client.Issues.ListProjectIssues(projID, opt)
+		if err != nil {
+			return nil, fmt.Errorf("listing project project issues with opts: %w", err)
+		}
+
+		issues = append(issues, is...)
+
+	return issues, nil
+}
+
 // ListAllGroupIssues retrieves all the issues within a group
 func (g *GitLab) ListAllGroupIssues(projID interface{}) ([]*gitlab.Issue, error) {
 	issues := make([]*gitlab.Issue, 0)

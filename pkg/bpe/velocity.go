@@ -29,7 +29,7 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 	m := make(map[string]*TrackVelocity)
 	labels := make(map[string]int)
 
-	state := "opened"
+	state := "closed"
 	opts := &gitlab.ListIssuesOptions{
 		State: &state,
 		Milestone: &milestone,
