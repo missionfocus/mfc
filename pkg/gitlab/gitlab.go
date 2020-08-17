@@ -69,21 +69,38 @@ func (g *GitLab) GetIssue(projID interface{}, issueID int) (*gitlab.Issue, error
 }
 
 func (g *GitLab) GetIssuesWithOptions(opt *gitlab.ListIssuesOptions) ([]*gitlab.Issue, error) {
-	issues, _, err := g.client.Issues.ListIssues(opt)
-	if err != nil {
-		return nil, fmt.Errorf("Retrieving issues with options: %w", err)
-	}
+	issues := make([]*gitlab.Issue, 0)
 
+	for {
+		is, res, err := g.client.Issues.ListIssues(opt)
+		if err != nil {
+			return nil, fmt.Errorf("Retrieving issues with options: %w", err)
+		}
+		if res.CurrentPage >= res.TotalPages {
+			break
+		}
+		issues = append(issues, is...)
+		opt.Page = res.NextPage
+	}
 	return issues, nil
 }
 
 
 // ListAllGroupEpicsWithOptions returns epics within a specificed group and meets specified options.
 func (g *GitLab) ListGroupEpicsWithOptions(gid interface{}, opt *gitlab.ListGroupEpicsOptions) ([]*gitlab.Epic, error) {
-		epics, _, err := g.client.Epics.ListGroupEpics(gid, opt)
+	epics := make([]*gitlab.Epic, 0)
+
+	for {
+		e, res, err := g.client.Epics.ListGroupEpics(gid, opt)
 		if err != nil {
 			return nil, fmt.Errorf("listing group epics with options: %w", err)
 		}
+		if res.CurrentPage >= res.TotalPages {
+			break
+		}
+		epics = append(epics, e...)
+		opt.Page = res.NextPage
+	}
 
 	return epics, nil
 }
@@ -195,14 +212,18 @@ func (g *GitLab) ListAllProjectIssues(projID interface{}) ([]*gitlab.Issue, erro
 
 func (g *GitLab) ListAllProjectIssuesWithOpts(projID interface{}, opt *gitlab.ListProjectIssuesOptions) ([]*gitlab.Issue, error) {
 	issues := make([]*gitlab.Issue, 0)
-
-		is, _, err := g.client.Issues.ListProjectIssues(projID, opt)
+	for {
+		is, res, err := g.client.Issues.ListProjectIssues(projID, opt)
 		if err != nil {
 			return nil, fmt.Errorf("listing project project issues with opts: %w", err)
 		}
 
 		issues = append(issues, is...)
-
+		if res.CurrentPage >= res.TotalPages {
+			break
+		}
+		opt.Page = res.NextPage
+	}
 	return issues, nil
 }
 

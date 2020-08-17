@@ -30,9 +30,11 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 	labels := make(map[string]int)
 
 	state := "closed"
+	scope := "all"
 	opts := &gitlab.ListIssuesOptions{
 		State: &state,
 		Milestone: &milestone,
+		Scope: &scope,
 	}
 	issues, _ := g.GetIssuesWithOptions(opts)
 
@@ -68,11 +70,10 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 
 	for key, value := range m {
 		totalWeight := 0
-		writer.Write([]string{key})
 
 		for count, _ := range value.issueTitles {
 			totalWeight = totalWeight + value.weights[count]
-			record := []string{"", value.issueTitles[count], value.issueURLs[count], utils.ToString(value.weights[count])}
+			record := []string{key, value.issueTitles[count], value.issueURLs[count], utils.ToString(value.weights[count])}
 			writer.Write(record)
 		}
 
@@ -90,7 +91,7 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 		record := []string{"", "", key, utils.ToString(value)}
 		writer.Write(record)
 	}
-	fmt.Println("Results printed to file IssueReport.csv")
+	fmt.Println("Results printed to file VelocityReport.csv")
 
 	return nil
 }

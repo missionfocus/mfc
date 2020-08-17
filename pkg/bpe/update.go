@@ -24,7 +24,6 @@ func GetLabelParameters(str string) []string {
 		strToDate := strings.Replace(d, " ", "", -1)
 		label = append(label, strToDate)
 	}
-
 	return label
 }
 
@@ -38,15 +37,12 @@ func UpdateEpicIssuesLabels(glClient *gitlab.Client, location, label string) err
 	if labels[0] == labels[1] {
 		log.Fatal("Error same label requested. Please try again.")
 	}
-
 	epicHasOldLabel, epicHasNewLabel := false, false
-
 	groupEpics, _ := g.ListAllGroupEpics(oursGroupID) //TODO find a better method for getting epic.
 	for _, epic := range groupEpics {
 		if epic.WebURL == location {
 			fmt.Println("Epic found:", epic.Title)
 			epicIssues = g.GetEpicIssues(epic.GroupID, epic.IID)
-
 			for ct, label := range epic.Labels {
 				if label == labels[0] {
 					epicHasOldLabel = true
@@ -97,7 +93,6 @@ func UpdateEpicIssuesLabels(glClient *gitlab.Client, location, label string) err
 //UpdateAllLabels - This will inherit parent epic labels to sub epics and issues.
 func UpdateAllLabels(glClient *gitlab.Client) error {
 	g := gl.New(glClient)
-
 	groups, err := g.ListAllGroups()
 	if err != nil {
 		return err

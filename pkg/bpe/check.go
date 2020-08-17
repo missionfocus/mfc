@@ -29,7 +29,7 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 	if state == "" {
 		state = "all"
 	}
-
+	scope := "all"
 	var Issues []*gitlab.Issue
 	if location == "" {
 		opt := &gitlab.ListIssuesOptions{
@@ -38,6 +38,7 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			CreatedBefore: &creationDates[1],
 			UpdatedAfter:  &updatedDates[0],
 			UpdatedBefore: &updatedDates[1],
+			Scope: 		   &scope,
 		}
 		Issues, _ = g.GetIssuesWithOptions(opt)
 	} else {
@@ -46,7 +47,6 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			Search: &location,
 			SearchNamespaces: &searchNameSpaces,
 		}
-
 		projects, _ := g.ListProjectsWithOptions(opt)
 		opts := &gitlab.ListProjectIssuesOptions{
 			State:         &state,
@@ -54,6 +54,7 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			CreatedBefore: &creationDates[1],
 			UpdatedAfter:  &updatedDates[0],
 			UpdatedBefore: &updatedDates[1],
+			Scope: 		   &scope,
 		}
 			Issues, _ = g.ListAllProjectIssuesWithOpts(projects[0].ID, opts)
 	}
@@ -68,34 +69,28 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 				needMilestoneAndLabel = true
 			}
 		}
-
 		for _, label := range issue.Labels {
 			if label == "management" || label == "meeting" || label == "standup" {
 				ignoreIssue	= true
 				break
 			}
-
 			if label == "state::in-progress" {
 				if issue.Milestone == nil {
 					needMilestoneHasLabel = true
 				}
 			}
-
 			if strings.Contains(strings.ToLower(label), "state::") {
 				hasLabelState = true
 			}
-
 			if issue.State == "closed" {
 					if label == "state::resolved" || label == "state::abandoned" || label == "state::moved" {
 						needLabelStateResolved = false
 				}
 			}
 		}
-
 		if ignoreIssue {
 			break
 		}
-
 		if needMilestoneAndLabel {
 			issuesInReport = append(issuesInReport, IssueReport{issue, " This issue has no milestones or labels set."})
 		}
@@ -109,13 +104,11 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			issuesInReport = append(issuesInReport, IssueReport{issue, " This issue is requires the `resolved` or `abandoned` label."})
 		}
 	}
-
-	csvfile, err :=os.OpenFile("IssueReport.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	csvfile, err := os.Create("IssueReport.csv")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer csvfile.Close()
-
 	writer := csv.NewWriter(csvfile)
 	defer writer.Flush()
 
@@ -129,7 +122,6 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 	fmt.Println("Results printed to file IssueReport.csv")
 	writer.Flush()
 	csvfile.Close()
-
 	return nil
 }
 
@@ -143,7 +135,6 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 	if state == "" {
 		state = "all"
 	}
-
 	opt := &gitlab.ListGroupEpicsOptions{
 		State:         &state,
 		CreatedAfter:  &creationDates[0],
@@ -151,9 +142,8 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 		UpdatedAfter:  &updatedDates[0],
 		UpdatedBefore: &updatedDates[1],
 	}
-
 	if location == "" {
-		groupEpics, _ = g.ListGroupEpicsWithOptions(125, opt)
+		groupEpics, _ = g.ListGroupEpicsWithOptions(145, opt)
 	} else {
 		groups, _ := g.ListAllGroups()
 		for _, group := range groups {
@@ -168,27 +158,27 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 			if epic.Description == "" {
 				epics = append(epics, EpicReport{epic, " This epic has no description"})
 			}
-
 			requiresEpicLabel := false
+			ignoreEpic := false
 			needLabelStateResolved := true
 
 			for _, label := range epic.Labels {
-				//TODO Idk what to do about this.
 				if label == "management" || label == "meeting" || label == "standup" {
+					ignoreEpic = true
 					break
 				}
-
 				if strings.Contains(strings.ToLower(label), "epic-") || strings.Contains(strings.ToLower(label), "epic::") {
 					requiresEpicLabel = true
 				}
-
 				if epic.State == "closed" {
 					if label == "state::resolved" || label == "state::abandoned" || label == "state::moved" {
 						needLabelStateResolved = false
 					}
 				}
 			}
-
+			if ignoreEpic {
+				break
+			}
 			if !requiresEpicLabel {
 				epics = append(epics, EpicReport{epic, " This epic does not contain a epic label"})
 			}
@@ -197,7 +187,7 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 			}
 	}
 
-	csvfile, err := os.OpenFile("EpicReport.csv", os.O_CREATE & os.O_APPEND, 0666)
+	csvfile, err := os.Create("EpicReport.csv")
 	if err != nil {
 		return err
 	}
