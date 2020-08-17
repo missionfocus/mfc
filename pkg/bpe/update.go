@@ -102,7 +102,7 @@ func UpdateAllLabels(glClient *gitlab.Client) error {
 		fmt.Println("\nUpdating Epics under the group:", group.Name)
 		groupEpics, _ := g.ListAllGroupEpics(group.ID)
 		for _, epic := range groupEpics {
-			if epic.GroupID != group.ID {
+			if epic.GroupID != group.ID { //DO NOT DELETE: Epics can have the same ID/IID, so this must be in place.
 				continue
 			}
 			if epic.ParentID != 0 {
