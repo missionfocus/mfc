@@ -2,6 +2,7 @@ module git.missionfocus.com/ours/code/tools/mfc
 
 go 1.13
 
+replace github.com/xanzy/go-gitlab => github.com/DavidMBusey/go-gitlab v0.35.2-alpha
 require (
 	git.missionfocus.com/ours/code/libraries/go v0.0.0-00010101000000-000000000000
 	github.com/aws/aws-sdk-go v1.19.19
@@ -31,5 +32,4 @@ require (
 	gopkg.in/yaml.v2 v2.3.0
 )
 
-replace github.com/xanzy/go-gitlab => github.com/DavidMBusey/go-gitlab v0.35.2
 replace git.missionfocus.com/ours/code/libraries/go => git.missionfocus.com/ours/code/libraries/go.git v1.1.1

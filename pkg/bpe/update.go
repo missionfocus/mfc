@@ -66,26 +66,26 @@ func UpdateEpicIssuesLabels(glClient *gitlab.Client, location, label string) err
 	}
 
 	for _, issue := range epicIssues {
-			issueHasOldLabel, issueHasNewLabel := false, false
+		issueHasOldLabel, issueHasNewLabel := false, false
 
-			for ct, label := range issue.Labels {
-				if label == labels[0] && labels[0] != "" {
-					issueHasOldLabel = true
-					issue.Labels = append(issue.Labels[:ct], issue.Labels[ct+1:]...)
-				}
-				if label == labels[1] && labels[1] != "" {
-					issueHasNewLabel = true
-				}
+		for ct, label := range issue.Labels {
+			if label == labels[0] && labels[0] != "" {
+				issueHasOldLabel = true
+				issue.Labels = append(issue.Labels[:ct], issue.Labels[ct+1:]...)
 			}
-			if !issueHasNewLabel {
-				issue.Labels = append(issue.Labels, labels[1])
+			if label == labels[1] && labels[1] != "" {
+				issueHasNewLabel = true
 			}
-			if issueHasOldLabel || !issueHasNewLabel {
-				opt := &gitlab.UpdateIssueOptions{
-					Labels: &issue.Labels,
-				}
-				g.UpdateIssueWithOpts(issue.ProjectID, issue.IID, opt)
+		}
+		if !issueHasNewLabel {
+			issue.Labels = append(issue.Labels, labels[1])
+		}
+		if issueHasOldLabel || !issueHasNewLabel {
+			opt := &gitlab.UpdateIssueOptions{
+				Labels: &issue.Labels,
 			}
+			g.UpdateIssueWithOpts(issue.ProjectID, issue.IID, opt)
+		}
 	}
 	return nil
 }

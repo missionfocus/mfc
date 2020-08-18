@@ -42,9 +42,9 @@ var bpeUpdateEpicIssuesLabelCmd = &cobra.Command{
 }
 
 var bpeUpdateAllLabelsCmd = &cobra.Command{
-	Use:     "all-labels",
-	Short:   "Update all Epics and Children labels",
-	Args:    cobra.ExactArgs(0),
+	Use:   "all-labels",
+	Short: "Update all Epics and Children labels",
+	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		vClient, err := getVaultClientWithToken()
 		check(err)
