@@ -13,6 +13,11 @@ type EpicIssuesStruct struct {
 	issues []*gitlab.Issue
 }
 
+const (
+	oursGroupID = 125
+	codeGroupID = 145
+)
+
 func GetLabelParameters(str string) []string {
 	if len(str) == 0 {
 		return nil
@@ -93,61 +98,80 @@ func UpdateEpicIssuesLabels(glClient *gitlab.Client, location, label string) err
 //UpdateAllLabels - This will inherit parent epic labels to sub epics and issues.
 func UpdateAllLabels(glClient *gitlab.Client) error {
 	g := gl.New(glClient)
-	groups, err := g.ListAllGroups()
-	if err != nil {
-		return err
-	}
+	groups, _ := g.ListSubGroups(codeGroupID)
+	addCodeGroup := g.GetGroup(codeGroupID) // Code includes Epics.
+	groups = append(groups, addCodeGroup)
 
 	for _, group := range groups {
-		fmt.Println("\nUpdating Epics under the group:", group.Name)
+		fmt.Println("\n--------------------------\n", "Reviewing Group: ", group.Name, "\n--------------------------")
 		groupEpics, _ := g.ListAllGroupEpics(group.ID)
 		for _, epic := range groupEpics {
-			if epic.GroupID != group.ID { //DO NOT DELETE: Epics can have the same ID/IID, so this must be in place.
+			if epic.GroupID != group.ID { //DO NOT DELETE.
 				continue
 			}
 			if epic.ParentID != 0 {
 				continue
 			}
-			fmt.Println("Updating Epics and Issues for the Parent Epic:", epic.Title)
-			UpdateChildEpicsAndIssues(glClient, group, epic)
+			fmt.Println("\nRoot Parent Epic: " + epic.Title)
+			UpdateChildEpicsAndIssues(glClient, group.ID, epic)
 		}
 	}
 	return nil
 }
 
-func UpdateChildEpicsAndIssues(glClient *gitlab.Client, group *gitlab.Group, epic *gitlab.Epic) error {
+func UpdateChildEpicsAndIssues(glClient *gitlab.Client, groupID int, epic *gitlab.Epic) error {
 	g := gl.New(glClient)
-	issues := g.GetEpicIssues(group.ID, epic.IID)
+	issues := g.GetEpicIssues(groupID, epic.IID)
 
 	for _, issue := range issues {
+		updateIssue := false
 		for _, epicLabel := range epic.Labels {
-			if strings.Contains(epicLabel, "epic-") {
+			if strings.Contains(epicLabel, "epic-") && !contains(issue.Labels, epicLabel) {
 				issue.Labels = append(issue.Labels, epicLabel)
+				updateIssue = true
 			}
 		}
-		opt := &gitlab.UpdateIssueOptions{
-			Labels: &issue.Labels,
+		if updateIssue {
+			log.Println("[Updated] Issue: " + issue.Title)
+			opt := &gitlab.UpdateIssueOptions{
+				AddLabels: &issue.Labels,
+			}
+			g.UpdateIssueWithOpts(issue.ProjectID, issue.IID, opt)
 		}
-		g.UpdateIssueWithOpts(issue.ProjectID, issue.IID, opt)
 	}
 
-	childEpics := g.GetEpicLinks(group.ID, epic.IID)
+	childEpics := g.GetEpicLinks(groupID, epic.IID)
 	if childEpics != nil {
 		for _, childEpic := range childEpics {
+			updateEpic := false
 			if childEpic.ParentID == epic.ID {
 				for _, epicLabel := range epic.Labels {
-					if strings.Contains(epicLabel, "epic-") {
+					if strings.Contains(epicLabel, "epic-") && !contains(childEpic.Labels, epicLabel) {
 						childEpic.Labels = append(childEpic.Labels, epicLabel)
+						updateEpic = true
 					}
 				}
-				opt := &gitlab.UpdateEpicOptions{
-					Labels: childEpic.Labels,
+				if updateEpic {
+					log.Println("[Updated] Child-Epic: " + childEpic.Title)
+					opt := &gitlab.UpdateEpicOptions{
+						Labels: childEpic.Labels,
+					}
+					g.UpdateEpicWithOpts(childEpic.GroupID, childEpic.IID, opt)
 				}
-
-				g.UpdateEpicWithOpts(group.ID, childEpic.IID, opt)
-				UpdateChildEpicsAndIssues(glClient, group, childEpic)
+				fmt.Println("  - [Checking] Child-Epic: " + childEpic.Title)
+				UpdateChildEpicsAndIssues(glClient, childEpic.GroupID, childEpic) //Recursion does this process for inherited children.
 			}
 		}
 	}
 	return nil
+}
+
+func contains(slice []string, item string) bool {
+	set := make(map[string]struct{}, len(slice))
+	for _, s := range slice {
+		set[s] = struct{}{}
+	}
+
+	_, ok := set[item]
+	return ok
 }

@@ -142,6 +142,11 @@ func (g *GitLab) ListAllGroups() ([]*gitlab.Group, error) {
 	return groups, nil
 }
 
+func (g *GitLab) GetGroup(groupID int) *gitlab.Group {
+	group, _, _ := g.client.Groups.GetGroup(groupID)
+	return group
+}
+
 func (g *GitLab) ListSubGroups(groupID int) ([]*gitlab.Group, error) {
 	groups := make([]*gitlab.Group, 0)
 	opt := &gitlab.ListSubgroupsOptions{
@@ -150,6 +155,27 @@ func (g *GitLab) ListSubGroups(groupID int) ([]*gitlab.Group, error) {
 			Page:    1,
 		},
 	}
+	for {
+		gs, res, err := g.client.Groups.ListSubgroups(groupID, opt)
+		if err != nil {
+			return nil, fmt.Errorf("listing subgroups: %w", err)
+		}
+
+		groups = append(groups, gs...)
+
+		if res.CurrentPage >= res.TotalPages {
+			break
+		}
+
+		opt.Page = res.NextPage
+	}
+
+	return groups, nil
+
+}
+
+func (g *GitLab) ListSubGroupsWithOptions(groupID int, opt *gitlab.ListSubgroupsOptions) ([]*gitlab.Group, error) {
+	groups := make([]*gitlab.Group, 0)
 	for {
 		gs, res, err := g.client.Groups.ListSubgroups(groupID, opt)
 		if err != nil {
