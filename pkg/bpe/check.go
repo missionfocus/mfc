@@ -57,7 +57,24 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			UpdatedBefore: &updatedDates[1],
 			Scope:         &scope,
 		}
-		Issues, _ = g.ListAllProjectIssuesWithOpts(projects[0].ID, opts)
+		if projects == nil {
+			log.Fatal("Error, cannot find a project with the location: " + location)
+		}
+		if projects[0].PathWithNamespace == location  {
+			Issues, _ = g.ListAllProjectIssuesWithOpts(projects[0].ID, opts)
+		} else {
+			//Precautionary: this should not be called on.
+			log.Println("Attempting to find project location...")
+			for _, project := range projects {
+				if project.PathWithNamespace == location {
+					Issues, _ = g.ListAllProjectIssuesWithOpts(project.ID, opts)
+					break
+				}
+			}
+		}
+		if Issues == nil {
+			log.Fatal("Error, no issues within project for: " + location)
+		}
 	}
 
 	ignoreIssue := false
