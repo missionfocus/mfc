@@ -71,10 +71,6 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			}
 		}
 		for _, label := range issue.Labels {
-			if label == "management" || label == "meeting" || label == "standup" {
-				ignoreIssue = true
-				break
-			}
 			if label == "state::in-progress" {
 				if issue.Milestone == nil {
 					needMilestoneHasLabel = true
@@ -164,10 +160,6 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 		needLabelStateResolved := true
 
 		for _, label := range epic.Labels {
-			if label == "management" || label == "meeting" || label == "standup" {
-				ignoreEpic = true
-				break
-			}
 			if strings.Contains(strings.ToLower(label), "epic-") || strings.Contains(strings.ToLower(label), "epic::") {
 				requiresEpicLabel = true
 			}
