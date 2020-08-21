@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
+	"git.missionfocus.com/ours/code/tools/mfc/pkg/tmetric"
 	"github.com/xanzy/go-gitlab"
 	"log"
 	"os"
@@ -23,8 +24,8 @@ type IssueReport struct {
 func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd string, ud string, state string) error {
 	g := gl.New(glClient)
 	issuesInReport := make([]IssueReport, 0)
-	creationDates := GetTimeParameters(cd)
-	updatedDates := GetTimeParameters(ud)
+	creationDates := tmetric.GetTimeParameters(cd)
+	updatedDates := tmetric.GetTimeParameters(ud)
 
 	if state == "" {
 		state = "all"
@@ -128,8 +129,8 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, ud string, state string) error {
 	g := gl.New(glClient)
 	epics := make([]EpicReport, 0)
-	creationDates := GetTimeParameters(cd)
-	updatedDates := GetTimeParameters(ud)
+	creationDates := tmetric.GetTimeParameters(cd)
+	updatedDates := tmetric.GetTimeParameters(ud)
 	var groupEpics []*gitlab.Epic
 
 	if state == "" {
