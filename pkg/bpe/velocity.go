@@ -81,7 +81,7 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 	writer := csv.NewWriter(csvfile)
 	defer writer.Flush()
 
-	headers := []string{"Person", "Issue Title", "Issue URL", "Issue Weight", "Epic Title" , "Epic URL"}
+	headers := []string{"Person", "Issue Title", "Issue URL", "Issue Weight", "Epic Title", "Epic URL"}
 	writer.Write(headers)
 
 	sumTotalWeight := 0
@@ -121,7 +121,7 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 	writer.Write(headers)
 
 	for key, value := range epics {
-		record := []string{"", "",  key, utils.ToString(value)}
+		record := []string{"", "", key, utils.ToString(value)}
 		writer.Write(record)
 	}
 	fmt.Println("Results printed to file VelocityReport " + milestone + ".csv")

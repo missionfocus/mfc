@@ -2,16 +2,17 @@ package bpe
 
 import (
 	"fmt"
-	"git.missionfocus.com/ours/code/libraries/go/tmetric/client/time_entries"
-	"git.missionfocus.com/ours/code/libraries/go/tmetric/models"
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/tmetric"
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
-	"github.com/go-openapi/strfmt"
 	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	"git.missionfocus.com/ours/code/libraries/go/tmetric/client/time_entries"
+	"git.missionfocus.com/ours/code/libraries/go/tmetric/models"
+	"git.missionfocus.com/ours/code/tools/mfc/pkg/tmetric"
+	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
+	"github.com/go-openapi/strfmt"
 )
 
 func GetSummedTimeEntries(timeEntries []*models.TimeEntry, isScanner bool) (time.Duration, bool) {

@@ -2,10 +2,11 @@ package bpe
 
 import (
 	"fmt"
-	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
-	"github.com/xanzy/go-gitlab"
 	"log"
 	"strings"
+
+	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
+	"github.com/xanzy/go-gitlab"
 )
 
 type EpicIssuesStruct struct {

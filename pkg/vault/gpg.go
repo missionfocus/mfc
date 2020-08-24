@@ -3,6 +3,7 @@ package vault
 import (
 	"bytes"
 	"encoding/base64"
+
 	"git.missionfocus.com/ours/code/libraries/go/gpg"
 	"github.com/hashicorp/vault/api"
 	"github.com/pkg/errors"

@@ -2,6 +2,9 @@ package tmetric
 
 import (
 	"errors"
+	"strings"
+	"time"
+
 	tmetric "git.missionfocus.com/ours/code/libraries/go/tmetric/client"
 	"git.missionfocus.com/ours/code/libraries/go/tmetric/client/accounts"
 	"git.missionfocus.com/ours/code/libraries/go/tmetric/client/time_entries"
@@ -9,8 +12,6 @@ import (
 	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
 	"github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
-	"strings"
-	"time"
 )
 
 const AccountID = 105432
@@ -39,7 +40,7 @@ func (r taskPerformanceRecord) More(other taskPerformanceRecord) bool {
 	return more
 }
 
-func GetTmetricAuth(vaultClient vault.Vault) (error, runtime.ClientAuthInfoWriter ) {
+func GetTmetricAuth(vaultClient vault.Vault) (error, runtime.ClientAuthInfoWriter) {
 	secret, err := vaultClient.KVUserGet("tmetric")
 	if err != nil {
 		return err, nil

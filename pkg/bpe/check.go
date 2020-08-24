@@ -3,12 +3,13 @@ package bpe
 import (
 	"encoding/csv"
 	"fmt"
-	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/tmetric"
-	"github.com/xanzy/go-gitlab"
 	"log"
 	"os"
 	"strings"
+
+	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
+	"git.missionfocus.com/ours/code/tools/mfc/pkg/tmetric"
+	"github.com/xanzy/go-gitlab"
 )
 
 type EpicReport struct {
@@ -60,7 +61,7 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 		if projects == nil {
 			log.Fatal("Error, cannot find a project with the location: " + location)
 		}
-		if projects[0].PathWithNamespace == location  {
+		if projects[0].PathWithNamespace == location {
 			Issues, _ = g.ListAllProjectIssuesWithOpts(projects[0].ID, opts)
 		} else {
 			//Precautionary: this should not be called on.

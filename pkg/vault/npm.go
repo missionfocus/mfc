@@ -2,11 +2,12 @@ package vault
 
 import (
 	"bytes"
-	"github.com/hashicorp/vault/api"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
+
+	"github.com/hashicorp/vault/api"
 )
 
 type NPMSecret struct {
