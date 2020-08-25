@@ -3,16 +3,22 @@ package bpe
 import (
 	"encoding/csv"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
 	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
-	"github.com/xanzy/go-gitlab"
-
 	"github.com/emirpasic/gods/utils"
+	"github.com/xanzy/go-gitlab"
 )
 
-const gitlabBaseURL = "https://git.missionfocus.com"
+const (
+	gitlabBaseURL = "https://git.missionfocus.com"
+)
+
+var blankLine = []string{""}
+var promptForCheck = true
+var checkAfterwards = false
 
 type TrackVelocity struct {
 	issueTitles      []string
@@ -44,50 +50,82 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 		Scope:     &scope,
 	}
 	issues, _ := g.GetIssuesWithOptions(opts)
-
+	if len(issues) == 0 {
+		return fmt.Errorf("no issues were found for the milestone: %s", milestone)
+	}
 	for _, issue := range issues {
 		if issue.Weight != 0 {
+			if issue.Labels != nil {
+				var labelArray []string
+				addLabels := true
+				for _, label := range issue.Labels {
+					if strings.Contains(label, "dta") {
+						addLabels = false
+						break
+					} else if strings.Contains(label, "epic-") {
+						labelArray = append(labelArray, label)
+					}
+				}
+				if addLabels {
+					for _, label := range labelArray {
+						totalWeightPerLabel := labels[label]
+						labels[label] = totalWeightPerLabel + issue.Weight
+					}
+				} else { continue }
+			} else {
+				log.Println("[WARNING] No labels for issue: " + issue.Title)
+			 	if promptForCheck {
+					checkAfterwards, _ = promptForAnswer("Would you like run a check request after?")
+				}
+			}
+
 			epicTitle := ""
 			epicURL := ""
 			if issue.Epic != nil {
 				epicTitle = issue.Epic.Title
 				epicURL = gitlabBaseURL + issue.Epic.URL
-
 				totalWeightPerEpic := epics[epicTitle]
 				epics[epicTitle] = totalWeightPerEpic + issue.Weight
+			} else {
+				log.Println("[WARNING] No parent epic for: " + issue.Title)
+				//if promptForCheck {
+				//	checkAfterwards, _ = promptForAnswer("Would you like run a check request after?")
+				//}
 			}
-			if _, ok := m[issue.Assignee.Name]; ok {
+
+			if issue.Assignee == nil {
+				log.Println("[WARNING] No assignee for: \"" + issue.Title + "\" using Author instead.")
+				if _, ok := m[issue.Author.Name]; ok {
+					foundPersonVelocity := m[issue.Assignee.Name]
+					foundPersonVelocity.AppendTrackVelocity(issue.Title, issue.WebURL, issue.Weight, epicTitle, epicURL)
+					m[issue.Assignee.Name] = foundPersonVelocity
+				} else {
+					newPersonVelocity := &TrackVelocity{[]string{issue.Title}, []string{issue.WebURL}, []int{issue.Weight}, []string{epicTitle}, []string{epicURL}}
+					m[issue.Author.Name] = newPersonVelocity
+				}
+			} else if _, ok := m[issue.Assignee.Name]; ok {
 				foundPersonVelocity := m[issue.Assignee.Name]
 				foundPersonVelocity.AppendTrackVelocity(issue.Title, issue.WebURL, issue.Weight, epicTitle, epicURL)
 				m[issue.Assignee.Name] = foundPersonVelocity
-			} else { //[]string{issue.Epic.Title}, []string{gitlabBaseURL + issue.Epic.URL}}
+			} else {
 				newPersonVelocity := &TrackVelocity{[]string{issue.Title}, []string{issue.WebURL}, []int{issue.Weight}, []string{epicTitle}, []string{epicURL}}
 				m[issue.Assignee.Name] = newPersonVelocity
 			}
-			for _, label := range issue.Labels {
-				if strings.Contains(label, "epic-") {
-					totalWeightPerLabel := labels[label]
-					labels[label] = totalWeightPerLabel + issue.Weight
-				}
-			}
 		}
 	}
-
-	csvfile, err := os.Create("VelocityReport " + milestone + ".csv")
+	csvFile, err := os.Create("VelocityReport " + milestone + ".csv")
 	if err != nil {
 		return err
 	}
-	defer csvfile.Close()
-	writer := csv.NewWriter(csvfile)
+	defer csvFile.Close()
+	writer := csv.NewWriter(csvFile)
 	defer writer.Flush()
-
 	headers := []string{"Person", "Issue Title", "Issue URL", "Issue Weight", "Epic Title", "Epic URL"}
 	writer.Write(headers)
 
 	sumTotalWeight := 0
 	for key, value := range m {
 		totalSingleMFMWeight := 0
-
 		for count, _ := range value.issueTitles {
 			totalSingleMFMWeight = totalSingleMFMWeight + value.weights[count]
 			record := []string{key, value.issueTitles[count], value.issueURLs[count], utils.ToString(value.weights[count]), value.parentEpicTitles[count], value.parentEpicURLs[count]}
@@ -96,35 +134,54 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 		sumTotalWeight = sumTotalWeight + totalSingleMFMWeight
 		totalLine := []string{"", "", "MFM Total Weight: ", utils.ToString(totalSingleMFMWeight), ""}
 		writer.Write(totalLine)
-
-		blankLine := []string{""}
 		writer.Write(blankLine)
 	}
 	totalWeight := []string{"", "", "All MFM Total Weight: ", utils.ToString(sumTotalWeight)}
-	writer.Write(totalWeight)
-
-	blankLine := []string{""}
+	err = writer.Write(totalWeight)
+	if err != nil {
+		return fmt.Errorf("ERROR Writing MFM Weight: %v",totalWeight)
+	}
 	writer.Write(blankLine)
 
 	headers = []string{"", "", "Epic Label", "Weight Per Label"}
 	writer.Write(headers)
-
 	for key, value := range labels {
 		record := []string{"", "", key, utils.ToString(value)}
-		writer.Write(record)
+		err = writer.Write(record)
+		if err != nil {
+			return fmt.Errorf("ERROR Writing labels: %v", record)
+		}
 	}
-
-	blankLine = []string{""}
 	writer.Write(blankLine)
 
 	headers = []string{"", "", "Epic Title", "Weight Per Title"}
 	writer.Write(headers)
-
 	for key, value := range epics {
 		record := []string{"", "", key, utils.ToString(value)}
-		writer.Write(record)
+		err = writer.Write(record)
+		if err != nil {
+			return fmt.Errorf("ERROR Writing Epic: %v", record)
+		}
 	}
 	fmt.Println("Results printed to file VelocityReport " + milestone + ".csv")
 
+	// TODO: Implement Checking Issues afterwards
+	//if checkAfterwards {
+	//	CheckEpicsWithinGroup(glClient, "", "", "", "")
+	//	CheckIssuesWithinProject(glClient, "", "", "", "")
+	//}
 	return nil
+}
+
+func promptForAnswer(question string) (bool, error){
+	fmt.Println(question + " [y/n]? ")
+	var input string
+	_, err := fmt.Scanln(&input)
+	if err != nil {
+		return false, err
+	}
+	if strings.ToLower(input) == "y" {
+		return true, nil
+	}
+	return false, nil
 }

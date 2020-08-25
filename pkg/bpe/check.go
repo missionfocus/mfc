@@ -22,12 +22,14 @@ type IssueReport struct {
 	reason string
 }
 
+//TODO make this accept options;
 func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd string, ud string, state string) error {
 	g := gl.New(glClient)
 	issuesInReport := make([]IssueReport, 0)
 	creationDates := tmetric.GetTimeParameters(cd)
 	updatedDates := tmetric.GetTimeParameters(ud)
 
+	// From this point to...
 	if state == "" {
 		state = "all"
 	}
@@ -77,6 +79,7 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			log.Fatal("Error, no issues within project for: " + location)
 		}
 	}
+	//This point can be in it's own method.
 
 	ignoreIssue := false
 	for _, issue := range Issues {
@@ -140,6 +143,7 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 	return nil
 }
 
+//TODO make this accept options;
 func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, ud string, state string) error {
 	g := gl.New(glClient)
 	epics := make([]EpicReport, 0)
