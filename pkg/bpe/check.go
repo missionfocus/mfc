@@ -22,21 +22,17 @@ type IssueReport struct {
 	reason string
 }
 
-//TODO make this accept options;
-func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd string, ud string, state string) error {
+func IssueOptsByCheckCommand(glClient *gitlab.Client, location string, cd string, ud string, state string) error {
 	g := gl.New(glClient)
-	issuesInReport := make([]IssueReport, 0)
+	found := false
 	creationDates := tmetric.GetTimeParameters(cd)
 	updatedDates := tmetric.GetTimeParameters(ud)
-
-	// From this point to...
 	if state == "" {
 		state = "all"
 	}
 	scope := "all"
-	var Issues []*gitlab.Issue
 	if location == "" {
-		opt := &gitlab.ListIssuesOptions{
+		opts := &gitlab.ListIssuesOptions{
 			State:         &state,
 			CreatedAfter:  &creationDates[0],
 			CreatedBefore: &creationDates[1],
@@ -44,7 +40,7 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			UpdatedBefore: &updatedDates[1],
 			Scope:         &scope,
 		}
-		Issues, _ = g.GetIssuesWithOptions(opt)
+		CheckIssuesWithOptions(glClient, opts, 0, nil)
 	} else {
 		searchNameSpaces := true
 		opt := &gitlab.ListProjectsOptions{
@@ -61,25 +57,43 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			Scope:         &scope,
 		}
 		if projects == nil {
-			log.Fatal("Error, cannot find a project with the location: " + location)
+			log.Fatal("error, cannot find a project with the location: " + location)
 		}
 		if projects[0].PathWithNamespace == location {
-			Issues, _ = g.ListAllProjectIssuesWithOpts(projects[0].ID, opts)
+			CheckIssuesWithOptions(glClient, nil, projects[0].ID, opts)
 		} else {
 			//Precautionary: this should not be called on.
 			log.Println("Attempting to find project location...")
 			for _, project := range projects {
 				if project.PathWithNamespace == location {
-					Issues, _ = g.ListAllProjectIssuesWithOpts(project.ID, opts)
+					CheckIssuesWithOptions(glClient, nil, project.ID, opts)
+					found = true
 					break
 				}
 			}
-		}
-		if Issues == nil {
-			log.Fatal("Error, no issues within project for: " + location)
+			if !found {
+				return fmt.Errorf("location and path err %s %s" , location)
+			}
 		}
 	}
-	//This point can be in it's own method.
+	return nil
+}
+
+func CheckIssuesWithOptions(glClient *gitlab.Client, issueOpts *gitlab.ListIssuesOptions, projID int, projectOpts *gitlab.ListProjectIssuesOptions) error {
+	g := gl.New(glClient)
+	issuesInReport := make([]IssueReport, 0)
+	var Issues []*gitlab.Issue
+
+	if projectOpts == nil && issueOpts != nil {
+		Issues, _ = g.GetIssuesWithOptions(issueOpts)
+	} else if projectOpts != nil && issueOpts == nil {
+		Issues, _ = g.ListAllProjectIssuesWithOpts(projID, projectOpts)
+		if Issues == nil {
+			return fmt.Errorf("no issues found %v", Issues)
+		}
+	} else {
+		return fmt.Errorf("invalid options, please try again %v %v", issueOpts, projectOpts)
+	}
 
 	ignoreIssue := false
 	for _, issue := range Issues {

@@ -17,8 +17,8 @@ const (
 )
 
 var blankLine = []string{""}
-var promptForCheck = true
-var checkAfterwards = false
+var promptEpicCheck, promptIssueCheck = true, true
+var checkEpicAfterwards, checkIssueAfterwards = false, false
 
 type TrackVelocity struct {
 	issueTitles      []string
@@ -72,11 +72,10 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 						labels[label] = totalWeightPerLabel + issue.Weight
 					}
 				} else { continue }
-			} else {
+			} else if promptIssueCheck {
 				log.Println("[WARNING] No labels for issue: " + issue.Title)
-			 	if promptForCheck {
-					checkAfterwards, _ = promptForAnswer("Would you like run a check request after?")
-				}
+				checkIssueAfterwards, _ = promptForAnswer("Would you like run an issue check request after?")
+				promptEpicCheck = false
 			}
 
 			epicTitle := ""
@@ -86,11 +85,10 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 				epicURL = gitlabBaseURL + issue.Epic.URL
 				totalWeightPerEpic := epics[epicTitle]
 				epics[epicTitle] = totalWeightPerEpic + issue.Weight
-			} else {
+			} else if promptEpicCheck {
 				log.Println("[WARNING] No parent epic for: " + issue.Title)
-				//if promptForCheck {
-				//	checkAfterwards, _ = promptForAnswer("Would you like run a check request after?")
-				//}
+				checkEpicAfterwards, _ = promptForAnswer("Would you like run an epic check for epics after?")
+				promptEpicCheck = false
 			}
 
 			if issue.Assignee == nil {
@@ -165,11 +163,12 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 	}
 	fmt.Println("Results printed to file VelocityReport " + milestone + ".csv")
 
-	// TODO: Implement Checking Issues afterwards
-	//if checkAfterwards {
-	//	CheckEpicsWithinGroup(glClient, "", "", "", "")
-	//	CheckIssuesWithinProject(glClient, "", "", "", "")
-	//}
+	if checkIssueAfterwards {
+		CheckIssuesWithOptions(glClient, opts, 0, nil)
+	}
+	if checkEpicAfterwards {
+		//CheckEpicsWithinGroup(glClient, "", "", "", "")
+	}
 	return nil
 }
 

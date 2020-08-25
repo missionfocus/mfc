@@ -15,14 +15,14 @@ func init() {
 	bpeCheckCmd.PersistentFlags().StringVarP(&gitlabCheckLocation, "Location", "l", "", "Define a location")
 	bpeCheckCmd.PersistentFlags().StringVarP(&gitlabCheckCreationDate, "CreationDate", "c", "", "AfterDate|BeforeDate")
 	bpeCheckCmd.PersistentFlags().StringVarP(&gitlabCheckUpdatedDate, "UpdateDate", "u", "", "AfterDate|BeforeDate")
-	bpeCheckCmd.PersistentFlags().StringVarP(&gitlabCheckStatus, "Status", "s", "", "Retrieve only closed/open issues and/or epics")
+	bpeCheckCmd.PersistentFlags().StringVarP(&bpeCheckState, "State", "s", "", "Retrieve only closed/open issues and/or epics")
 }
 
 var (
 	gitlabCheckLocation     string
 	gitlabCheckCreationDate string
 	gitlabCheckUpdatedDate  string
-	gitlabCheckStatus       string
+	bpeCheckState           string
 )
 
 const bpeCheckEpicsExample = `
@@ -55,8 +55,8 @@ var bpeCheckIssuesAndEpicsCmd = &cobra.Command{
 		client, err := getGitLabClient(v)
 		check(err)
 
-		check(bpe.CheckEpicsWithinGroup(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
-		check(bpe.CheckIssuesWithinProject(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
+		check(bpe.CheckEpicsWithinGroup(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, bpeCheckState))
+		check(bpe.IssueOptsByCheckCommand(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, bpeCheckState))
 	},
 }
 
@@ -73,7 +73,7 @@ var bpeCheckEpicsCmd = &cobra.Command{
 		client, err := getGitLabClient(v)
 		check(err)
 
-		check(bpe.CheckEpicsWithinGroup(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
+		check(bpe.CheckEpicsWithinGroup(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, bpeCheckState))
 	},
 }
 
@@ -90,6 +90,6 @@ var bpeCheckIssuesCmd = &cobra.Command{
 		client, err := getGitLabClient(v)
 		check(err)
 
-		check(bpe.CheckIssuesWithinProject(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
+		check(bpe.IssueOptsByCheckCommand(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, bpeCheckState))
 	},
 }
