@@ -78,7 +78,6 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 		}
 	}
 
-	ignoreIssue := false
 	for _, issue := range Issues {
 		needMilestoneAndLabel, needMilestoneHasLabel, hasLabelState := false, false, false
 		needLabelStateResolved := true
@@ -102,9 +101,6 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 					needLabelStateResolved = false
 				}
 			}
-		}
-		if ignoreIssue {
-			break
 		}
 		if needMilestoneAndLabel {
 			issuesInReport = append(issuesInReport, IssueReport{issue, " This issue has no milestones or labels set."})
@@ -135,8 +131,6 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 		writer.Write(record)
 	}
 	fmt.Println("Results printed to file IssueReport.csv")
-	writer.Flush()
-	csvfile.Close()
 	return nil
 }
 
@@ -173,13 +167,12 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 		if epic.Description == "" {
 			epics = append(epics, EpicReport{epic, " This epic has no description"})
 		}
-		requiresEpicLabel := false
-		ignoreEpic := false
+		requiresEpicLabel := true
 		needLabelStateResolved := true
 
 		for _, label := range epic.Labels {
-			if strings.Contains(strings.ToLower(label), "epic-") || strings.Contains(strings.ToLower(label), "epic::") {
-				requiresEpicLabel = true
+			if strings.Contains(strings.ToLower(label), "epic-") {
+				requiresEpicLabel = false
 			}
 			if epic.State == "closed" {
 				if label == "state::resolved" || label == "state::abandoned" || label == "state::moved" {
@@ -187,10 +180,7 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 				}
 			}
 		}
-		if ignoreEpic {
-			break
-		}
-		if !requiresEpicLabel {
+		if requiresEpicLabel {
 			epics = append(epics, EpicReport{epic, " This epic does not contain a epic label"})
 		}
 		if needLabelStateResolved {
@@ -215,8 +205,5 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 		writer.Write(record)
 	}
 	fmt.Println("Results printed to file EpicReport.csv")
-	writer.Flush()
-	csvfile.Close()
-
 	return nil
 }

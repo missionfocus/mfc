@@ -42,11 +42,7 @@ var tmetricSetTokenCmd = &cobra.Command{
 }
 
 var (
-	tmetricFormat    string
-	tmetricStartDate string
-	tmetricEndDate   string
 	tmetricPerson    string
-	gitlabIssueURL   string
 )
 
 var tmetricHoursCommand = &cobra.Command{
@@ -71,6 +67,6 @@ var tmetricValidateTMetricCommand = &cobra.Command{
 		check(err)
 		vaultClient := vault.New(vaultAPIClient)
 
-		check(bpe.ValidateTMetricTime(vaultClient, os.Stdout))
+		check(bpe.ValidateTMetricTime(vaultClient))
 	},
 }

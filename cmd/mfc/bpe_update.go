@@ -10,11 +10,18 @@ func init() {
 	bpeCmd.AddCommand(bpeUpdateCmd)
 	bpeUpdateCmd.AddCommand(bpeUpdateEpicIssuesLabelCmd)
 	bpeUpdateCmd.AddCommand(bpeUpdateAllLabelsCmd)
+
+	bpeUpdateEpicIssuesLabelCmd.PersistentFlags().BoolVar(&bpeIncludeChildren, "children", false, "Include child Epic and Issues in label update.")
 }
 
+var (
+	bpeIncludeChildren bool
+)
+
 const bpeUpdateEpicIssueLabels = `
-  mfc bpe update eil "https://git.missionfocus.com/groups/ours/mfm/-/epics/1" "dev::coding|"      					 # Deletes dev::coding label and adds no label in place.
-  mfc bpe update eil "https://git.missionfocus.com/ours/mfm/mfm-records/-/issues/5" "check-this|dev::coding"         # Removes check-this label and adds dev:coding label
+  mfc bpe update eil "https://git.missionfocus.com/groups/ours/mfm/-/epics/1" "dev::coding|"      			# Deletes dev::coding label and adds no label in place.
+  mfc bpe update eil "https://git.missionfocus.com/groups/ours/mfm/-/epics/1" "check-this|dev::coding"         # Removes check-this label and adds dev:coding label
+  mfc bpe update eil "https://git.missionfocus.com/groups/ours/mfm/-/epics/1" "|dev::coding" --children         # Removes dev::coding from the epic and all the sub-epics and issues.
 `
 
 var bpeUpdateCmd = &cobra.Command{
@@ -37,7 +44,7 @@ var bpeUpdateEpicIssuesLabelCmd = &cobra.Command{
 		client, err := getGitLabClient(v)
 		check(err)
 
-		check(bpe.UpdateEpicIssuesLabels(client, args[0], args[1]))
+		check(bpe.UpdateEpicIssuesLabels(client, args[0], args[1], bpeIncludeChildren))
 	},
 }
 

@@ -12,17 +12,17 @@ func init() {
 	bpeCheckCmd.AddCommand(bpeCheckIssuesCmd)
 	bpeCheckCmd.AddCommand(bpeCheckEpicsCmd)
 
-	bpeCheckCmd.PersistentFlags().StringVarP(&gitlabCheckLocation, "Location", "l", "", "Define a location")
-	bpeCheckCmd.PersistentFlags().StringVarP(&gitlabCheckCreationDate, "CreationDate", "c", "", "AfterDate|BeforeDate")
-	bpeCheckCmd.PersistentFlags().StringVarP(&gitlabCheckUpdatedDate, "UpdateDate", "u", "", "AfterDate|BeforeDate")
-	bpeCheckCmd.PersistentFlags().StringVarP(&gitlabCheckStatus, "Status", "s", "", "Retrieve only closed/open issues and/or epics")
+	bpeCheckCmd.PersistentFlags().StringVarP(&bpeCheckLocation, "Location", "l", "", "Define a location")
+	bpeCheckCmd.PersistentFlags().StringVarP(&bpeCheckCreationDate, "CreationDate", "c", "", "AfterDate|BeforeDate")
+	bpeCheckCmd.PersistentFlags().StringVarP(&bpeCheckUpdatedDate, "UpdateDate", "u", "", "AfterDate|BeforeDate")
+	bpeCheckCmd.PersistentFlags().StringVarP(&bpeCheckStatus, "Status", "s", "", "Retrieve only closed/open issues and/or epics")
 }
 
 var (
-	gitlabCheckLocation     string
-	gitlabCheckCreationDate string
-	gitlabCheckUpdatedDate  string
-	gitlabCheckStatus       string
+	bpeCheckLocation     string
+	bpeCheckCreationDate string
+	bpeCheckUpdatedDate  string
+	bpeCheckStatus       string
 )
 
 const bpeCheckEpicsExample = `
@@ -39,7 +39,7 @@ const bpeCheckIssuesExample = `
 
 var bpeCheckCmd = &cobra.Command{
 	Use:     "check",
-	Short:   "Gitlab check <cmd>",
+	Short:   "bpe check <cmd>",
 	Aliases: []string{"ck"},
 }
 
@@ -55,8 +55,8 @@ var bpeCheckIssuesAndEpicsCmd = &cobra.Command{
 		client, err := getGitLabClient(v)
 		check(err)
 
-		check(bpe.CheckEpicsWithinGroup(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
-		check(bpe.CheckIssuesWithinProject(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
+		check(bpe.CheckEpicsWithinGroup(client, bpeCheckLocation, bpeCheckCreationDate, bpeCheckUpdatedDate, bpeCheckStatus))
+		check(bpe.CheckIssuesWithinProject(client, bpeCheckLocation, bpeCheckCreationDate, bpeCheckUpdatedDate, bpeCheckStatus))
 	},
 }
 
@@ -73,7 +73,7 @@ var bpeCheckEpicsCmd = &cobra.Command{
 		client, err := getGitLabClient(v)
 		check(err)
 
-		check(bpe.CheckEpicsWithinGroup(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
+		check(bpe.CheckEpicsWithinGroup(client, bpeCheckLocation, bpeCheckCreationDate, bpeCheckUpdatedDate, bpeCheckStatus))
 	},
 }
 
@@ -90,6 +90,6 @@ var bpeCheckIssuesCmd = &cobra.Command{
 		client, err := getGitLabClient(v)
 		check(err)
 
-		check(bpe.CheckIssuesWithinProject(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, gitlabCheckStatus))
+		check(bpe.CheckIssuesWithinProject(client, bpeCheckLocation, bpeCheckCreationDate, bpeCheckUpdatedDate, bpeCheckStatus))
 	},
 }

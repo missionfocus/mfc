@@ -142,9 +142,12 @@ func (g *GitLab) ListAllGroups() ([]*gitlab.Group, error) {
 	return groups, nil
 }
 
-func (g *GitLab) GetGroup(groupID int) *gitlab.Group {
-	group, _, _ := g.client.Groups.GetGroup(groupID)
-	return group
+func (g *GitLab) GetGroup(groupID int) (*gitlab.Group, error) {
+	group, _, err := g.client.Groups.GetGroup(groupID)
+	if err != nil {
+		return nil, fmt.Errorf("listing subgroups: %w", err)
+	}
+	return group, nil
 }
 
 func (g *GitLab) ListSubGroups(groupID int) ([]*gitlab.Group, error) {
