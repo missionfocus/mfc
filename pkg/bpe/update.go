@@ -33,8 +33,8 @@ func GetLabelParameters(str string) []string {
 	return label
 }
 
-//UpdateEpicIssuesLabels will update all labels related - includes epic and children issues
-func UpdateEpicIssuesLabels(glClient *gitlab.Client, location, label string, includeChildren bool) error {
+//UpdateEpicIssuesWith will update all labels related - includes epic and children issues
+func UpdateEpicIssuesWith(glClient *gitlab.Client, location, label string, includeChildren bool) error {
 	g := gl.New(glClient)
 	foundEpic := false
 	labels := GetLabelParameters(label)
@@ -46,19 +46,19 @@ func UpdateEpicIssuesLabels(glClient *gitlab.Client, location, label string, inc
 		if epic.WebURL == location {
 			foundEpic = true
 			fmt.Println("Epic found:", epic.Title)
-			UpdateAllLabelsWith(glClient, labels, epic.GroupID, epic, includeChildren)
+			UpdateEpicIssuesWithRunner(glClient, labels, epic.GroupID, epic, includeChildren)
 			break
 		}
 	}
 	if !foundEpic {
 		fmt.Println("Unable to find that epic URL. Please try again.")
-	}  else {
+	} else {
 		fmt.Println("Task completed.")
 	}
 	return nil
 }
 
-func UpdateAllLabelsWith(glClient *gitlab.Client, labels []string, groupID int, epic *gitlab.Epic, loop bool) error {
+func UpdateEpicIssuesWithRunner(glClient *gitlab.Client, labels []string, groupID int, epic *gitlab.Epic, loop bool) error {
 	g := gl.New(glClient)
 	epicHasOldLabel, epicHasNewLabel := false, false
 	var epicIssues []*gitlab.Issue
@@ -107,7 +107,7 @@ func UpdateAllLabelsWith(glClient *gitlab.Client, labels []string, groupID int, 
 		if childEpics != nil {
 			for _, childEpic := range childEpics {
 				if childEpic.ParentID == epic.ID {
-					UpdateAllLabelsWith(glClient, labels, childEpic.GroupID, childEpic, loop)
+					UpdateEpicIssuesWithRunner(glClient, labels, childEpic.GroupID, childEpic, loop)
 				}
 			}
 		}
@@ -115,8 +115,8 @@ func UpdateAllLabelsWith(glClient *gitlab.Client, labels []string, groupID int, 
 	return nil
 }
 
-//UpdateAllLabels - This will inherit parent epic labels to sub epics and issues.
-func UpdateAllLabels(glClient *gitlab.Client) error {
+//UpdateAllEpicLabels - This will inherit parent epic labels to sub epics and issues.
+func UpdateAllEpicLabels(glClient *gitlab.Client) error {
 	g := gl.New(glClient)
 	groups, _ := g.ListSubGroups(codeGroupID)
 	addCodeGroup, _ := g.GetGroup(codeGroupID) // Code includes Epics.
@@ -132,13 +132,13 @@ func UpdateAllLabels(glClient *gitlab.Client) error {
 				continue
 			}
 			fmt.Println("\nRoot Parent Epic: " + epic.Title)
-			UpdateAllEpicLabel(glClient, group.ID, epic)
+			UpdateAllEpicLabelsRunner(glClient, group.ID, epic)
 		}
 	}
 	return nil
 }
 
-func UpdateAllEpicLabel(glClient *gitlab.Client, groupID int, epic *gitlab.Epic) error {
+func UpdateAllEpicLabelsRunner(glClient *gitlab.Client, groupID int, epic *gitlab.Epic) error {
 	g := gl.New(glClient)
 	issues := g.GetEpicIssues(groupID, epic.IID)
 	for _, issue := range issues {
@@ -176,7 +176,7 @@ func UpdateAllEpicLabel(glClient *gitlab.Client, groupID int, epic *gitlab.Epic)
 					g.UpdateEpicWithOpts(childEpic.GroupID, childEpic.IID, opt)
 				}
 				fmt.Println("  - [Checking] Child-Epic: " + childEpic.Title)
-				UpdateAllEpicLabel(glClient, childEpic.GroupID, childEpic) //Recursion does this process for inherited children.
+				UpdateAllEpicLabelsRunner(glClient, childEpic.GroupID, childEpic) //Recursion does this process for inherited children.
 			}
 		}
 	}

@@ -44,7 +44,7 @@ var bpeUpdateEpicIssuesLabelCmd = &cobra.Command{
 		client, err := getGitLabClient(v)
 		check(err)
 
-		check(bpe.UpdateEpicIssuesLabels(client, args[0], args[1], bpeIncludeChildren))
+		check(bpe.UpdateEpicIssuesWith(client, args[0], args[1], bpeIncludeChildren))
 	},
 }
 
@@ -60,6 +60,6 @@ var bpeUpdateAllLabelsCmd = &cobra.Command{
 		client, err := getGitLabClient(v)
 		check(err)
 
-		check(bpe.UpdateAllLabels(client))
+		check(bpe.UpdateAllEpicLabels(client))
 	},
 }

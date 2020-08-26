@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	AccountID = 105432
+	AccountID    = 105432
 	glTimeFormat = "2006-01-02"
 )
 

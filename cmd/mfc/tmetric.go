@@ -42,7 +42,7 @@ var tmetricSetTokenCmd = &cobra.Command{
 }
 
 var (
-	tmetricPerson    string
+	tmetricPerson string
 )
 
 var tmetricHoursCommand = &cobra.Command{

@@ -91,8 +91,8 @@ func ValidateTMetricTime(vaultClient vault.Vault) error {
 		if m.UserProfile.UserName == "Mission Focus" {
 			continue
 		}
-		minimumHours := time.Duration(7) * time.Hour + time.Duration(30)*time.Minute
-		maximumHours := time.Duration(8) * time.Hour + time.Duration(30)*time.Minute
+		minimumHours := time.Duration(7)*time.Hour + time.Duration(30)*time.Minute
+		maximumHours := time.Duration(8)*time.Hour + time.Duration(30)*time.Minute
 		params := time_entries.NewTimeEntriesGetTimeEntriesParams().
 			WithAccountID(tmetric.AccountID).
 			WithUserProfileID(profileId).
