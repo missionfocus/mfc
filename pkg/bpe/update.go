@@ -9,15 +9,15 @@ import (
 	"github.com/xanzy/go-gitlab"
 )
 
-type EpicIssuesStruct struct {
-	epic   *gitlab.Epic
-	issues []*gitlab.Issue
-}
-
 const (
 	oursGroupID = 125
 	codeGroupID = 145
 )
+
+type EpicIssuesStruct struct {
+	epic   *gitlab.Epic
+	issues []*gitlab.Issue
+}
 
 func GetLabelParameters(str string) []string {
 	if len(str) == 0 {
@@ -144,7 +144,7 @@ func UpdateAllEpicLabelsRunner(glClient *gitlab.Client, groupID int, epic *gitla
 	for _, issue := range issues {
 		updateIssue := false
 		for _, epicLabel := range epic.Labels {
-			if strings.Contains(epicLabel, "epic-") && !contains(issue.Labels, epicLabel) {
+			if strings.Contains(epicLabel, "epic-") && !contains(issue.Labels, epicLabel)  && !strings.Contains(epicLabel, "x-epic-") {
 				issue.Labels = append(issue.Labels, epicLabel)
 				updateIssue = true
 			}
@@ -163,7 +163,7 @@ func UpdateAllEpicLabelsRunner(glClient *gitlab.Client, groupID int, epic *gitla
 			updateEpic := false
 			if childEpic.ParentID == epic.ID {
 				for _, epicLabel := range epic.Labels {
-					if strings.Contains(epicLabel, "epic-") && !contains(childEpic.Labels, epicLabel) {
+					if strings.Contains(epicLabel, "epic-") && !contains(childEpic.Labels, epicLabel) && !strings.Contains(epicLabel, "x-epic-"){
 						childEpic.Labels = append(childEpic.Labels, epicLabel)
 						updateEpic = true
 					}

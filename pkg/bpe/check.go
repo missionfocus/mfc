@@ -34,7 +34,7 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 	scope := "all"
 	var Issues []*gitlab.Issue
 	if location == "" {
-		opt := &gitlab.ListIssuesOptions{
+		opt := &gitlab.ListGroupIssuesOptions{
 			State:         &state,
 			CreatedAfter:  &creationDates[0],
 			CreatedBefore: &creationDates[1],
@@ -42,7 +42,7 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			UpdatedBefore: &updatedDates[1],
 			Scope:         &scope,
 		}
-		Issues, _ = g.GetIssuesWithOptions(opt)
+		Issues, _ = g.ListGroupIssuesWithOptions(codeGroupID, opt)
 	} else {
 		searchNameSpaces := true
 		opt := &gitlab.ListProjectsOptions{
@@ -79,39 +79,36 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 	}
 
 	for _, issue := range Issues {
-		needMilestoneAndLabel, needMilestoneHasLabel, hasLabelState := false, false, false
-		needLabelStateResolved := true
-
+		missingLabels := false
+		missingMilestoneHasLabel := false
+		needStateLabel := true
+		doneWithIssue := false
 		if issue.Labels == nil {
-			if issue.Milestone == nil {
-				needMilestoneAndLabel = true
-			}
-		}
-		for _, label := range issue.Labels {
-			if label == "state::in-progress" {
-				if issue.Milestone == nil {
-					needMilestoneHasLabel = true
+			missingLabels = true
+		} else {
+			for _, label := range issue.Labels {
+				if strings.Contains(label, "dta::") || strings.Contains(label, "x-epic-") {
+					doneWithIssue = true
+					break
+				}
+				if label == "state::in-progress" && issue.Milestone == nil {
+					missingMilestoneHasLabel = true
+				}
+				if issue.State == "closed" {
+					if label == "state::resolved" || label == "state::abandoned" || label == "state::moved" {
+						needStateLabel = false
+					}
 				}
 			}
-			if strings.Contains(strings.ToLower(label), "state::") {
-				hasLabelState = true
-			}
-			if issue.State == "closed" {
-				if label == "state::resolved" || label == "state::abandoned" || label == "state::moved" {
-					needLabelStateResolved = false
-				}
-			}
 		}
-		if needMilestoneAndLabel {
-			issuesInReport = append(issuesInReport, IssueReport{issue, " This issue has no milestones or labels set."})
+		if doneWithIssue {
+			continue
 		}
-		if needMilestoneHasLabel {
+		if missingLabels {
+			issuesInReport = append(issuesInReport, IssueReport{issue, " This issue has no labels."})
+		} else if missingMilestoneHasLabel {
 			issuesInReport = append(issuesInReport, IssueReport{issue, " This issue is in-progress, but has no milestone."})
-		}
-		if !hasLabelState {
-			issuesInReport = append(issuesInReport, IssueReport{issue, " This issue does not contain a `state::` label"})
-		}
-		if needLabelStateResolved {
+		} else if needStateLabel {
 			issuesInReport = append(issuesInReport, IssueReport{issue, " This issue is requires the `resolved` or `abandoned` label."})
 		}
 	}
@@ -152,7 +149,7 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 		UpdatedBefore: &updatedDates[1],
 	}
 	if location == "" {
-		groupEpics, _ = g.ListGroupEpicsWithOptions(145, opt)
+		groupEpics, _ = g.ListGroupEpicsWithOptions(codeGroupID, opt)
 	} else {
 		groups, _ := g.ListAllGroups()
 		for _, group := range groups {
@@ -164,27 +161,24 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 	}
 
 	for _, epic := range groupEpics {
+		doneWithEpic := false
+		missingEpicLabel := false
+		for _, label := range epic.Labels {
+			if strings.Contains(strings.ToLower(label), "value-stream") || strings.Contains(strings.ToLower(label), "mgmt") {
+				doneWithEpic = true
+				break
+			}
+			if strings.Contains(strings.ToLower(label), "epic-") {
+				missingEpicLabel = true
+			}
+		}
+		if doneWithEpic {
+			continue
+		}
 		if epic.Description == "" {
 			epics = append(epics, EpicReport{epic, " This epic has no description"})
-		}
-		requiresEpicLabel := true
-		needLabelStateResolved := true
-
-		for _, label := range epic.Labels {
-			if strings.Contains(strings.ToLower(label), "epic-") {
-				requiresEpicLabel = false
-			}
-			if epic.State == "closed" {
-				if label == "state::resolved" || label == "state::abandoned" || label == "state::moved" {
-					needLabelStateResolved = false
-				}
-			}
-		}
-		if requiresEpicLabel {
+		} else if missingEpicLabel {
 			epics = append(epics, EpicReport{epic, " This epic does not contain a epic label"})
-		}
-		if needLabelStateResolved {
-			epics = append(epics, EpicReport{epic, " This epic is requires the `resolved` or `abandoned` label."})
 		}
 	}
 
