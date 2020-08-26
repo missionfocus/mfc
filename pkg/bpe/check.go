@@ -81,13 +81,17 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 	for _, issue := range Issues {
 		missingLabels := false
 		missingMilestoneHasLabel := false
-		needStateLabel := true
 		doneWithIssue := false
+		needStateLabel := false
+
+		if issue.State == "closed" {
+			needStateLabel = true
+		}
 		if issue.Labels == nil {
 			missingLabels = true
 		} else {
 			for _, label := range issue.Labels {
-				if strings.Contains(label, "dta::") || strings.Contains(label, "x-epic-") {
+				if strings.Contains(label, "dta::") || strings.Contains(label, "x-epic-") || strings.Contains(label, "dta-resource"){
 					doneWithIssue = true
 					break
 				}
@@ -95,7 +99,7 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 					missingMilestoneHasLabel = true
 				}
 				if issue.State == "closed" {
-					if label == "state::resolved" || label == "state::abandoned" || label == "state::moved" {
+					if strings.Contains(label, "resolved") || strings.Contains(label, "abandoned")  ||strings.Contains(label, "moved") {
 						needStateLabel = false
 					}
 				}
@@ -103,8 +107,9 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 		}
 		if doneWithIssue {
 			continue
-		}
-		if missingLabels {
+		} else if issue.Description == "" {
+			issuesInReport = append(issuesInReport, IssueReport{issue, " This issue has no description"})
+		} else if missingLabels {
 			issuesInReport = append(issuesInReport, IssueReport{issue, " This issue has no labels."})
 		} else if missingMilestoneHasLabel {
 			issuesInReport = append(issuesInReport, IssueReport{issue, " This issue is in-progress, but has no milestone."})
@@ -162,20 +167,19 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 
 	for _, epic := range groupEpics {
 		doneWithEpic := false
-		missingEpicLabel := false
+		missingEpicLabel := true
 		for _, label := range epic.Labels {
-			if strings.Contains(strings.ToLower(label), "value-stream") || strings.Contains(strings.ToLower(label), "mgmt") {
+			if strings.Contains(label, "value-stream") || strings.Contains(label, "mgmt") || strings.Contains(label, "+"){
 				doneWithEpic = true
 				break
 			}
-			if strings.Contains(strings.ToLower(label), "epic-") {
-				missingEpicLabel = true
+			if strings.Contains(label, "epic-")  {
+				missingEpicLabel = false
 			}
 		}
 		if doneWithEpic {
 			continue
-		}
-		if epic.Description == "" {
+		} else if epic.Description == "" {
 			epics = append(epics, EpicReport{epic, " This epic has no description"})
 		} else if missingEpicLabel {
 			epics = append(epics, EpicReport{epic, " This epic does not contain a epic label"})
