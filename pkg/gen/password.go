@@ -1,12 +1,13 @@
 package gen
 
 import (
-	"github.com/pkg/errors"
-	"github.com/sethvargo/go-diceware/diceware"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/sethvargo/go-diceware/diceware"
 )
 
 type Password struct {

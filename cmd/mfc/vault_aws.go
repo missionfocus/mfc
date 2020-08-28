@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
+	"time"
+
 	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
-	"path/filepath"
-	"time"
 )
 
 func init() {

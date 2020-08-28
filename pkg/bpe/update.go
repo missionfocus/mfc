@@ -2,50 +2,17 @@ package bpe
 
 import (
 	"fmt"
+	"log"
 	"strings"
-	"time"
 
 	gl "git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
-	"github.com/asaskevich/govalidator"
 	"github.com/xanzy/go-gitlab"
 )
 
-// SetState ensures that the state can be queried
-func SetState(status string) string {
-	state := strings.ToLower(status)
-	if state == "open" {
-		state = "opened"
-	}
-	if state == "close" {
-		state = "closed"
-	} else {
-		state = ""
-	}
-	return state
-}
-
 const (
-	glTimeFormat    = "2006-01-02"
-	inputTimeFormat = "01/02/2006"
+	oursGroupID = 125
+	codeGroupID = 145
 )
-
-//GetTimeParameters is used to alter the format [date] | [date] into a comparable format
-func GetTimeParameters(str string) []time.Time {
-	if len(str) == 0 {
-		return nil
-	}
-	date := make([]time.Time, 0)
-	splitDateStrings := strings.Split(str, "|")
-
-	for _, d := range splitDateStrings {
-		strToDate := strings.Replace(d, " ", "", -1)
-		t, _ := time.Parse(inputTimeFormat, strToDate)
-		t.Format(glTimeFormat)
-		date = append(date, t)
-	}
-
-	return date
-}
 
 type EpicIssuesStruct struct {
 	epic   *gitlab.Epic
@@ -57,184 +24,170 @@ func GetLabelParameters(str string) []string {
 		return nil
 	}
 	label := make([]string, 0)
-	splitDateStrings := strings.Split(str, "|")
+	splitLabelStrings := strings.Split(str, "|")
 
-	for _, d := range splitDateStrings {
-		strToDate := strings.Replace(d, " ", "", -1)
-		label = append(label, strToDate)
+	for _, d := range splitLabelStrings {
+		removeWhiteSpace := strings.Replace(d, " ", "", -1)
+		label = append(label, removeWhiteSpace)
 	}
-
 	return label
 }
 
-//UpdateEpicIssuesLabels will update all labels related - includes epic and children issues
-func UpdateEpicIssuesLabels(glClient *gitlab.Client, location, label string) error {
+//UpdateEpicIssuesWith will update all labels related - includes epic and children issues
+func UpdateEpicIssuesWith(glClient *gitlab.Client, location, label string, includeChildren bool) error {
 	g := gl.New(glClient)
-	epicIssues := make([]EpicIssuesStruct, 0)
-	fmt.Println("Location", location)
+	foundEpic := false
 	labels := GetLabelParameters(label)
 	if labels[0] == labels[1] {
-		fmt.Println("Please try again. Error same label requested")
-		return nil
+		log.Fatal("Error same label requested. Please try again.")
 	}
-
-	groups, err := g.ListAllGroups()
-	if err != nil {
-		return err
-	}
-
-	if location == "" {
-		return nil
-	}
-
-	locationFound := false
-	epicHasOldLabel, epicHasNewLabel := false, false
-
-	fmt.Println("Finding location epic and issues. Please wait...")
-	for _, group := range groups {
-		if !strings.Contains(location, "/code") && strings.Contains(group.WebURL, "/code") { // Included for optimization.
-			continue
-		}
-		groupEpics, _ := g.ListAllGroupEpics(group.ID)
-		for _, epic := range groupEpics {
-			// The imported API does not use WebURL for epics -- this will detect epic location.
-			if strings.Contains(location, "/epics/") {
-				if strings.Contains(location, group.WebURL) {
-					splitURL := strings.Split(location, "epics/")
-					if splitURL[1] == govalidator.ToString(epic.IID) {
-						locationFound = true
-						fmt.Println("Epic found:", epic.Title)
-						epicIssues = append(epicIssues, EpicIssuesStruct{epic, g.GetEpicIssues(group.ID, epic.IID)})
-					}
-				}
-			}
-
-			issues := g.GetEpicIssues(group.ID, epic.IID)
-			for _, i := range issues {
-				if i.WebURL == location {
-					fmt.Println("Issue found:", i.Title)
-					epicIssues = append(epicIssues, EpicIssuesStruct{epic, g.GetEpicIssues(group.ID, epic.IID)})
-					locationFound = true
-				}
-				if locationFound == true {
-					break
-				}
-			}
-
-			if locationFound {
-				for ct, label := range epic.Labels {
-					if label == labels[0] {
-						epicHasOldLabel = true
-						epic.Labels = append(epic.Labels[:ct], epic.Labels[ct+1:]...)
-					}
-					if label == labels[1] {
-						epicHasNewLabel = true
-					}
-				}
-				if !epicHasNewLabel {
-					epic.Labels = append(epic.Labels, labels[1])
-				}
-				if epicHasOldLabel || !epicHasNewLabel {
-					opt := &gitlab.UpdateEpicOptions{
-						Labels: epic.Labels,
-					}
-					g.UpdateEpicWithOpts(group.ID, epic.IID, opt)
-				}
-
-				for _, ei := range epicIssues {
-					for _, issue := range ei.issues {
-						issueHasOldLabel, issueHasNewLabel := false, false
-
-						for ct, label := range issue.Labels {
-							if label == labels[0] && labels[0] != "" {
-								issueHasOldLabel = true
-								issue.Labels = append(issue.Labels[:ct], issue.Labels[ct+1:]...)
-							}
-							if label == labels[1] && labels[1] != "" {
-								issueHasNewLabel = true
-							}
-						}
-						if !issueHasNewLabel {
-							issue.Labels = append(issue.Labels, labels[1])
-						}
-						if issueHasOldLabel || !issueHasNewLabel {
-							opt := &gitlab.UpdateIssueOptions{
-								Labels: &issue.Labels,
-							}
-							g.UpdateIssueWithOpts(issue.ProjectID, issue.IID, opt)
-						}
-					}
-				}
-				break
-			}
-		}
-		if locationFound {
+	groupEpics, _ := g.ListAllGroupEpics(oursGroupID)
+	for _, epic := range groupEpics {
+		if epic.WebURL == location {
+			foundEpic = true
+			fmt.Println("Epic found:", epic.Title)
+			UpdateEpicIssuesWithRunner(glClient, labels, epic.GroupID, epic, includeChildren)
 			break
+		}
+	}
+	if !foundEpic {
+		fmt.Println("Unable to find that epic URL. Please try again.")
+	} else {
+		fmt.Println("Task completed.")
+	}
+	return nil
+}
+
+func UpdateEpicIssuesWithRunner(glClient *gitlab.Client, labels []string, groupID int, epic *gitlab.Epic, loop bool) error {
+	g := gl.New(glClient)
+	epicHasOldLabel, epicHasNewLabel := false, false
+	var epicIssues []*gitlab.Issue
+	epicIssues = g.GetEpicIssues(epic.GroupID, epic.IID)
+	for _, issue := range epicIssues {
+		issueHasOldLabel, issueHasNewLabel := false, false
+		for ct, label := range issue.Labels {
+			if label == labels[0] && labels[0] != "" {
+				issueHasOldLabel = true
+				issue.Labels = append(issue.Labels[:ct], issue.Labels[ct+1:]...)
+			}
+			if label == labels[1] && labels[1] != "" {
+				issueHasNewLabel = true
+			}
+		}
+		if !issueHasNewLabel {
+			issue.Labels = append(issue.Labels, labels[1])
+		}
+		if issueHasOldLabel || !issueHasNewLabel {
+			opt := &gitlab.UpdateIssueOptions{
+				Labels: &issue.Labels,
+			}
+			g.UpdateIssueWithOpts(issue.ProjectID, issue.IID, opt)
+		}
+	}
+	for ct, label := range epic.Labels {
+		if label == labels[0] {
+			epicHasOldLabel = true
+			epic.Labels = append(epic.Labels[:ct], epic.Labels[ct+1:]...)
+		}
+		if label == labels[1] {
+			epicHasNewLabel = true
+		}
+	}
+	if !epicHasNewLabel {
+		epic.Labels = append(epic.Labels, labels[1])
+	}
+	if epicHasOldLabel || !epicHasNewLabel {
+		opt := &gitlab.UpdateEpicOptions{
+			Labels: epic.Labels,
+		}
+		g.UpdateEpicWithOpts(epic.GroupID, epic.IID, opt)
+	}
+	if loop {
+		childEpics := g.GetEpicLinks(groupID, epic.IID)
+		if childEpics != nil {
+			for _, childEpic := range childEpics {
+				if childEpic.ParentID == epic.ID {
+					UpdateEpicIssuesWithRunner(glClient, labels, childEpic.GroupID, childEpic, loop)
+				}
+			}
 		}
 	}
 	return nil
 }
 
-//UpdateAllLabels - This will inherit parent epic labels to sub epics and issues.
-func UpdateAllLabels(glClient *gitlab.Client) error {
+//UpdateAllEpicLabels - This will inherit parent epic labels to sub epics and issues.
+func UpdateAllEpicLabels(glClient *gitlab.Client) error {
 	g := gl.New(glClient)
-
-	groups, err := g.ListAllGroups()
-	if err != nil {
-		return err
-	}
-
+	groups, _ := g.ListSubGroups(codeGroupID)
+	addCodeGroup, _ := g.GetGroup(codeGroupID) // Code includes Epics.
+	groups = append(groups, addCodeGroup)
 	for _, group := range groups {
-		fmt.Println("\nUpdating Epics under the group:", group.Name)
+		fmt.Println("\n--------------------------\n", "Reviewing Group: ", group.Name, "\n--------------------------")
 		groupEpics, _ := g.ListAllGroupEpics(group.ID)
 		for _, epic := range groupEpics {
-			if epic.GroupID != group.ID {
+			if epic.GroupID != group.ID { //DO NOT DELETE.
 				continue
 			}
 			if epic.ParentID != 0 {
 				continue
 			}
-			fmt.Println("Updating Epics and Issues for the Parent Epic:", epic.Title)
-			UpdateChildEpicsAndIssues(glClient, group, epic)
+			fmt.Println("\nRoot Parent Epic: " + epic.Title)
+			UpdateAllEpicLabelsRunner(glClient, group.ID, epic)
 		}
 	}
 	return nil
 }
 
-func UpdateChildEpicsAndIssues(glClient *gitlab.Client, group *gitlab.Group, epic *gitlab.Epic) error {
+func UpdateAllEpicLabelsRunner(glClient *gitlab.Client, groupID int, epic *gitlab.Epic) error {
 	g := gl.New(glClient)
-	epicLabels := epic.Labels
-	issues := g.GetEpicIssues(group.ID, epic.IID)
-
+	issues := g.GetEpicIssues(groupID, epic.IID)
 	for _, issue := range issues {
-		for _, epicLabel := range epicLabels {
-			if strings.Contains(epicLabel, "epic-") {
+		updateIssue := false
+		for _, epicLabel := range epic.Labels {
+			if strings.Contains(epicLabel, "epic-") && !contains(issue.Labels, epicLabel)  && !strings.Contains(epicLabel, "x-epic-") {
 				issue.Labels = append(issue.Labels, epicLabel)
+				updateIssue = true
 			}
 		}
-		opt := &gitlab.UpdateIssueOptions{
-			Labels: &issue.Labels,
+		if updateIssue {
+			log.Println("[Updated] Issue: " + issue.Title)
+			opt := &gitlab.UpdateIssueOptions{
+				AddLabels: &issue.Labels,
+			}
+			g.UpdateIssueWithOpts(issue.ProjectID, issue.IID, opt)
 		}
-		g.UpdateIssueWithOpts(issue.ProjectID, issue.IID, opt)
 	}
-
-	childEpics := g.GetEpicLinks(group.ID, epic.IID)
+	childEpics := g.GetEpicLinks(groupID, epic.IID)
 	if childEpics != nil {
 		for _, childEpic := range childEpics {
+			updateEpic := false
 			if childEpic.ParentID == epic.ID {
-				for _, epicLabel := range epicLabels {
-					if strings.Contains(epicLabel, "epic-") {
+				for _, epicLabel := range epic.Labels {
+					if strings.Contains(epicLabel, "epic-") && !contains(childEpic.Labels, epicLabel) && !strings.Contains(epicLabel, "x-epic-"){
 						childEpic.Labels = append(childEpic.Labels, epicLabel)
+						updateEpic = true
 					}
 				}
-				opt := &gitlab.UpdateEpicOptions{
-					Labels: childEpic.Labels,
+				if updateEpic {
+					log.Println("[Updated] Child-Epic: " + childEpic.Title)
+					opt := &gitlab.UpdateEpicOptions{
+						Labels: childEpic.Labels,
+					}
+					g.UpdateEpicWithOpts(childEpic.GroupID, childEpic.IID, opt)
 				}
-
-				g.UpdateEpicWithOpts(group.ID, childEpic.IID, opt)
-				UpdateChildEpicsAndIssues(glClient, group, childEpic)
+				fmt.Println("  - [Checking] Child-Epic: " + childEpic.Title)
+				UpdateAllEpicLabelsRunner(glClient, childEpic.GroupID, childEpic) //Recursion does this process for inherited children.
 			}
 		}
 	}
 	return nil
+}
+
+func contains(slice []string, item string) bool {
+	set := make(map[string]struct{}, len(slice))
+	for _, s := range slice {
+		set[s] = struct{}{}
+	}
+	_, ok := set[item]
+	return ok
 }

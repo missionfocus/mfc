@@ -2,7 +2,6 @@ package vault
 
 import (
 	"encoding/json"
-	"github.com/hashicorp/vault/api"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -11,6 +10,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/vault/api"
 )
 
 func getBaseAddr(account string) string {

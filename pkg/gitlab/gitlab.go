@@ -68,6 +68,42 @@ func (g *GitLab) GetIssue(projID interface{}, issueID int) (*gitlab.Issue, error
 	return issue, nil
 }
 
+func (g *GitLab) GetIssuesWithOptions(opt *gitlab.ListIssuesOptions) ([]*gitlab.Issue, error) {
+	issues := make([]*gitlab.Issue, 0)
+
+	for {
+		is, res, err := g.client.Issues.ListIssues(opt)
+		if err != nil {
+			return nil, fmt.Errorf("Retrieving issues with options: %w", err)
+		}
+		if res.CurrentPage >= res.TotalPages {
+			break
+		}
+		issues = append(issues, is...)
+		opt.Page = res.NextPage
+	}
+	return issues, nil
+}
+
+// ListAllGroupEpicsWithOptions returns epics within a specificed group and meets specified options.
+func (g *GitLab) ListGroupEpicsWithOptions(gid interface{}, opt *gitlab.ListGroupEpicsOptions) ([]*gitlab.Epic, error) {
+	epics := make([]*gitlab.Epic, 0)
+
+	for {
+		e, res, err := g.client.Epics.ListGroupEpics(gid, opt)
+		if err != nil {
+			return nil, fmt.Errorf("listing group epics with options: %w", err)
+		}
+		if res.CurrentPage >= res.TotalPages {
+			break
+		}
+		epics = append(epics, e...)
+		opt.Page = res.NextPage
+	}
+
+	return epics, nil
+}
+
 // GetEpic retrieves a specific epic.
 func (g *GitLab) GetEpic(gid interface{}, epic int) (*gitlab.Epic, error) {
 	Epic, _, err := g.client.Epics.GetEpic(gid, epic)
@@ -106,6 +142,14 @@ func (g *GitLab) ListAllGroups() ([]*gitlab.Group, error) {
 	return groups, nil
 }
 
+func (g *GitLab) GetGroup(groupID int) (*gitlab.Group, error) {
+	group, _, err := g.client.Groups.GetGroup(groupID)
+	if err != nil {
+		return nil, fmt.Errorf("listing subgroups: %w", err)
+	}
+	return group, nil
+}
+
 func (g *GitLab) ListSubGroups(groupID int) ([]*gitlab.Group, error) {
 	groups := make([]*gitlab.Group, 0)
 	opt := &gitlab.ListSubgroupsOptions{
@@ -114,6 +158,27 @@ func (g *GitLab) ListSubGroups(groupID int) ([]*gitlab.Group, error) {
 			Page:    1,
 		},
 	}
+	for {
+		gs, res, err := g.client.Groups.ListSubgroups(groupID, opt)
+		if err != nil {
+			return nil, fmt.Errorf("listing subgroups: %w", err)
+		}
+
+		groups = append(groups, gs...)
+
+		if res.CurrentPage >= res.TotalPages {
+			break
+		}
+
+		opt.Page = res.NextPage
+	}
+
+	return groups, nil
+
+}
+
+func (g *GitLab) ListSubGroupsWithOptions(groupID int, opt *gitlab.ListSubgroupsOptions) ([]*gitlab.Group, error) {
+	groups := make([]*gitlab.Group, 0)
 	for {
 		gs, res, err := g.client.Groups.ListSubgroups(groupID, opt)
 		if err != nil {
@@ -142,7 +207,7 @@ func (g *GitLab) ListAllProjects() ([]*gitlab.Project, error) {
 		},
 	}
 
-	return g.ListAllProjectsWithOptions(opt)
+	return g.ListProjectsWithOptions(opt)
 }
 
 // ListAllProjectIssues retrieves all the issues within a project
@@ -173,8 +238,25 @@ func (g *GitLab) ListAllProjectIssues(projID interface{}) ([]*gitlab.Issue, erro
 	return issues, nil
 }
 
+func (g *GitLab) ListAllProjectIssuesWithOpts(projID interface{}, opt *gitlab.ListProjectIssuesOptions) ([]*gitlab.Issue, error) {
+	issues := make([]*gitlab.Issue, 0)
+	for {
+		is, res, err := g.client.Issues.ListProjectIssues(projID, opt)
+		if err != nil {
+			return nil, fmt.Errorf("listing project project issues with opts: %w", err)
+		}
+
+		issues = append(issues, is...)
+		if res.CurrentPage >= res.TotalPages {
+			break
+		}
+		opt.Page = res.NextPage
+	}
+	return issues, nil
+}
+
 // ListAllGroupIssues retrieves all the issues within a group
-func (g *GitLab) ListAllGroupIssues(projID interface{}) ([]*gitlab.Issue, error) {
+func (g *GitLab) ListAllGroupIssues(groupID interface{}) ([]*gitlab.Issue, error) {
 	issues := make([]*gitlab.Issue, 0)
 
 	opt := &gitlab.ListGroupIssuesOptions{
@@ -185,7 +267,26 @@ func (g *GitLab) ListAllGroupIssues(projID interface{}) ([]*gitlab.Issue, error)
 	}
 
 	for {
-		is, res, err := g.client.Issues.ListGroupIssues(projID, opt)
+		is, res, err := g.client.Issues.ListGroupIssues(groupID, opt)
+		if err != nil {
+			return nil, fmt.Errorf("listing project group issues: %w", err)
+		}
+
+		issues = append(issues, is...)
+
+		if res.CurrentPage >= res.TotalPages {
+			break
+		}
+		opt.Page = res.NextPage
+	}
+	return issues, nil
+
+}
+func (g *GitLab) ListGroupIssuesWithOptions(groupID interface{}, opt *gitlab.ListGroupIssuesOptions) ([]*gitlab.Issue, error) {
+	issues := make([]*gitlab.Issue, 0)
+
+	for {
+		is, res, err := g.client.Issues.ListGroupIssues(groupID, opt)
 		if err != nil {
 			return nil, fmt.Errorf("listing project group issues: %w", err)
 		}
@@ -229,7 +330,7 @@ func (g *GitLab) ListAllGroupEpics(gid interface{}) ([]*gitlab.Epic, error) {
 }
 
 // ListAllProjects lists all of the projects the caller has access to.
-func (g *GitLab) ListAllProjectsWithOptions(opt *gitlab.ListProjectsOptions) ([]*gitlab.Project, error) {
+func (g *GitLab) ListProjectsWithOptions(opt *gitlab.ListProjectsOptions) ([]*gitlab.Project, error) {
 	projects := make([]*gitlab.Project, 0)
 
 	for {

@@ -6,6 +6,7 @@ require (
 	git.missionfocus.com/ours/code/libraries/go v0.0.0-00010101000000-000000000000
 	github.com/aws/aws-sdk-go v1.19.19
 	github.com/blang/semver v3.5.1+incompatible
+	github.com/emirpasic/gods v1.12.0
 	github.com/frankban/quicktest v1.4.1 // indirect
 	github.com/go-git/go-git/v5 v5.0.0
 	github.com/go-openapi/runtime v0.19.15
@@ -24,7 +25,7 @@ require (
 	github.com/sethvargo/go-diceware v0.0.0-20181002232325-908b539e6e65
 	github.com/spf13/cobra v0.0.4
 	github.com/stretchr/testify v1.4.0
-	github.com/xanzy/go-gitlab v0.33.0
+	github.com/xanzy/go-gitlab v0.36.0
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
 	gopkg.in/square/go-jose.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0

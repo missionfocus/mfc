@@ -1,11 +1,12 @@
 package vault
 
 import (
-	"github.com/hashicorp/vault/api"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/hashicorp/vault/api"
 )
 
 type Vault interface {
