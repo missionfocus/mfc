@@ -66,12 +66,11 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 						labelArray = append(labelArray, label)
 					}
 				}
-				if addLabels {
-					for _, label := range labelArray {
-						totalWeightPerLabel := labels[label]
-						labels[label] = totalWeightPerLabel + issue.Weight
-					}
-				} else { continue }
+				if !addLabels { continue }
+				for _, label := range labelArray {
+					totalWeightPerLabel := labels[label]
+					labels[label] = totalWeightPerLabel + issue.Weight
+				}
 			} else if promptIssueCheck {
 				log.Println("[WARNING] No labels for issue: " + issue.Title)
 				checkIssueAfterwards, _ = promptForAnswer("Would you like run an issue check request after?")
@@ -90,22 +89,21 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 				checkEpicAfterwards, _ = promptForAnswer("Would you like run an epic check for epics after?")
 				promptEpicCheck = false
 			}
-
 			if issue.Assignee == nil {
 				log.Println("[WARNING] No assignee for: \"" + issue.Title + "\" using Author instead.")
-				if _, ok := m[issue.Author.Name]; ok {
-					foundPersonVelocity := m[issue.Assignee.Name]
+				if _, ok := m[issue.Author.Name]; ok { // Author exists in report already
+					foundPersonVelocity := m[issue.Author.Name]
 					foundPersonVelocity.AppendTrackVelocity(issue.Title, issue.WebURL, issue.Weight, epicTitle, epicURL)
-					m[issue.Assignee.Name] = foundPersonVelocity
-				} else {
+					m[issue.Author.Name] = foundPersonVelocity
+				} else { // Add author to report
 					newPersonVelocity := &TrackVelocity{[]string{issue.Title}, []string{issue.WebURL}, []int{issue.Weight}, []string{epicTitle}, []string{epicURL}}
 					m[issue.Author.Name] = newPersonVelocity
 				}
-			} else if _, ok := m[issue.Assignee.Name]; ok {
+			} else if _, ok := m[issue.Assignee.Name]; ok { // Assignee exists in report already
 				foundPersonVelocity := m[issue.Assignee.Name]
 				foundPersonVelocity.AppendTrackVelocity(issue.Title, issue.WebURL, issue.Weight, epicTitle, epicURL)
 				m[issue.Assignee.Name] = foundPersonVelocity
-			} else {
+			} else { // Add assignee to report
 				newPersonVelocity := &TrackVelocity{[]string{issue.Title}, []string{issue.WebURL}, []int{issue.Weight}, []string{epicTitle}, []string{epicURL}}
 				m[issue.Assignee.Name] = newPersonVelocity
 			}
@@ -164,16 +162,23 @@ func VelocityReport(glClient *gitlab.Client, milestone, iteration string) error 
 	fmt.Println("Results printed to file VelocityReport " + milestone + ".csv")
 
 	if checkIssueAfterwards {
-		CheckIssuesWithOptions(glClient, opts, 0, nil)
+		var Issues []*gitlab.Issue
+		Issues, _ = g.GetIssuesWithOptions(opts)
+		CheckIssues(Issues)
 	}
 	if checkEpicAfterwards {
-		//CheckEpicsWithinGroup(glClient, "", "", "", "")
+		var groupEpics []*gitlab.Epic
+		opt := &gitlab.ListGroupEpicsOptions{
+			State:         &state,
+		}
+		groupEpics, _ = g.ListGroupEpicsWithOptions(codeGroupID, opt)
+		CheckEpics(groupEpics)
 	}
 	return nil
 }
 
 func promptForAnswer(question string) (bool, error){
-	fmt.Println(question + " [y/n]? ")
+	fmt.Print(question + " [y/n]? ")
 	var input string
 	_, err := fmt.Scanln(&input)
 	if err != nil {

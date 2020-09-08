@@ -55,7 +55,7 @@ var bpeCheckIssuesAndEpicsCmd = &cobra.Command{
 		client, err := getGitLabClient(v)
 		check(err)
 
-		check(bpe.CheckEpicsWithinGroup(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, bpeCheckState))
+		check(bpe.EpicOptsByCheckCommand(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, bpeCheckState))
 		check(bpe.IssueOptsByCheckCommand(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, bpeCheckState))
 	},
 }
@@ -73,7 +73,7 @@ var bpeCheckEpicsCmd = &cobra.Command{
 		client, err := getGitLabClient(v)
 		check(err)
 
-		check(bpe.CheckEpicsWithinGroup(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, bpeCheckState))
+		check(bpe.EpicOptsByCheckCommand(client, gitlabCheckLocation, gitlabCheckCreationDate, gitlabCheckUpdatedDate, bpeCheckState))
 	},
 }
 
