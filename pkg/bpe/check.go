@@ -22,19 +22,19 @@ type IssueReport struct {
 	reason string
 }
 
-func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd string, ud string, state string) error {
+func IssueOptsByCheckCommand(glClient *gitlab.Client, location string, cd string, ud string, state string) error {
 	g := gl.New(glClient)
-	issuesInReport := make([]IssueReport, 0)
+	found := false
 	creationDates := tmetric.GetTimeParameters(cd)
 	updatedDates := tmetric.GetTimeParameters(ud)
+	var Issues []*gitlab.Issue
 
 	if state == "" {
 		state = "all"
 	}
 	scope := "all"
-	var Issues []*gitlab.Issue
 	if location == "" {
-		opt := &gitlab.ListGroupIssuesOptions{
+		issueOpts := &gitlab.ListIssuesOptions {
 			State:         &state,
 			CreatedAfter:  &creationDates[0],
 			CreatedBefore: &creationDates[1],
@@ -42,7 +42,7 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			UpdatedBefore: &updatedDates[1],
 			Scope:         &scope,
 		}
-		Issues, _ = g.ListGroupIssuesWithOptions(codeGroupID, opt)
+		Issues, _ = g.GetIssuesWithOptions(issueOpts)
 	} else {
 		searchNameSpaces := true
 		opt := &gitlab.ListProjectsOptions{
@@ -50,7 +50,7 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			SearchNamespaces: &searchNameSpaces,
 		}
 		projects, _ := g.ListProjectsWithOptions(opt)
-		opts := &gitlab.ListProjectIssuesOptions{
+		projectOpts := &gitlab.ListProjectIssuesOptions {
 			State:         &state,
 			CreatedAfter:  &creationDates[0],
 			CreatedBefore: &creationDates[1],
@@ -59,25 +59,35 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 			Scope:         &scope,
 		}
 		if projects == nil {
-			log.Fatal("Error, cannot find a project with the location: " + location)
-		}
-		if projects[0].PathWithNamespace == location {
-			Issues, _ = g.ListAllProjectIssuesWithOpts(projects[0].ID, opts)
+			log.Fatal("error, cannot find a project with the location: " + location)
+		} else if projects[0].PathWithNamespace == location {
+			Issues, _ = g.ListAllProjectIssuesWithOpts(projects[0].ID, projectOpts)
 		} else {
 			//Precautionary: this should not be called on.
-			log.Println("Attempting to find project location...")
+			log.Println("Attempting to find project location" + location)
 			for _, project := range projects {
 				if project.PathWithNamespace == location {
-					Issues, _ = g.ListAllProjectIssuesWithOpts(project.ID, opts)
+					log.Println("Found project location"  + location)
+					Issues, _ = g.ListAllProjectIssuesWithOpts(project.ID, projectOpts)
+					found = true
 					break
 				}
 			}
-		}
-		if Issues == nil {
-			log.Fatal("Error, no issues within project for: " + location)
+			if !found {
+				return fmt.Errorf("location and path err %s" , location)
+			}
 		}
 	}
+	if Issues != nil {
+		CheckIssues(Issues)
+	} else {
+		return fmt.Errorf("no issues found %s" , location)
+	}
+	return nil
+}
 
+func CheckIssues(Issues []*gitlab.Issue) error {
+	issuesInReport := make([]IssueReport, 0)
 	for _, issue := range Issues {
 		missingLabels := false
 		missingMilestoneHasLabel := false
@@ -136,9 +146,8 @@ func CheckIssuesWithinProject(glClient *gitlab.Client, location string, cd strin
 	return nil
 }
 
-func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, ud string, state string) error {
+func EpicOptsByCheckCommand(glClient *gitlab.Client, location string, cd string, ud string, state string) error {
 	g := gl.New(glClient)
-	epics := make([]EpicReport, 0)
 	creationDates := tmetric.GetTimeParameters(cd)
 	updatedDates := tmetric.GetTimeParameters(ud)
 	var groupEpics []*gitlab.Epic
@@ -164,7 +173,17 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 			}
 		}
 	}
+	if groupEpics == nil {
+		return fmt.Errorf("no epics found %s" , location)
+	} else {
+		CheckEpics(groupEpics)
+	}
 
+	return nil
+}
+
+func CheckEpics(groupEpics []*gitlab.Epic) error {
+	epics := make([]EpicReport, 0)
 	for _, epic := range groupEpics {
 		doneWithEpic := false
 		missingEpicLabel := true
@@ -185,19 +204,15 @@ func CheckEpicsWithinGroup(glClient *gitlab.Client, location string, cd string, 
 			epics = append(epics, EpicReport{epic, " This epic does not contain a epic label"})
 		}
 	}
-
 	csvfile, err := os.Create("EpicReport.csv")
 	if err != nil {
 		return err
 	}
 	defer csvfile.Close()
-
 	writer := csv.NewWriter(csvfile)
 	defer writer.Flush()
-
 	headers := []string{"Epic Name", "Epic URL", "Author", "Reason"}
 	writer.Write(headers)
-
 	for _, e := range epics {
 		record := []string{e.epic.Title, e.epic.WebURL, e.epic.Author.Name, e.reason}
 		writer.Write(record)
