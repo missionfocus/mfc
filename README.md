@@ -31,13 +31,15 @@ mfc update
 ```
 URL=$(curl http://public.missionfocus.com/mfc/manifest.yaml | grep darwin | grep -o 'http://.*')
 echo $URL 
+sudo mkdir /usr/local/bin
 sudo curl $URL -o /usr/local/bin/mfc
 sudo chmod +x /usr/local/bin/mfc
 ```
 ### Linux
 ```
 URL=$(curl http://public.missionfocus.com/mfc/manifest.yaml | grep linux | grep -o 'http://.*')
-echo $URL 
+echo $URL
+sudo mkdir /usr/local/bin 
 sudo curl $URL -o /usr/local/bin/mfc
 sudo chmod +x /usr/local/bin/mfc
 ```
