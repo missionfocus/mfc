@@ -25,9 +25,10 @@ var (
 )
 
 const gitlabCloneExample = `
-  mfc gitlab clone ^ours/              # Clones the entire ours tree
-  mfc gitlab clone ^ours/code/tools/   # Clones just the projects under the ours/code/tools group
-  mfc gitlab clone ours/code/tools/mfc # Clones only the ours/code/tools/mfc project
+  eval "$(ssh-agent -s)"; ssh-add ~/.ssh/id_rsa # Add ssh key to ssh-agent
+  mfc gitlab clone ^ours/                       # Clones the entire ours tree
+  mfc gitlab clone ^ours/code/tools/            # Clones just the projects under the ours/code/tools group
+  mfc gitlab clone ours/code/tools/mfc          # Clones only the ours/code/tools/mfc project
 `
 
 var gitlabCloneCmd = &cobra.Command{

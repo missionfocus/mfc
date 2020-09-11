@@ -24,6 +24,7 @@ func New(client *gitlab.Client) *GitLab {
 }
 
 // CloneAll clones all `projects` into `directory`, using the project namespace as the directory structure.
+// Uses a initial shallow clone of 1000 to avoid empty epos, and fetches the rest of the repository to improve repository access.
 func (g *GitLab) CloneAll(projects []*gitlab.Project, directory string, progress io.Writer) error {
 	if err := os.MkdirAll(directory, 0777); err != nil {
 		return fmt.Errorf("creating base directory: %w", err)
@@ -32,7 +33,6 @@ func (g *GitLab) CloneAll(projects []*gitlab.Project, directory string, progress
 	for _, proj := range projects {
 		cloneDir := filepath.Join(directory, proj.PathWithNamespace)
 		fmt.Fprintf(progress, "\n==> Cloning %s into %s\n", proj.PathWithNamespace, cloneDir)
-
 		if err := os.MkdirAll(cloneDir, 0777); err != nil {
 			return fmt.Errorf("creating repository directory: %w", err)
 		}
@@ -40,6 +40,7 @@ func (g *GitLab) CloneAll(projects []*gitlab.Project, directory string, progress
 		_, err := git.PlainClone(cloneDir, false, &git.CloneOptions{
 			URL:      proj.SSHURLToRepo,
 			Progress: progress,
+			Depth:    1,
 		})
 		if err != nil {
 			if err.Error() == "repository already exists" {
@@ -51,8 +52,23 @@ func (g *GitLab) CloneAll(projects []*gitlab.Project, directory string, progress
 				fmt.Fprint(progress, "--> Repository is empty, skipping\n")
 				continue
 			}
-
-			return fmt.Errorf("cloning repo: %w", err)
+			return fmt.Errorf("cloning repo: %w failed.", err)
+		}
+		w, err := git.PlainOpen(cloneDir)
+		if err != nil {
+			return fmt.Errorf("opening local repo: %w failed.", err)
+		}
+		err = w.Fetch(&git.FetchOptions{
+			Progress: progress,
+			Depth:    3000})
+		if err != nil {
+			if err.Error() == "already up-to-date" {
+				fmt.Fprint(progress, "--> Already up to date.\n")
+				continue
+			}
+			return fmt.Errorf("fetching repo: %w failed.", err)
+		} else {
+			fmt.Fprint(progress, "--> Fetched repo: %w, succeeded.\n")
 		}
 	}
 
