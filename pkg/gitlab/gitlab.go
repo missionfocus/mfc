@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/xanzy/go-gitlab"
@@ -24,7 +26,7 @@ func New(client *gitlab.Client) *GitLab {
 }
 
 // CloneAll clones all `projects` into `directory`, using the project namespace as the directory structure.
-// Uses a initial shallow clone of 1000 to avoid empty epos, and fetches the rest of the repository to improve repository access.
+// Uses a initial shallow clone of 1 to avoid empty repos, and fetches the rest of the repository to improve repository access.
 func (g *GitLab) CloneAll(projects []*gitlab.Project, directory string, progress io.Writer) error {
 	if err := os.MkdirAll(directory, 0777); err != nil {
 		return fmt.Errorf("creating base directory: %w", err)
@@ -54,24 +56,18 @@ func (g *GitLab) CloneAll(projects []*gitlab.Project, directory string, progress
 			}
 			return fmt.Errorf("cloning repo: %w failed.", err)
 		}
-		w, err := git.PlainOpen(cloneDir)
+		cmd := exec.Command("git", "fetch", "--unshallow")
+		cmd.Dir = cloneDir
+		out, err := cmd.CombinedOutput()
 		if err != nil {
-			return fmt.Errorf("opening local repo: %w failed.", err)
-		}
-		err = w.Fetch(&git.FetchOptions{
-			Progress: progress,
-			Depth:    3000})
-		if err != nil {
-			if err.Error() == "already up-to-date" {
-				fmt.Fprint(progress, "--> Already up to date.\n")
+			if strings.TrimSuffix(string(out), "\n") == "fatal: --unshallow on a complete repository does not make sense" {
+				fmt.Fprint(progress, "--> Repository is already latest, continuing\n")
 				continue
+			} else {
+				return fmt.Errorf("Fetch unshallow repo: %w failed.", err)
 			}
-			return fmt.Errorf("fetching repo: %w failed.", err)
-		} else {
-			fmt.Fprint(progress, "--> Fetched repo: %w, succeeded.\n")
 		}
 	}
-
 	return nil
 }
 
