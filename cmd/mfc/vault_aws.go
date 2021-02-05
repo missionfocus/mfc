@@ -52,7 +52,11 @@ func setAwsConfigRegion(account string) (err error) {
 		}
 	}
 	if string(out) == "" && vaultAWSIssueConfigRegion == "" {
-		vaultAWSIssueConfigRegion = defaultRegion
+		if account == "govcloud" {
+			vaultAWSIssueConfigRegion = "us-gov-west-1"
+		} else {
+			vaultAWSIssueConfigRegion = defaultRegion
+		}
 	}
 	if vaultAWSIssueConfigRegion == "" {
 		return nil
@@ -60,7 +64,7 @@ func setAwsConfigRegion(account string) (err error) {
 	cmd = exec.Command("bash", "-c", fmt.Sprintf("aws configure set region %s --profile %s", vaultAWSIssueConfigRegion, account))
 	out, err = cmd.CombinedOutput()
 	if err != nil {
-		fmt.Printf("Failed to set aws config region: %s %v\n", string(out), err)
+		fmt.Printf("\nWarning: failed to set aws config region: %s %v\nDo you have aws cli installed?", string(out), err)
 	}
 	return err
 }
