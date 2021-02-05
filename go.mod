@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	git.missionfocus.com/ours/code/libraries/go v0.0.0-00010101000000-000000000000
+	github.com/TheJumpCloud/jcapi-go v3.0.0+incompatible
 	github.com/aws/aws-sdk-go v1.19.19
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/emirpasic/gods v1.12.0
