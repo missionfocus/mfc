@@ -30,4 +30,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
           # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
-          HOMEBREW_GH_TOKEN: ${{ GH_PAT_GORELEASER }}
+          HOMEBREW_GH_TOKEN: ${{ secrets.GH_PAT_GORELEASER }}
