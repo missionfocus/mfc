@@ -30,8 +30,13 @@ brews:
       owner: missionfocus
       name: homebrew-tap
       token: "{{ .Env.GH_PAT_GORELEASER }}"
+    folder: Formula
+    test: |
+      system "#{bin}/mfc --version"
     homepage: https://missionfocus.com
     description: Utility toolbelt for Mission Focus engineers
+    install: |
+      bin.install "mfc"
 
 checksum:
   name_template: "checksums.txt"
