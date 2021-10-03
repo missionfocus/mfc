@@ -41,26 +41,6 @@ func (v *vault) KvReadAws(key string) (*STSSecret, error) {
 	return NewSTSSecret(secret), nil
 }
 
-func (v *vault) KvGpgImport(key string, private bool) (out []byte, err error) {
-	secret, err := v.Logical().Read(key)
-	if err != nil {
-		return nil, err
-	}
-
-	gpgSecret, err := NewPGPSecret(secret)
-	if err != nil {
-		return nil, err
-	}
-
-	if private {
-		out, err = gpgSecret.ImportPrivate()
-	} else {
-		out, err = gpgSecret.ImportPublic()
-	}
-
-	return
-}
-
 func (v *vault) KvNPMAuth(key string) (*NPMSecret, error) {
 	secret, err := v.Logical().Read(key)
 	if err != nil {

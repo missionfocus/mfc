@@ -3,15 +3,11 @@ module git.missionfocus.com/ours/code/tools/mfc
 go 1.13
 
 require (
-	git.missionfocus.com/ours/code/libraries/go v0.0.0-00010101000000-000000000000
 	github.com/TheJumpCloud/jcapi-go v3.0.0+incompatible
 	github.com/aws/aws-sdk-go v1.19.19
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/emirpasic/gods v1.12.0
 	github.com/frankban/quicktest v1.4.1 // indirect
 	github.com/go-git/go-git/v5 v5.0.0
-	github.com/go-openapi/runtime v0.19.15
-	github.com/go-openapi/strfmt v0.19.5
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/hcl v1.0.1-0.20180906183839-65a6292f0157 // indirect
@@ -31,5 +27,3 @@ require (
 	gopkg.in/square/go-jose.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )
-
-replace git.missionfocus.com/ours/code/libraries/go => git.missionfocus.com/ours/code/libraries/go.git v1.1.1
