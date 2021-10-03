@@ -1,4 +1,4 @@
-module git.missionfocus.com/ours/code/tools/mfc
+module github.com/missionfocus/mfc
 
 go 1.13
 

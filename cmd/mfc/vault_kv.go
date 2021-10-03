@@ -8,7 +8,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
+	"github.com/missionfocus/mfc/pkg/vault"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
