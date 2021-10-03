@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
+	"github.com/missionfocus/mfc/pkg/vault"
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/cobra"
 )

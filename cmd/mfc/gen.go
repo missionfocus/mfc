@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/gen"
+	"github.com/missionfocus/mfc/pkg/gen"
 	"github.com/spf13/cobra"
 )
 

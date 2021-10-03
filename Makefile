@@ -10,5 +10,5 @@ gitlab-release:
 
 .PHONY: build
 build:
-	CGO_ENABLED=0 go build -v -ldflags "-X main.version=$(CI_COMMIT_TAG)" -o $(BINARY) git.missionfocus.com/ours/code/tools/mfc/cmd/mfc
+	CGO_ENABLED=0 go build -v -ldflags "-X main.version=$(CI_COMMIT_TAG)" -o $(BINARY) github.com/missionfocus.com/mfc/cmd/mfc
 	openssl sha1 $(BINARY) > $(BINARY).checksum

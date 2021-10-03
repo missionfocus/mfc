@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/gitlab"
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
+	"github.com/missionfocus/mfc/pkg/gitlab"
+	"github.com/missionfocus/mfc/pkg/vault"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )

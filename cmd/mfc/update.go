@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/autoupdate"
+	"github.com/missionfocus/mfc/pkg/autoupdate"
 	"github.com/spf13/cobra"
 )
 

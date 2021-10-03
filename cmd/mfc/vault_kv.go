@@ -8,7 +8,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
+	"github.com/missionfocus/mfc/pkg/vault"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -22,14 +22,12 @@ func init() {
 	vaultKVCmd.AddCommand(vaultKVGetAllCmd)
 	vaultKVCmd.AddCommand(vaultKVPutAllCmd)
 	vaultKVCmd.AddCommand(vaultKVUserCmd)
-	vaultKVGPGCmd.AddCommand(vaultKVGpgImportCmd)
 	vaultKVNPMCmd.AddCommand(kvNPMAuthCmd)
 
 	vaultKVUserCmd.AddCommand(vaultKVUserGetCmd)
 	vaultKVUserCmd.AddCommand(vaultKVUserWriteCmd)
 
 	vaultKVAwsCmd.PersistentFlags().StringVarP(&vaultKVAwsProfileName, "profile", "p", "vault", "name of the profile")
-	vaultKVGpgImportCmd.PersistentFlags().BoolVar(&vaultKVGpgImportPrivate, "private", false, "import the pair's private key")
 
 	kvNPMAuthCmd.PersistentFlags().BoolVar(&vautlKVNPMStdout, "stdout", false, "write the NPM auth token to stdout instead of .npmrc")
 	kvNPMAuthCmd.PersistentFlags().StringVarP(&vaultKVNPMRCPath, "path", "p", filepath.Join(homeDir(), ".npmrc"), "path to .npmrc")
@@ -140,25 +138,6 @@ var vaultKVAwsCmd = &cobra.Command{
 var vaultKVGPGCmd = &cobra.Command{
 	Use:   "gpg",
 	Short: "Interact with GPG keys stored in Vault",
-}
-
-var vaultKVGpgImportPrivate bool
-
-var vaultKVGpgImportCmd = &cobra.Command{
-	Use:   "import <key>",
-	Short: "Import the GPG key at the specified KV engine key",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		key := args[0]
-
-		client, err := getVaultClientWithToken()
-		check(err)
-
-		v := vault.New(client)
-		out, err := v.KvGpgImport(key, vaultKVGpgImportPrivate)
-		silentPrint(string(out))
-		check(err)
-	},
 }
 
 var vaultKVNPMCmd = &cobra.Command{

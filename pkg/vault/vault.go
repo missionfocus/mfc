@@ -19,7 +19,6 @@ type Vault interface {
 
 	KvListAll(key string) []string
 	KvReadAws(key string) (*STSSecret, error)
-	KvGpgImport(key string, private bool) ([]byte, error)
 	KvNPMAuth(key string) (*NPMSecret, error)
 	KVGetAll(key string) ([]KVItem, []*TreeNode)
 	KVPutAll(items []KVItem) error

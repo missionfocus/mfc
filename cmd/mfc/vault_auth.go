@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
+	"github.com/missionfocus/mfc/pkg/vault"
 	"github.com/spf13/cobra"
 )
 

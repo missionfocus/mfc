@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"git.missionfocus.com/ours/code/tools/mfc/pkg/vault"
+	"github.com/missionfocus/mfc/pkg/vault"
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 )
