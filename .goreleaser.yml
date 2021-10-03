@@ -24,6 +24,15 @@ archives:
       windows: Windows
       386: i386
       amd64: x86_64
+
+brews:
+  - tap:
+      owner: missionfocus
+      name: homebrew-tap
+      token: "{{ .Env.GH_PAT_GORELEASER }}"
+    homepage: https://missionfocus.com
+    description: Utility toolbelt for Mission Focus engineers
+
 checksum:
   name_template: "checksums.txt"
 snapshot:
